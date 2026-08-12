@@ -18,7 +18,20 @@ export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
   // Smoke suite is intentionally small; one project is enough.
-  projects: [{ name: "chromium", use: { browserName: "chromium" } }],
+  projects: [
+    {
+      name: "chromium",
+      use: {
+        browserName: "chromium",
+        launchOptions: {
+          args: [
+            "--use-fake-device-for-media-stream",
+            "--use-fake-ui-for-media-stream",
+          ],
+        },
+      },
+    },
+  ],
   use: {
     baseURL,
     trace: "retain-on-failure",

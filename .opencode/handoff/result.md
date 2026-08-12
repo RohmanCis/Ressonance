@@ -1,64 +1,58 @@
-# Result — T021 QR Scannable Generator (Implementation + QA)
+# Result — T023 D1/D2 Voice Defect Fixes
 
 ## Status
-DONE. QR placeholder replaced with scannable QRCodeSVG. Visual/scanner QA passed.
+DONE. Both defects fixed and verified. Awaiting independent QA.
 
 ## Changes
-- `components/admin/admin-access.tsx`: `QRCodeSVG` from `qrcode.react@4.2.0` replaces 81-cell deterministic placeholder; renders `url` (public event URL). Leftover placeholder copy corrected to scannable wording.
-- `package.json` / `package-lock.json`: added `qrcode.react@4.2.0` (React 19 peer-compatible).
-- `eslint.config.mjs`: added `next-env.d.ts` to ignores (lint blocker fix).
-- `e2e/qr-qa.spec.ts`: route-intercepted QA suite (4 tests).
-- `e2e/qr-desktop.png`, `e2e/qr-mobile.png`: visual evidence screenshots.
+File: `components/guest-event-entry.tsx` ONLY.
 
-## QA Validation
+### D1: Voice upload error retains review UI
+- Added `"review-error"` to `VoiceState` union type.
+- Upload error handlers (`request.onload` catch, `request.onerror`, generic catch) now set `voiceState` to `"review-error"` instead of `"error"`.
+- `"review-error"` routes to the existing review branch (audio playback + duration + Submit + Re-record), with the error message displayed via `{state === "review-error" && <p role="alert">{message}</p>}`.
+- Permission error (`recordVoice` catch) still uses `"error"` → idle branch (correct: no audio to retain).
+- Replaced dead `{isError && ...}` in review branch with `{state === "review-error" && ...}`.
 
-### Playwright route-intercepted tests: 4/4 PASS
-1. **QR renders, encodes exact public URL, copy/print intact (desktop)** — PASS
-   - SVG: `viewBox="0 0 29 29"`, `role="img"`, `aria-label="QR code for event access"`, 2 paths (white bg + black QR modules with `shape-rendering="crispEdges"`).
-   - Rendered size: 128×128px (>100px threshold for phone scanning).
-   - Public URL input: exact match to `http://localhost:3000/e/qa-event-abc123`.
-   - Copy button: clicks → label changes to "Copied" → clipboard contains exact URL.
-   - Print button: present and enabled.
-   - No private/secret/signed URL anywhere on page (supabase, storage, signed, token, service-role, secret — all absent).
+### D2: Voice onstop stale closure fixed
+- Added `voiceSecondsRef = useRef(0)` alongside existing `voiceSeconds` state.
+- `recordVoice()`: resets `voiceSecondsRef.current = 0` at record start.
+- Interval callback: writes `voiceSecondsRef.current = next` on each tick.
+- `recorder.onstop`: reads `voiceSecondsRef.current` instead of stale `voiceSeconds` closure for the "Too short" hint decision.
+- Duration display unchanged (already correct via `seconds` prop).
 
-2. **QR not distorted at mobile width 375px** — PASS
-   - Aspect ratio: within 0.95–1.05 (square preserved).
-   - Width: ≤375px (fits viewport).
-
-3. **QR not distorted at tablet width 768px** — PASS
-   - Aspect ratio: within 0.95–1.05.
-
-4. **Copy button provides feedback** — PASS
-   - Clipboard write + read confirmed exact URL.
-
-### Existing smoke suite: 3 passed / 1 skipped / 0 failed (no regression)
-
-### Visual evidence
-- `e2e/qr-desktop.png`: desktop layout, QR beside URL block, copy/print buttons.
-- `e2e/qr-mobile.png`: mobile stacked layout, QR centered, undistorted.
-
-## QA Report
+## Verification
 | Check | Result |
 |---|---|
-| rendered | PASS |
-| encoded URL | PASS |
-| scanner | PASS (SVG module structure valid; physical scan deferred — no live backend) |
-| responsive | PASS (375px, 768px, 1280px) |
-| copy/print intact | PASS |
-| no private URL encoded | PASS |
+| `npm run typecheck` | PASS (clean) |
+| `npm run lint` | 0 errors, 5 pre-existing warnings |
+| `npm test` (vitest) | 27/27 files, 232/232 tests PASS |
+| `npm run build` | Compiled successfully |
+| Playwright mobile-media QA | 10/10 PASS (D1+D2 fix tests included) |
+| Playwright smoke | 3 passed / 1 skipped / 0 failed |
+
+### D1 fix test (test 7)
+"voice: upload error retains audio, duration, Re-record, and Submit" — PASS
+- Error message visible
+- `<audio>` playback retained
+- Duration displayed
+- Re-record button available
+- Submit (retry) button available
+- "Record" (idle) button NOT shown
+
+### D2 fix test (test 10)
+"voice: onstop hint uses actual duration, not stale closure" — PASS
+- 6s recording: "Too short" NOT shown (correct: 6s >= 5s)
+- "Keep recording for at least 5 seconds" guidance NOT shown
+- Duration display: "6s" (correct)
 
 ## SSOT conflict
-None. Library choice within approved latitude (PRD L802 open, UI_UX L211 permits). No canonical document modified.
+None. No canonical document or API behavior changed.
 
 ## Architecture drift
-None. qrcode.react is a presentational client component; no new endpoint, schema field, or topology change.
+None. UI-only state change; no new endpoint, schema field, or dependency.
 
 ## Blockers
-None for T021. Physical scanner verification with a live backend remains deferred.
-
-## Remaining issues
-- Live scanner verification with physical device + seeded ACTIVE event (deferred — no `.env` / live backend available).
-- Broader browser capability and mobile-media coverage remain outstanding (pre-existing).
+None.
 
 ## Next step
-T021 complete. Proceed to remaining QA scope (broader browser coverage, mobile-media coverage) or commit T021 changes when scheduled.
+Independent QA review, then commit when approved.
