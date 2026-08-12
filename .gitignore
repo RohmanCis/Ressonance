@@ -44,3 +44,5 @@ coverage/
 # supabase (Local CLI)
 supabase/.tmp/
 supabase/.output/
+test-results/
+playwright-report/

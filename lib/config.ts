@@ -10,12 +10,16 @@ export function getServerConfig() {
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const databaseUrl = process.env.DATABASE_URL;
+  const storageBucket = process.env.SUPABASE_STORAGE_BUCKET;
 
   const missing: string[] = [];
   if (!url) missing.push("NEXT_PUBLIC_SUPABASE_URL");
   if (!anonKey) missing.push("NEXT_PUBLIC_SUPABASE_ANON_KEY");
   if (!serviceRoleKey) missing.push("SUPABASE_SERVICE_ROLE_KEY");
   if (!appUrl) missing.push("NEXT_PUBLIC_APP_URL");
+  if (!databaseUrl) missing.push("DATABASE_URL");
+  if (!storageBucket) missing.push("SUPABASE_STORAGE_BUCKET");
 
   if (missing.length > 0) {
     throw new Error(
@@ -29,5 +33,7 @@ export function getServerConfig() {
     supabaseAnonKey: anonKey as string,
     supabaseServiceRoleKey: serviceRoleKey as string,
     appUrl: appUrl as string,
+    databaseUrl: databaseUrl as string,
+    supabaseStorageBucket: storageBucket as string,
   };
 }

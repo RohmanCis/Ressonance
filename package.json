@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "e2e": "playwright test",
+    "test:postgres": "vitest run lib/db/schema.integration.test.ts lib/submit-photo.concurrency.test.ts lib/submit-voice-note.concurrency.test.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
@@ -17,6 +19,7 @@
     "clsx": "^2.1.1",
     "lucide-react": "^0.469.0",
     "next": "^15.1.6",
+    "pg": "^8.23.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "server-only": "^0.0.1",
@@ -24,6 +27,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4.0.0",
     "@types/node": "^22.10.7",
     "@types/pg": "^8.21.0",
@@ -32,7 +36,6 @@
     "@vitejs/plugin-react": "^4.3.4",
     "eslint": "^9.18.0",
     "eslint-config-next": "^15.1.6",
-    "pg": "^8.23.0",
     "postcss": "^8.5.1",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.3",

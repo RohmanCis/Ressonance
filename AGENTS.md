@@ -17,13 +17,14 @@ Read only the documents relevant to the task, plus this file. Do not duplicate t
 | 3 | `docs/ARCHITECTURE_DECISIONS.md` | Approved architectural decisions and stack |
 | 4 | `docs/TECHNICAL_DESIGN.md` | System boundaries, security, storage, sessions, transactions, testing strategy |
 | 5 | `docs/API_CONTRACT.md` | HTTP paths, methods, payloads, status codes, errors, auth behavior |
-| 6 | UI/UX contract, if created | Approved UI behavior and presentation constraints |
+| 6 | `docs/UI_UX.md` | UI behavior, screens, states, transitions, presentation constraints |
+| 7 | `docs/UI_DESIGN.md` | MVP visual system: direction, layout, typography, tokens, spacing, motion, accessibility presentation |
 
 Precedence follows the table for conflicts, except a higher document cannot silently invalidate a lower document's explicit locked constraint. Report the conflict. `AGENTS.md` never overrides canonical documents.
 
 Authority is confined to this repository. External projects, workspaces, absolute paths outside the repository, imported external requirements, and external AGENTS files are invalid authority and must never be used to change, challenge, or QA this repository's behavior. Do not read or reference them.
 
-Current UI/UX contract: none found. Do not invent one.  
+Current UI status: `docs/UI_UX.md` is LOCKED; `docs/UI_DESIGN.md` is LOCKED. `docs/UI_DESIGN.md` is subordinate to `docs/UI_UX.md` and defines only presentation, never behavior, screens, or states. Both are approved authority for implementation; do not silently reinterpret or invent replacements.  
 Current API status: `docs/API_CONTRACT.md` is LOCKED and approved for implementation.
 
 ## 3. Locked product invariants
@@ -65,7 +66,7 @@ Do not introduce an ORM, provider, framework, service, schema field, endpoint, o
 - **Product/domain task:** `docs/PRD.md` relevant sections; `docs/db_scheme.md` for data impact.
 - **Database/migration task:** `docs/db_scheme.md` + relevant `docs/TECHNICAL_DESIGN.md` sections.
 - **API/backend task:** `docs/API_CONTRACT.md` + relevant `docs/TECHNICAL_DESIGN.md` and `docs/ARCHITECTURE_DECISIONS.md` sections.
-- **UI task:** approved UI/UX contract if present + relevant PRD/API sections; route visual work to Designer.
+- **UI task:** `docs/UI_UX.md` for behavior/states + `docs/UI_DESIGN.md` for visual system + relevant PRD/API sections; route visual work to Designer.
 - **Cross-cutting/security task:** relevant sections of all affected canonical documents.
 
 Inspect existing code and conventions after loading context. Read the governing document before modifying code. Do not load every document by default.
@@ -104,6 +105,16 @@ Required lifecycle:
 6. Orchestrator reads `result.md` before marking the task complete.
 7. Orchestrator updates `CURRENT.md` after completion.
 
+Async delegation protocol:
+
+1. After dispatching a background agent, set `CURRENT.md` status to `WAITING_FOR_AGENT` and record the task ID and objective.
+2. End the orchestration turn. Do not poll the agent with repeated wait or tool calls.
+3. Resume by reading `CURRENT.md` then `result.md`. Inspect the repository only when `result.md` is missing or inconsistent with `task.md`.
+4. Confirm the agent reached a terminal state before reconciling.
+5. Never dispatch a duplicate task while the previous agent is non-terminal. Retry only after the previous agent is confirmed terminal.
+
+File state is the durable synchronization mechanism. Do not carry large conversational context across waiting periods.
+
 Do not create per-task `STATUS.md`, `HANDOFF.md`, `T001.md`, `result-T001.md`, task directories, or result directories. `task.md` and `result.md` are replaced for each current task. Canonical documents remain the source of truth; do not duplicate PRD, schema, architecture, API, or UI content into handoff files.
 
 Context strategy: load the smallest governing document set defined in §5; reference paths/sections instead of copying content.
@@ -115,7 +126,7 @@ Context strategy: load the smallest governing document set defined in §5; refer
 - Stop the affected decision path when a conflict blocks safe implementation.
 - Do not modify PRD, schema, architecture, API, or UI canonical documents without explicit scope and approval.
 - QA and review may rely only on this repository's canonical documents and this file. External projects, workspaces, absolute paths outside the repository, imported external requirements, and external AGENTS files are invalid authority and must not be used to change, challenge, or QA this repository.
-- Do not implement before required design documents are approved. Canonical status: API Contract LOCKED, Database Schema approved cleanup complete, Technical Design LOCKED, Architecture Decisions LOCKED, implementation gate cleared.
+- Do not implement before required design documents are approved. Canonical status: API Contract LOCKED, Database Schema approved cleanup complete, Technical Design LOCKED, Architecture Decisions LOCKED, UI/UX Contract LOCKED, UI Design LOCKED, implementation gate cleared.
 
 ## 9. Testing and security gate
 
@@ -125,8 +136,8 @@ Never trust frontend limits, localStorage, client MIME/duration, public storage 
 
 ## 10. Current repository state
 
-Repository contains a working Next.js + TypeScript MVP application skeleton for the guest-session flow (T001–T004). Present: `package.json`/lockfile, `tsconfig.json`, `eslint.config.mjs`, `next.config.ts`, `postcss.config.mjs`, `components.json`, `.env.example`, `.gitignore`, `types/supabase.ts` (placeholder), Tailwind/vitest tooling, `supabase/migrations/0001_initial_schema.sql`, and `.opencode/handoff/` task-state files. No Git repository is present.
+Guest-side API, Admin API, Guest UI, and Admin UI are implemented. Local Playwright smoke QA passes: 3 passed / 1 skipped / 0 failed. Vitest, typecheck, and lint pass per the current handoff; lint has existing warnings.
 
-Implemented application code: `app/api/events/[public_id]/session/route.ts` (POST Start with configurable fixed-window rate limiting, `429 RATE_LIMITED`), `lib/start-guest-session.ts`, `lib/rate-limit.ts`, `lib/guest-session.ts`, `lib/config.ts`, and `lib/supabase/{client,server,service-role}.ts`. The service-role client is guarded by a hard `server-only` boundary. Vitest suites cover rate limiting, guest-session helpers, session-start orchestration, route-level behavior (valid Start, unknown/CLOSED events, invalid input, malformed JSON/content type, cookie attributes, no token exposure, rate limit), and DB integration (skips when no Postgres is reachable).
+Live Supabase Auth/PostgreSQL/Storage integration remains unverified because no live backend configuration or seeded ACTIVE event is available. `PLAYWRIGHT_LIVE=1` is therefore not runnable. Chromium is installed. Git worktree is clean.
 
-Known source-document issues requiring future approved decisions: session-expiration representation remains open; media retention policy remains open. Do not fix canonical documents silently.
+Known implementation limitations: the Admin access screen uses a deterministic visual QR placeholder, not a scannable QR generator; live integration and broader browser capability/mobile-media coverage remain outstanding. Known source-document questions remain deferred: session-expiration representation and media-retention policy. Do not fix canonical documents silently.
