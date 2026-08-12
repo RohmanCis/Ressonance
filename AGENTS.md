@@ -136,8 +136,8 @@ Never trust frontend limits, localStorage, client MIME/duration, public storage 
 
 ## 10. Current repository state
 
-Guest-side API, Admin API, Guest UI, and Admin UI are implemented. Local Playwright smoke QA passes: 3 passed / 1 skipped / 0 failed. Vitest, typecheck, and lint pass per the current handoff; lint has existing warnings.
+Guest-side API, Admin API, Guest UI, and Admin UI are implemented. The Admin access screen renders a scannable QR code (`qrcode.react`) encoding the event public URL. Local Playwright smoke QA passes: 3 passed / 1 skipped / 0 failed; QR visual/scanner QA passes: 4 passed / 0 failed. Vitest, typecheck, and lint pass; lint has existing warnings only (0 errors, `next-env.d.ts` excluded).
 
-Live Supabase Auth/PostgreSQL/Storage integration remains unverified because no live backend configuration or seeded ACTIVE event is available. `PLAYWRIGHT_LIVE=1` is therefore not runnable. Chromium is installed. Git worktree is clean.
+Live Supabase Auth/PostgreSQL/Storage integration remains unverified because no live backend configuration or seeded ACTIVE event is available. `PLAYWRIGHT_LIVE=1` is therefore not runnable. Chromium is installed.
 
-Known implementation limitations: the Admin access screen uses a deterministic visual QR placeholder, not a scannable QR generator; live integration and broader browser capability/mobile-media coverage remain outstanding. Known source-document questions remain deferred: session-expiration representation and media-retention policy. Do not fix canonical documents silently.
+Known implementation limitations: live scanner verification with a physical device, broader browser capability, and mobile-media coverage remain outstanding. Known source-document questions remain deferred: session-expiration representation and media-retention policy. Do not fix canonical documents silently.
