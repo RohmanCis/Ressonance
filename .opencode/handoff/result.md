@@ -1,14 +1,13 @@
-# Result — Governance/Handoff Cleanup
+# Result — T020 Live Integration Reconciliation
 
 ## Status
-DONE. Handoff state synchronized. No application code or canonical document changed.
+DONE. T020 live verification reconciled. No application code or canonical document changed. QR not implemented.
 
 ## Validation
-- Authority order preserved in `AGENTS.md` §2; canonical documents remain authoritative.
-- Guest API/UI and Admin API/UI implemented; local browser smoke passed.
-- Local smoke: `3 passed / 1 skipped / 0 failed`.
-- Live integration remains blocked by missing backend configuration and seeded ACTIVE event.
-- Worktree clean.
+- Live PostgreSQL integration: `13/13 PASS`.
+- Live browser QA with `PLAYWRIGHT_LIVE=1`: `4/4 PASS`.
+- Verified environment: configured live Supabase Auth/PostgreSQL/Storage with seeded ACTIVE event.
+- Handoff-only reconciliation; no application-code or canonical-document changes.
 
 ## SSOT conflict
 None.
@@ -17,7 +16,12 @@ None.
 None.
 
 ## Blockers
-Live Supabase Auth/PostgreSQL/Storage coverage unverified. `PLAYWRIGHT_LIVE=1` not runnable without environment setup.
+None for T020.
+
+## Remaining QA scope
+- Broader browser capability coverage.
+- Mobile-media coverage.
+- Session-expiration representation and media-retention policy remain deferred source-document questions.
 
 ## Next step
-Provision/configure live backend and seeded ACTIVE event, then rerun live QA. T020 not started.
+No implementation task. Continue with remaining QA scope when scheduled; do not implement QR as part of T020.

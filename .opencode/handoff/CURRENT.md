@@ -1,9 +1,9 @@
 # Current Execution State
 
-- Phase: Browser/runtime QA complete; live integration blocked.
-- Status: PASS WITH BLOCKER. Local smoke: 3 passed / 1 skipped / 0 failed.
-- Current task: Governance/handoff cleanup complete; no implementation task active.
-- Blocker: No live Supabase/Auth/PostgreSQL/Storage configuration or seeded ACTIVE event; `PLAYWRIGHT_LIVE=1` cannot run.
-- Next task: Provision/configure live backend and seeded ACTIVE event, then rerun live QA. Do not start T020.
-- Scope: No application-code or canonical-document changes.
-- Worktree: Clean.
+- Phase: Browser/runtime QA and live integration verified.
+- Status: PASS. PostgreSQL integration: 13/13 PASS. `PLAYWRIGHT_LIVE=1`: 4/4 PASS.
+- Current task: T020 live integration reconciliation complete; no implementation task active.
+- Verified environment: Live Supabase Auth/PostgreSQL/Storage configuration with seeded ACTIVE event; live PostgreSQL and Playwright checks passed.
+- Remaining QA scope: Broader browser capability and mobile-media coverage. Known session-expiration representation and media-retention policy questions remain deferred.
+- Scope: Handoff-only changes. No application-code or canonical-document changes. QR not implemented.
+- Worktree: Handoff files modified only.
