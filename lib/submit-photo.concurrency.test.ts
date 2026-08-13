@@ -111,7 +111,7 @@ describe("concurrent photo submissions (TECHNICAL_DESIGN §8)", () => {
       },
       async findSessionByTokenHash(hash) {
         const { rows } = await db.query(
-          "SELECT id, event_id, session_token, guest_name FROM guest_sessions WHERE session_token = $1",
+          "SELECT id, event_id, session_token, guest_name, expires_at FROM guest_sessions WHERE session_token = $1",
           [hash],
         );
         return rows[0] ?? null;

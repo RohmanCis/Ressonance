@@ -174,7 +174,7 @@ At session creation:
 
 This avoids creating database sessions for simple page visits and makes the guest name available to all subsequent submissions in the session.
 
-Session expiration policy is an open technical decision.
+A GuestSession has a maximum lifetime of 30 minutes from creation. Expiry is determined by a server-side `expires_at` timestamp. Once expired, the session cannot submit photos or voice notes; a new GuestSession (via Start) is required for further submissions. Physical QR rescan is not required if the guest still has the event URL. Client-side drafts may remain visible after expiry while the page is alive, but must not be submitted using or resurrecting the expired session. A new session has its own independent quota; no quota is transferred. The MVP does not persist expired-session drafts across page reload or navigation.
 
 ---
 
@@ -795,7 +795,6 @@ To be decided at the technical design stage, after ERD and architecture are defi
 - Supported image formats.
 - Supported audio formats.
 - Audio inspection tool/library for server-side duration validation.
-- Guest session expiration policy.
 - Media retention policy.
 - Backup strategy.
 - Monitoring and logging.

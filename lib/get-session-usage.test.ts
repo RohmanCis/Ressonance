@@ -28,6 +28,7 @@ function session(overrides: Partial<GuestSession> = {}): GuestSession {
     event_id: "e1",
     session_token: hashSessionToken(TOKEN),
     guest_name: "Fante",
+    expires_at: "2099-01-01T00:00:00Z",
     ...overrides,
   };
 }
@@ -122,5 +123,18 @@ describe("getSessionUsage", () => {
       expect(r.body.voice_note_available).toBe(false);
       expect(r.body.guest_name).toBe("Fante");
     }
+  });
+
+  it("returns session_expired for an expired session", async () => {
+    const r = await getSessionUsage(
+      repo({
+        async findSessionByTokenHash(hash) {
+          const s = session({ expires_at: new Date(Date.now() - 60000).toISOString() });
+          return s.session_token === hash ? s : null;
+        },
+      }),
+      { publicId: "evt-active", cookieValue: TOKEN },
+    );
+    expect(r.kind).toBe("session_expired");
   });
 });

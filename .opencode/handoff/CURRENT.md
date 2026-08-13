@@ -1,21 +1,20 @@
 # Current Execution State
 
 - Phase: Session closed. No active task.
-- Status: IDLE. Worktree has uncommitted session changes (see below). Not committed per session-close protocol.
+- Status: IDLE. Working tree has uncommitted T026+T027 changes (31 files, +292/-73). Not committed per session-close protocol.
 - Completed this session:
-  - T025: §9 coverage-matrix gap audit and closure. 9/10 COVERED before, 1 PARTIAL (cat 6) closed. 10/10 COVERED after. No app defects found.
-  - AGENTS.md §141 reconciled: stale "live integration unverified" → verified (PostgreSQL 13/13, PLAYWRIGHT_LIVE=1 4/4, seeded ACTIVE event).
-  - AGENTS.md §7: added Session Close Protocol (9 steps).
-  - Handoff files reconciled (T021/T023 stale task.md/result.md cleared).
-- Verification: vitest 233/233 (+1), typecheck PASS, lint 0 errors, build PASS. git diff --check clean (CRLF warnings only).
+  - T026: reconciled approved 30-min GuestSession expiration policy into 7 canonical docs (14 edits, +22/-21). No app code. Approved.
+  - T027: implemented expiration in app code (17 files, 8 new tests). QA verdict: APPROVE (@oracle, 10/10 checklist pass, 0 defects).
+  - Final QA audit (pre-T026): APPROVE. 14/14 areas PASS, 10/10 §9 coverage COVERED, 0 defects.
+- Verification: vitest 242/242 (+9), typecheck PASS, lint 0 errors. git diff --check clean (CRLF warnings only).
 - Uncommitted files (all this session, no pre-existing/unrelated work):
-  - `AGENTS.md` — §141 live-integration reconciliation + §7 Session Close Protocol.
-  - `app/api/admin/media/[media_id]/access/route.test.ts` — +1 test (signed-URL TTL upper bound), +1 import.
-  - `.opencode/handoff/{CURRENT,task,result}.md` — handoff reconciliation.
+  - T026 canonical docs: `docs/PRD.md`, `docs/db_scheme.md`, `docs/TECHNICAL_DESIGN.md`, `docs/API_CONTRACT.md`, `docs/UI_UX.md`, `docs/ARCHITECTURE_DECISIONS.md`, `AGENTS.md`
+  - T027 app code: `supabase/migrations/0001_initial_schema.sql`, `lib/guest-session.ts`, `lib/resolve-guest-session.ts`, `lib/get-session-usage.ts`, `lib/submit-photo.ts`, `lib/submit-voice-note.ts`, `lib/start-guest-session.ts`, 3 guest route handlers
+  - T027 tests: 9 test files + 2 concurrency test files
+  - Handoff: `.opencode/handoff/{CURRENT,task,result}.md`
 - Deferred decisions (require explicit approval; §8 forbids silent fix):
-  - Session-expiration representation (touches §3 GuestSession invariant).
   - Media-retention policy (touches storage/security posture).
-- Outstanding scope (not codeable this session):
-  - Live mobile-device verification with real camera/mic (hardware-gated).
-  - Broader browser-capability coverage (ops-gated, needs additional browser installs).
-- Next: commit session work when scheduled (no commit/push performed).
+- Outstanding scope (hardware/ops-gated, not codeable here):
+  - Live mobile-device verification with real camera/mic.
+  - Broader browser-capability coverage.
+- Next: commit T026+T027 when scheduled (no commit/push performed).

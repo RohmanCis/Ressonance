@@ -41,7 +41,7 @@ vi.mock("@/lib/config", () => ({
 }));
 
 let events: Record<string, { id: string; status: string }> = {};
-let sessions: Record<string, { id: string; event_id: string; session_token: string; guest_name: string | null }> = {};
+let sessions: Record<string, { id: string; event_id: string; session_token: string; guest_name: string | null; expires_at: string }> = {};
 let photoCount = 0;
 let voiceCount = 0;
 let failCount = false;
@@ -61,7 +61,7 @@ function fakeClient() {
         const s = sessions[params[0] as string];
         return {
           rows: s
-            ? [{ id: s.id, event_id: s.event_id, session_token: s.session_token, guest_name: s.guest_name }]
+            ? [{ id: s.id, event_id: s.event_id, session_token: s.session_token, guest_name: s.guest_name, expires_at: s.expires_at }]
             : [],
         };
       }
@@ -155,6 +155,7 @@ function seedSession() {
     event_id: "event-1",
     session_token: hashSessionToken(token),
     guest_name: "Fante",
+    expires_at: "2099-01-01T00:00:00Z",
   };
   return token;
 }
@@ -315,6 +316,26 @@ describe("POST /api/events/{public_id}/photos (route)", () => {
     expect(res.status).toBe(401);
     const body = await res.json();
     expect(body.error.code).toBe("SESSION_INVALID");
+    expect(reads()).toBe(0);
+    const setCookie = res.headers.get("set-cookie");
+    expect(setCookie).toContain(`${GUEST_SESSION_COOKIE}=`);
+    expect(setCookie?.toLowerCase()).toContain("max-age=0");
+  });
+
+  it("returns 401 SESSION_EXPIRED and clears the cookie for an expired session, without reading the body", async () => {
+    const token = generateSessionToken();
+    sessions[hashSessionToken(token)] = {
+      id: "session-exp",
+      event_id: "event-1",
+      session_token: hashSessionToken(token),
+      guest_name: null,
+      expires_at: new Date(Date.now() - 60000).toISOString(),
+    };
+    const { request, reads } = counterRequest(token);
+    const res = await POST(request, { params });
+    expect(res.status).toBe(401);
+    const body = await res.json();
+    expect(body.error.code).toBe("SESSION_EXPIRED");
     expect(reads()).toBe(0);
     const setCookie = res.headers.get("set-cookie");
     expect(setCookie).toContain(`${GUEST_SESSION_COOKIE}=`);

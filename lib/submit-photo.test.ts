@@ -103,6 +103,7 @@ function fresh(): { state: State; rawToken: string } {
     event_id: "event-1",
     session_token: hashSessionToken(token),
     guest_name: "Fante",
+    expires_at: "2099-01-01T00:00:00Z",
   };
   const state: State = {
     events: {
@@ -197,6 +198,18 @@ describe("resolvePhotoAuth", () => {
       cookieValue: rawToken,
     });
     expect(result.kind).toBe("session_invalid");
+  });
+
+  it("returns session_expired for an expired session", async () => {
+    const { state, rawToken } = fresh();
+    state.sessions[Object.keys(state.sessions)[0]].expires_at = new Date(
+      Date.now() - 60000,
+    ).toISOString();
+    const result = await resolvePhotoAuth(makeSessionRepo(state), {
+      publicId: "evt-active",
+      cookieValue: rawToken,
+    });
+    expect(result.kind).toBe("session_expired");
   });
 });
 

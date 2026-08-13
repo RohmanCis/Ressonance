@@ -93,8 +93,9 @@ export async function POST(
           event_id: string;
           session_token: string;
           guest_name: string | null;
+          expires_at: string;
         }>(
-          "SELECT id, event_id, session_token, guest_name FROM guest_sessions WHERE session_token = $1 LIMIT 1",
+          "SELECT id, event_id, session_token, guest_name, expires_at FROM guest_sessions WHERE session_token = $1 LIMIT 1",
           [hash],
         );
         return rows[0] ?? null;
@@ -127,6 +128,14 @@ export async function POST(
       case "session_invalid": {
         const response = NextResponse.json(
           { error: { code: "SESSION_INVALID", message: "The guest session is invalid." } },
+          { status: 401 },
+        );
+        response.headers.append("Set-Cookie", clearGuestSessionCookie());
+        return response;
+      }
+      case "session_expired": {
+        const response = NextResponse.json(
+          { error: { code: "SESSION_EXPIRED", message: "The guest session has expired." } },
           { status: 401 },
         );
         response.headers.append("Set-Cookie", clearGuestSessionCookie());

@@ -10,7 +10,8 @@ import {
  * `SessionRepo`, so the endpoint can run against Supabase while tests use an
  * in-memory fake. Covers: opaque event resolution, CLOSED rejection, optional
  * name validation, token generation with SHA-256 digest persistence, and the
- * exact API Contract response shape. No rate limiting / expiry (open).
+ * exact API Contract response shape. No rate limiting (route layer). Expiry is
+ * DB-managed via the `expires_at` default.
  */
 
 export interface EventRef {

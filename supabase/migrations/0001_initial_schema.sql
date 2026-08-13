@@ -65,10 +65,16 @@ CREATE TABLE guest_sessions (
     session_token  TEXT        NOT NULL,
     guest_name     TEXT,
     created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at     TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '30 minutes'),
 
     CONSTRAINT uq_guest_sessions_token
         UNIQUE (session_token)
 );
+
+-- GuestSession expiration policy (T026): max lifetime 30 minutes from creation.
+-- `expires_at` is set at creation to `created_at + 30 minutes` (via the default
+-- above). The backend checks `expires_at <= NOW()` on every protected guest
+-- endpoint and returns 401 SESSION_EXPIRED, clearing the cookie.
 
 CREATE INDEX idx_guest_sessions_event_id
     ON guest_sessions (event_id);

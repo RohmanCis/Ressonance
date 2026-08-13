@@ -176,8 +176,8 @@ export async function POST(
  * GET /api/events/{public_id}/session — Get session/usage state (API Contract 6.3).
  * Read-only. Requires a valid guest-session cookie belonging to `{public_id}`.
  * Returns 404 for unknown events; CLOSED events stay readable (status included).
- * Invalid/unknown/mismatched sessions return 401 SESSION_INVALID and clear the
- * cookie. No rate limiting (creation-only), no expiry policy (open).
+ * Invalid/unknown/mismatched/expired sessions return 401 SESSION_INVALID /
+ * SESSION_EXPIRED and clear the cookie. No rate limiting (creation-only).
  */
 export async function GET(
   request: NextRequest,
@@ -208,7 +208,7 @@ export async function GET(
     async findSessionByTokenHash(hash) {
       const { data, error } = await db
         .from("guest_sessions")
-        .select("id, event_id, session_token, guest_name")
+        .select("id, event_id, session_token, guest_name, expires_at")
         .eq("session_token", hash)
         .maybeSingle();
       if (error) throw error;
@@ -218,6 +218,7 @@ export async function GET(
             event_id: data.event_id as string,
             session_token: data.session_token as string,
             guest_name: data.guest_name as string | null,
+            expires_at: data.expires_at as string,
           }
         : null;
     },
@@ -261,6 +262,14 @@ export async function GET(
       case "session_invalid": {
         const response = NextResponse.json(
           { error: { code: "SESSION_INVALID", message: "The guest session is invalid." } },
+          { status: 401 },
+        );
+        response.headers.append("Set-Cookie", clearGuestSessionCookie());
+        return response;
+      }
+      case "session_expired": {
+        const response = NextResponse.json(
+          { error: { code: "SESSION_EXPIRED", message: "The guest session has expired." } },
           { status: 401 },
         );
         response.headers.append("Set-Cookie", clearGuestSessionCookie());

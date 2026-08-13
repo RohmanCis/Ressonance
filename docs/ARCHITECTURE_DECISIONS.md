@@ -37,7 +37,7 @@ Date: 2026-08-11
 **Status:** Locked behavior; attributes proposed  
 **Decision:** Create GuestSession only on Start. Issue an opaque, high-entropy credential in an HttpOnly cookie, separate from the DB primary key.
 
-**Proposed attributes:** `__Host-guest_session`, `HttpOnly`, `Secure` in production, `SameSite=Lax`, `Path=/`, no `Domain`. Expiry remains open.
+**Proposed attributes:** `__Host-guest_session`, `HttpOnly`, `Secure` in production, `SameSite=Lax`, `Path=/`, no `Domain`, `Max-Age=1800` (30-minute session lifetime; `expires_at` on `guest_sessions` is the authoritative check).
 
 **Storage safeguard:** store a SHA-256 digest of the cookie token in `guest_sessions.session_token`; hash incoming cookie values before lookup. This preserves the separate credential/PK rule and limits damage from a database read.
 

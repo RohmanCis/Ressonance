@@ -68,7 +68,7 @@ Admin endpoints require a valid Supabase Auth session. Missing, expired, or inva
 
 The server sets an opaque, high-entropy credential in an HttpOnly cookie only when Start succeeds. The cookie value is never returned as a normal response field. It is separate from `GuestSession.id`.
 
-The cookie is same-origin, `HttpOnly`, `Secure` in production, `SameSite=Lax`, `Path=/`, host-only. Expiry duration remains open. If the server identifies an expired or invalid guest session on any protected guest endpoint, it clears the cookie and returns `401 SESSION_EXPIRED` or `401 SESSION_INVALID`. The client discards only in-memory session/usage state, shows a session-expired message, and requires the guest to press Start again. It must not silently retry a failed upload, create a session on page load, or use localStorage to restore authority. A new Start request creates a new GuestSession and replaces the cookie.
+The cookie is same-origin, `HttpOnly`, `Secure` in production, `SameSite=Lax`, `Path=/`, host-only, `Max-Age=1800` (30 minutes). A GuestSession has a maximum lifetime of 30 minutes from creation, determined by a server-side `expires_at` timestamp. If the server identifies an expired or invalid guest session on any protected guest endpoint, it clears the cookie and returns `401 SESSION_EXPIRED` or `401 SESSION_INVALID`. The client discards only in-memory session/usage state, shows a session-expired message, and requires the guest to press Start again. It must not silently retry a failed upload, create a session on page load, or use localStorage to restore authority. A new Start request creates a new GuestSession and replaces the cookie.
 
 Guest sessions are browser-profile scoped, not person or device identities. Clearing cookies or changing browsers creates a separate session when Start is pressed.
 
@@ -571,13 +571,12 @@ Invalid, corrupt, unsupported, or uninspectable audio is rejected before success
 
 1. Exact rate-limit windows, quotas, and identity keys.
 2. Image/audio file-size limits and supported formats.
-3. Guest-session expiry policy, value, and representation.
-4. `public_id` format.
-5. `storage_key` format.
-6. Signed URL TTL.
-7. Hosting-specific same-origin base URL and local development proxy details.
-8. Monitoring, backups, and media-retention policy.
-9. Schema constraint/index naming cleanup before migrations.
+3. `public_id` format.
+4. `storage_key` format.
+5. Signed URL TTL.
+6. Hosting-specific same-origin base URL and local development proxy details.
+7. Monitoring, backups, and media-retention policy.
+8. Schema constraint/index naming cleanup before migrations.
 
 ## 9. Next step
 

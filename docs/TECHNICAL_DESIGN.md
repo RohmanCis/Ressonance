@@ -87,7 +87,7 @@ Secure:   true in production
 SameSite: Lax
 Path:     /
 Domain:   omitted
-Max-Age:  undecided with session-expiration policy
+Max-Age:  1800 (30 minutes, matching expires_at)
 ```
 
 Use `Secure: false` only for local HTTP development. `SameSite=Lax` fits same-origin navigation and reduces cross-site request exposure. If the approved topology needs cross-site cookies, stop and explicitly redesign cookie/CORS/CSRF handling; do not silently switch to `SameSite=None`.
@@ -98,7 +98,7 @@ For each guest submission, backend reads the cookie, hashes or safely compares t
 
 ### Expiration and invalidation
 
-Expiration is open. Recommended MVP default: application-managed expiry with a server-side `expires_at` column or equivalent, but this would modify the locked schema and requires approval before implementation. Until approved, do not add an expiration field.
+A GuestSession has a maximum lifetime of 30 minutes from creation. The `guest_sessions.expires_at` column (set to `created_at + INTERVAL '30 minutes'` at creation) is the authoritative expiry timestamp. On every protected guest endpoint, the backend checks `expires_at <= NOW()` and rejects expired sessions with `401 SESSION_EXPIRED`, clearing the cookie. An expired session cannot submit photos or voice notes. A new GuestSession (via Start) is required for further submissions; the new session has its own independent quota — no quota is transferred from the expired session. Client-side drafts may remain visible after expiry while the page is alive, but must not be submitted using or resurrecting the expired session. The MVP does not persist expired-session drafts across page reload or navigation. No server-side draft migration, session resurrection, or quota transfer mechanism exists.
 
 Invalidation: clear the cookie and reject the token when expired, revoked, malformed, or absent. Guest sessions have no guest logout requirement; invalidation is primarily expiry or incident response.
 
@@ -245,9 +245,8 @@ Exact codes, status choices, and API shapes belong in the next API Contract. Err
 2. Set exact rate limits.
 3. Set image/audio file-size limits and supported formats.
 4. Confirm server-side `ffprobe`/FFmpeg availability in the hosting runtime.
-5. Decide guest-session expiration representation and policy.
-6. Decide `public_id` format and `storage_key` format.
-7. Approve API contract/error-code details, monitoring, backups, and retention policy.
+5. Decide `public_id` format and `storage_key` format.
+6. Approve API contract/error-code details, monitoring, backups, and retention policy.
 
 ## 16. Exact next implementation step
 

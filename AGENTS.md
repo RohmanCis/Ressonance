@@ -152,4 +152,4 @@ Guest-side API, Admin API, Guest UI, and Admin UI are implemented. The Admin acc
 
 Live Supabase Auth/PostgreSQL/Storage integration verified: live PostgreSQL 13/13 PASS, `PLAYWRIGHT_LIVE=1` 4/4 PASS, with a seeded ACTIVE event. Chromium is installed.
 
-Known implementation limitations: live scanner verification with a physical device, broader browser capability, and mobile-media coverage remain outstanding. Known source-document questions remain deferred: session-expiration representation and media-retention policy. Do not fix canonical documents silently.
+Known implementation limitations: live scanner verification with a physical device, broader browser capability, and mobile-media coverage remain outstanding. Known source-document questions remain deferred: media-retention policy. Do not fix canonical documents silently.

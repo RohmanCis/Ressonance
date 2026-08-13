@@ -117,6 +117,20 @@ describe("database integration (T004-R1)", () => {
     expect(rows).toHaveLength(1);
   });
 
+  it("guest_sessions has expires_at with 30-minute default", async () => {
+    if (!client || !available) return;
+    const { rows } = await client.query(
+      `SELECT column_name, data_type, column_default
+         FROM information_schema.columns
+        WHERE table_name = 'guest_sessions' AND column_name = 'expires_at'`,
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].data_type).toBe("timestamp with time zone");
+    // Postgres normalizes INTERVAL '30 minutes' to a 30-minute interval value.
+    expect(rows[0].column_default).toContain("00:30:00");
+    expect(rows[0].column_default).toContain("interval");
+  });
+
   it("enables RLS on every table (server-only boundary)", async () => {
     if (!client || !available) return;
     const { rows } = await client.query(

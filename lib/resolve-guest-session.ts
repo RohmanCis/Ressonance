@@ -10,8 +10,8 @@ import {
  *
  * Pure and testable: the database lookup is injected. Used by every protected
  * guest endpoint (usage, photo, voice-note) to turn the presented cookie into
- * a session that provably belongs to the target event. No expiry logic — that
- * policy is an open decision.
+ * a session that provably belongs to the target event and has not expired
+ * (checked against `expires_at`).
  */
 
 export interface SessionByTokenRepo {
@@ -23,6 +23,7 @@ export type ResolveResult =
   | { kind: "invalid" }
   | { kind: "not_found" }
   | { kind: "wrong_event" }
+  | { kind: "session_expired" }
   | { kind: "ok"; session: GuestSession };
 
 /**
@@ -40,6 +41,10 @@ export async function resolveGuestSession(
   const session = await repo.findSessionByTokenHash(hashSessionToken(cookieValue));
   if (!session) return { kind: "not_found" };
   if (!sessionBelongsToEvent(session, eventId)) return { kind: "wrong_event" };
+
+  if (new Date(session.expires_at) <= new Date()) {
+    return { kind: "session_expired" };
+  }
 
   return { kind: "ok", session };
 }

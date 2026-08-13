@@ -17,7 +17,7 @@ import {
 
 let events: { id: string; public_id: string; title: string; status: string }[] = [];
 let createdSessions: Record<string, unknown>[] = [];
-let sessions: { id: string; event_id: string; session_token: string; guest_name: string | null }[] = [];
+let sessions: { id: string; event_id: string; session_token: string; guest_name: string | null; expires_at: string }[] = [];
 let photosBySession: Record<string, number> = {};
 let voiceNotesBySession: Record<string, number> = {};
 
@@ -261,6 +261,7 @@ function seedSession(opts: {
     event_id: opts.eventId,
     session_token: hashSessionToken(token),
     guest_name: opts.guestName ?? null,
+    expires_at: "2099-01-01T00:00:00Z",
   });
   photosBySession[sessions[0].id] = opts.photos ?? 0;
   voiceNotesBySession[sessions[0].id] = opts.voiceNotes ?? 0;
@@ -329,6 +330,25 @@ describe("GET /api/events/{public_id}/session", () => {
     const body = await res.json();
     expect(body.error.code).toBe("SESSION_INVALID");
     expect(res.headers.get("set-cookie")).toContain("Max-Age=0");
+  });
+
+  it("returns 401 SESSION_EXPIRED and clears the cookie for an expired session", async () => {
+    const token = generateSessionToken();
+    sessions.push({
+      id: "session-exp",
+      event_id: "event-1",
+      session_token: hashSessionToken(token),
+      guest_name: null,
+      expires_at: new Date(Date.now() - 60000).toISOString(),
+    });
+    photosBySession["session-exp"] = 0;
+    voiceNotesBySession["session-exp"] = 0;
+    const res = await GET(makeGetRequest(token), { params });
+    expect(res.status).toBe(401);
+    const body = await res.json();
+    expect(body.error.code).toBe("SESSION_EXPIRED");
+    const setCookie = res.headers.get("set-cookie");
+    expect(setCookie?.toLowerCase()).toContain("max-age=0");
   });
 
   it("returns 404 NOT_FOUND for an unknown event", async () => {

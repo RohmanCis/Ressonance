@@ -10,8 +10,8 @@ import { resolveGuestSession } from "@/lib/resolve-guest-session";
  * `UsageRepo`, so the endpoint can run against Supabase while tests use an
  * in-memory fake. Covers: opaque event resolution (404), cookie/session
  * resolution (401 SESSION_REQUIRED / SESSION_INVALID), event ownership, and
- * the exact API Contract Guest usage shape with photo/voice counts. No expiry
- * / rate limiting (open).
+ * the exact API Contract Guest usage shape with photo/voice counts. Session
+ * expiry is enforced via `expires_at` (401 SESSION_EXPIRED).
  */
 
 export interface UsageEvent {
@@ -41,6 +41,7 @@ export type GetUsageResult =
   | { kind: "not_found" }
   | { kind: "session_required" }
   | { kind: "session_invalid" }
+  | { kind: "session_expired" }
   | { kind: "ok"; body: UsageBody };
 
 const PHOTO_LIMIT = 5;
@@ -64,9 +65,11 @@ export async function getSessionUsage(
     case "invalid":
     case "not_found":
     case "wrong_event":
-      // No session-expiry policy yet, so invalid/unknown/mismatched all map to
-      // SESSION_INVALID; the caller clears the cookie on these.
+      // Invalid/unknown/mismatched sessions map to SESSION_INVALID; expired
+      // sessions map to session_expired (401 SESSION_EXPIRED).
       return { kind: "session_invalid" };
+    case "session_expired":
+      return { kind: "session_expired" };
     case "ok": {
       const [photoCount, voiceCount] = await Promise.all([
         repo.countPhotos(resolved.session.id),

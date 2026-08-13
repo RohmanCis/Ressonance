@@ -34,6 +34,7 @@ export type PhotoAuthResult =
   | { kind: "event_closed" }
   | { kind: "session_required" }
   | { kind: "session_invalid" }
+  | { kind: "session_expired" }
   | { kind: "ok"; event: { id: string; status: string }; session: GuestSession };
 
 /**
@@ -62,6 +63,8 @@ export async function resolvePhotoAuth(
     case "not_found":
     case "wrong_event":
       return { kind: "session_invalid" };
+    case "session_expired":
+      return { kind: "session_expired" };
     case "ok":
       return { kind: "ok", event, session: resolved.session };
   }

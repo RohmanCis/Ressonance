@@ -49,14 +49,14 @@ describe("isValidSessionToken", () => {
 });
 
 describe("buildGuestSessionCookie", () => {
-  it("sets HttpOnly, SameSite=Lax, Path=/, host-only, no expiry", () => {
+  it("sets HttpOnly, SameSite=Lax, Path=/, Max-Age=1800, no Expires", () => {
     const cookie = buildGuestSessionCookie("token", { secure: false });
     const lower = cookie.toLowerCase();
     expect(cookie.startsWith(`${GUEST_SESSION_COOKIE}=token`)).toBe(true);
     expect(lower).toContain("httponly");
     expect(lower).toContain("samesite=lax");
     expect(lower).toContain("path=/");
-    expect(lower).not.toContain("max-age");
+    expect(lower).toContain("max-age=1800");
     expect(lower).not.toContain("expires=");
     expect(lower).not.toContain("domain=");
   });
@@ -75,6 +75,7 @@ describe("sessionBelongsToEvent", () => {
     event_id: "e1",
     session_token: hashSessionToken("token"),
     guest_name: null,
+    expires_at: "2099-01-01T00:00:00Z",
   };
 
   it("accepts a session for its own event", () => {

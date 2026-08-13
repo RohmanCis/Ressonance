@@ -4,12 +4,15 @@ import { createHash, randomBytes } from "node:crypto";
  * GuestSession identity foundation (T003).
  *
  * Scope: token generation, SHA-256 digest storage/lookup height, HttpOnly
- * cookie construction, and event/session ownership. No `expires_at`, no
- * timeout logic, no cookie `Max-Age`/`Expires` policy — session expiry is an
- * open technical decision (see docs/TECHNICAL_DESIGN.md §5, §15).
+ * cookie construction, and event/session ownership. Session expiry is enforced
+ * server-side via the `expires_at` column (30-min lifetime); the cookie
+ * `Max-Age=1800` matches that lifetime (see docs/TECHNICAL_DESIGN.md §5, §15).
  */
 
 export const GUEST_SESSION_COOKIE = "__Host-guest_session";
+
+/** Server-side GuestSession lifetime must match cookie Max-Age (T026). */
+export const GUEST_SESSION_MAX_AGE_SECONDS = 1800;
 
 /** Raw opaque high-entropy credential, never stored in plaintext. */
 export function generateSessionToken(bytes = 32): string {
@@ -45,8 +48,8 @@ export interface GuestSessionCookieOptions {
  * Build the Set-Cookie value for the guest-session credential.
  *
  * Attributes: `__Host-guest_session`, HttpOnly, SameSite=Lax, Path=/,
- * host-only (no Domain), Secure in production. Deliberately no `Max-Age` and
- * no `Expires` — expiry policy is an open decision.
+ * host-only (no Domain), Secure in production. `Max-Age=1800` matches the
+ * server-side `expires_at` lifetime.
  */
 export function buildGuestSessionCookie(
   token: string,
@@ -58,6 +61,7 @@ export function buildGuestSessionCookie(
     "HttpOnly",
     "SameSite=Lax",
     "Path=/",
+    `Max-Age=${GUEST_SESSION_MAX_AGE_SECONDS}`,
   ];
   if (secure) parts.push("Secure");
   return parts.join("; ");
@@ -67,8 +71,8 @@ export function buildGuestSessionCookie(
  * Build a Set-Cookie value that clears the guest-session credential.
  *
  * Used by protected guest endpoints when a presented session is invalid or
- * no longer valid (API Contract §3). `Max-Age=0` is only the standard cookie
- * deletion mechanism — it is not session-expiry policy (still open).
+ * expired (API Contract §3). `Max-Age=0` is only the standard cookie
+ * deletion mechanism; expiry policy itself is enforced server-side.
  */
 export function clearGuestSessionCookie(
   options: GuestSessionCookieOptions = {},
@@ -91,6 +95,7 @@ export interface GuestSession {
   event_id: string;
   session_token: string;
   guest_name: string | null;
+  expires_at: string;
 }
 
 /**

@@ -20,6 +20,7 @@ Source of Truth: PRD v1.3 + Domain Model + ERD (all locked)
 | closed_at consistency | CHECK constraint: NULL when ACTIVE, NOT NULL when CLOSED/ARCHIVED |
 | Media event_id | Not stored — accessed via GuestSession (no denormalization) |
 | session_token | Separate from PK — credential vs identity separation |
+| Session expiration | `expires_at` column on `guest_sessions`; 30-minute lifetime from creation |
 | original_filename | Dropped — no business value for browser-captured media |
 
 ---
@@ -95,6 +96,7 @@ CREATE TABLE guest_sessions (
     session_token  TEXT        NOT NULL,
     guest_name     TEXT,
     created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at     TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '30 minutes'),
 
     CONSTRAINT uq_guest_sessions_token
         UNIQUE (session_token)
@@ -105,6 +107,10 @@ CREATE TABLE guest_sessions (
 -- session_token. It stores the SHA-256 digest of the HttpOnly cookie
 -- credential (ADR-004 / Technical Design §5); the raw credential stays
 -- separate from the PK and is never stored or exposed.
+
+-- Session expiration: expires_at is set to created_at + 30 minutes at
+-- session creation. The backend rejects all submissions from an expired
+-- session (expires_at <= NOW()) and returns 401 SESSION_EXPIRED.
 
 -- Dashboard queries: event → sessions
 CREATE INDEX idx_guest_sessions_event_id
@@ -236,8 +242,7 @@ ARCHIVE→ status = 'ARCHIVED', closed_at = (tetap timestamp dari CLOSE)
 | `event_id` di `photos` / `voice_notes` | Tidak denormalisasi — akses via `guest_sessions.event_id` |
 | `original_filename` | Tidak ada business value untuk media dari kamera browser |
 | `archived_at` | `ARCHIVED` belum punya behavior aktif di MVP |
-| Session expiration columns | Open technical decision — ditentukan saat technical design |
-| Media retention / `expires_at` | Out of MVP scope |
+| Media retention / media `expires_at` | Out of MVP scope |
 | Soft delete (`deleted_at`) | Tidak ada FR delete di MVP |
 
 ---
@@ -246,7 +251,6 @@ ARCHIVE→ status = 'ARCHIVED', closed_at = (tetap timestamp dari CLOSE)
 
 Item berikut akan mempengaruhi schema tapi belum dapat dikunci sampai technical design selesai:
 
-- **Session expiration** — apakah butuh kolom `expires_at` di `guest_sessions`, atau dikelola di application layer
 - **storage_key format** — konvensi path di object storage (contoh: `events/{event_id}/photos/{uuid}.jpg`) ditentukan saat API design
 - **public_id format** — UUID, nanoid, atau short random string; panjang dan charset ditentukan saat technical design
 

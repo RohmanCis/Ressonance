@@ -210,5 +210,5 @@ When no name was supplied, show `Anonymous Guest` in guest-facing session contex
 - Visual style, theme, typography, spacing, and imagery.
 - QR rendering library or equivalent rendering implementation.
 - Camera and recorder implementation details, supported browser matrix, and permission-denial fallback details.
-- How session expiry is surfaced in timing and wording; expiry policy and representation remain open in canonical documents.
+- How session expiry is surfaced in timing and wording; the expiry policy (30-minute session lifetime) is now resolved in canonical documents.
 - Whether and how to communicate media retention; retention policy remains open.
