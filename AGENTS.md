@@ -119,6 +119,18 @@ Do not create per-task `STATUS.md`, `HANDOFF.md`, `T001.md`, `result-T001.md`, t
 
 Context strategy: load the smallest governing document set defined in §5; reference paths/sections instead of copying content.
 
+Session close protocol — triggered by an explicit session-close instruction (e.g., "I want to close sessions"):
+
+1. Stop new implementation work immediately.
+2. Reconcile `CURRENT.md`, `task.md`, and `result.md` with the actual repository state.
+3. Record completed work, validation results, blockers, deferred decisions, and the next task or idle state.
+4. Verify no stale active-task state remains in any handoff file.
+5. Run `git diff --check` and inspect `git status`.
+6. Explicitly distinguish this session's changes from pre-existing or unrelated uncommitted work.
+7. Never modify canonical documents unless required to reconcile verified repository state.
+8. Never commit or push automatically.
+9. Provide a concise session-close summary and a proposed Git commit message covering the work completed in the session.
+
 ## 8. Conflict and drift handling
 
 - Report any SSOT conflict before implementation. Do not silently choose a resolution.
@@ -138,6 +150,6 @@ Never trust frontend limits, localStorage, client MIME/duration, public storage 
 
 Guest-side API, Admin API, Guest UI, and Admin UI are implemented. The Admin access screen renders a scannable QR code (`qrcode.react`) encoding the event public URL. Local Playwright smoke QA passes: 3 passed / 1 skipped / 0 failed; QR visual/scanner QA passes: 4 passed / 0 failed. Vitest, typecheck, and lint pass; lint has existing warnings only (0 errors, `next-env.d.ts` excluded).
 
-Live Supabase Auth/PostgreSQL/Storage integration remains unverified because no live backend configuration or seeded ACTIVE event is available. `PLAYWRIGHT_LIVE=1` is therefore not runnable. Chromium is installed.
+Live Supabase Auth/PostgreSQL/Storage integration verified: live PostgreSQL 13/13 PASS, `PLAYWRIGHT_LIVE=1` 4/4 PASS, with a seeded ACTIVE event. Chromium is installed.
 
 Known implementation limitations: live scanner verification with a physical device, broader browser capability, and mobile-media coverage remain outstanding. Known source-document questions remain deferred: session-expiration representation and media-retention policy. Do not fix canonical documents silently.

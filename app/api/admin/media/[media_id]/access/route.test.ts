@@ -6,6 +6,7 @@ import {
   createFakeAdminMediaDb,
   type FakeMediaDbState,
 } from "@/test/admin-media-db";
+import { SIGNED_URL_TTL_SECONDS } from "@/lib/admin-media-repo";
 
 /**
  * Route tests for GET /api/admin/media/{media_id}/access (API Contract 5.8).
@@ -131,6 +132,20 @@ describe("GET /api/admin/media/{media_id}/access", () => {
     expect(text).not.toContain("storage_key");
     expect(text).not.toContain("guest_session_id");
     expect(text).not.toContain("session-1");
+  });
+
+  it("issues a short-lived signed URL bounded by SIGNED_URL_TTL_SECONDS", async () => {
+    const before = Date.now();
+    const res = await GET(makeRequest("photo-1"), { params: Promise.resolve({ media_id: "photo-1" }) });
+    const after = Date.now();
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    // The TTL passed to createSignedUrl is embedded in the fake URL.
+    expect(body.url).toContain(`t=${SIGNED_URL_TTL_SECONDS}`);
+    // expires_at must fall within [before, before + TTL] — short-lived, not far-future.
+    const expires = Date.parse(body.expires_at);
+    expect(expires).toBeGreaterThanOrEqual(before + SIGNED_URL_TTL_SECONDS * 1000);
+    expect(expires).toBeLessThanOrEqual(after + SIGNED_URL_TTL_SECONDS * 1000);
   });
 
   it("returns 200 with a signed url for a voice note", async () => {

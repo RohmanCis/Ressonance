@@ -1,9 +1,21 @@
 # Current Execution State
 
-- Phase: T023 D1/D2 voice defect fixes complete. Independent QA approved.
-- Status: PASS. Oracle review APPROVED — no regressions, no edge cases.
-- Current task: T023 complete; no active task.
-- Changes: `components/guest-event-entry.tsx` only (D1: review-error state, D2: voiceSecondsRef).
-- Verification: typecheck PASS, lint 0 errors, vitest 232/232, build PASS, Playwright mobile-media 10/10, smoke 3/1/0. Oracle independent review APPROVED.
-- Worktree: modified — components/guest-event-entry.tsx, playwright.config.ts, e2e/mobile-media-qa.spec.ts, handoff files.
-- Next: commit when scheduled. Remaining QA: live mobile-device verification with real camera/mic.
+- Phase: Session closed. No active task.
+- Status: IDLE. Worktree has uncommitted session changes (see below). Not committed per session-close protocol.
+- Completed this session:
+  - T025: §9 coverage-matrix gap audit and closure. 9/10 COVERED before, 1 PARTIAL (cat 6) closed. 10/10 COVERED after. No app defects found.
+  - AGENTS.md §141 reconciled: stale "live integration unverified" → verified (PostgreSQL 13/13, PLAYWRIGHT_LIVE=1 4/4, seeded ACTIVE event).
+  - AGENTS.md §7: added Session Close Protocol (9 steps).
+  - Handoff files reconciled (T021/T023 stale task.md/result.md cleared).
+- Verification: vitest 233/233 (+1), typecheck PASS, lint 0 errors, build PASS. git diff --check clean (CRLF warnings only).
+- Uncommitted files (all this session, no pre-existing/unrelated work):
+  - `AGENTS.md` — §141 live-integration reconciliation + §7 Session Close Protocol.
+  - `app/api/admin/media/[media_id]/access/route.test.ts` — +1 test (signed-URL TTL upper bound), +1 import.
+  - `.opencode/handoff/{CURRENT,task,result}.md` — handoff reconciliation.
+- Deferred decisions (require explicit approval; §8 forbids silent fix):
+  - Session-expiration representation (touches §3 GuestSession invariant).
+  - Media-retention policy (touches storage/security posture).
+- Outstanding scope (not codeable this session):
+  - Live mobile-device verification with real camera/mic (hardware-gated).
+  - Broader browser-capability coverage (ops-gated, needs additional browser installs).
+- Next: commit session work when scheduled (no commit/push performed).
