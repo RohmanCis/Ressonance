@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
+import ffprobeInstaller from "@ffprobe-installer/ffprobe";
+
 import { loadVoiceNoteFileConfig } from "@/lib/audio-file";
 import { createFfprobeAudioInspector } from "@/lib/audio-inspector";
 import { getServerConfig } from "@/lib/config";
@@ -208,7 +210,7 @@ export async function POST(
         }
 
         const inspector = createFfprobeAudioInspector(
-          process.env.FFPROBE_PATH ?? "ffprobe",
+          process.env.FFPROBE_PATH ?? ffprobeInstaller.path,
         );
         const result = await submitVoiceNote(
           { sessionRepo, txRepo, storage, inspector, config: fileConfig },

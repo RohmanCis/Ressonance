@@ -8,7 +8,10 @@
  *
  * ponytail: in-memory state is not shared across processes. Add a shared
  * (managed or DB-backed) store when the deployment requires multiple
- * application instances.
+ * application instances. On Vercel serverless, function instances scale
+ * horizontally and are recycled dynamically — this limiter is per-instance
+ * only (defense-in-depth, not cross-instance authoritative). Accepted MVP
+ * limitation per ADR-008; do not rely on it for global quota enforcement.
  */
 
 export interface RateLimitConfig {

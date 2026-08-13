@@ -13,6 +13,7 @@
     "test:postgres": "vitest run lib/db/schema.integration.test.ts lib/submit-photo.concurrency.test.ts lib/submit-voice-note.concurrency.test.ts"
   },
   "dependencies": {
+    "@ffprobe-installer/ffprobe": "^2.1.2",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.48.1",
     "class-variance-authority": "^0.7.1",

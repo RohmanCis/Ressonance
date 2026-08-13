@@ -1,7 +1,6 @@
 # Task — (none active)
 
-No active implementation task. Session = Production / Deployment Readiness Audit
-(read-only), now complete. See `CURRENT.md` for reconciled state authority.
+T028 Vercel Runtime Compatibility complete. No active implementation task.
+See CURRENT.md for reconciled state authority.
 
-Last completed: deployment-readiness audit. No code changed, no canonical
-documents modified. Orchestrator writes this file before delegating the next task.
+Orchestrator writes this file before delegating the next task.
