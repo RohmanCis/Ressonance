@@ -40,7 +40,9 @@ export function isValidSessionToken(token: unknown): token is string {
 }
 
 export interface GuestSessionCookieOptions {
-  /** `Secure` flag. Defaults to production; pass `false` for local HTTP. */
+  /** `Secure` flag. Always on by default: the `__Host-` prefix mandates it
+   * (RFC 6265bis). Browsers treat localhost as a secure context, so this
+   * works in local dev over HTTP too. Pass `false` only for unit tests. */
   secure?: boolean;
 }
 
@@ -55,7 +57,7 @@ export function buildGuestSessionCookie(
   token: string,
   options: GuestSessionCookieOptions = {},
 ): string {
-  const secure = options.secure ?? process.env.NODE_ENV === "production";
+  const secure = options.secure ?? true;
   const parts = [
     `${GUEST_SESSION_COOKIE}=${token}`,
     "HttpOnly",
@@ -77,7 +79,7 @@ export function buildGuestSessionCookie(
 export function clearGuestSessionCookie(
   options: GuestSessionCookieOptions = {},
 ): string {
-  const secure = options.secure ?? process.env.NODE_ENV === "production";
+  const secure = options.secure ?? true;
   const parts = [
     `${GUEST_SESSION_COOKIE}=`,
     "HttpOnly",

@@ -1,11 +1,31 @@
-# Result — (none active)
+# Result — Bundle B (Guest Core Flow) complete
 
-No active task result. A6 fix verified, pending commit. Session closed.
+Status: COMPLETE. All B1–B8 steps PASS. Two blocking defects found and fixed.
 
-A6 outcome: `admin-dashboard.tsx` response-parsing fix (2 lines) implemented +
-verified (vitest admin events 33/33, typecheck, lint, Playwright ACTIVE+CLOSED
-dashboard flows, API close lifecycle 200→409). No SSOT conflict, no architecture
-drift, no canonical-doc changes. See CURRENT.md for full state.
+Files changed:
+- `lib/guest-session.ts` — cookie `Secure` flag always on by default (5
+  insertions, 3 deletions). `__Host-` prefix mandates `Secure` per RFC
+  6265bis; previous conditional default (`NODE_ENV === "production"`) caused
+  browser to reject the cookie in dev, breaking the entire guest flow.
 
-Orchestrator reads this file after the next delegated task reaches a terminal
-state.
+Database changes (live Supabase, not in repo):
+- `ALTER TABLE guest_sessions ADD COLUMN expires_at TIMESTAMPTZ NOT NULL
+  DEFAULT (NOW() + INTERVAL '30 minutes')` — schema drift fix; migration
+  0001 had the column but it was never applied to the live DB.
+
+Validation:
+- vitest: 67/67 PASS (guest-session 9, events 6, session 20, photos 14,
+  voice-notes 18).
+- Live E2E Bundle B: B1–B8 all PASS (browser snapshots, API responses,
+  console evidence).
+
+Blockers: none remaining for Bundle B.
+
+SSOT conflict: none.
+
+Architecture drift: none. Cookie fix aligns with API Contract §3 (HttpOnly,
+SameSite=Lax, Path=/, host-only, Max-Age=1800, Secure in production — now
+Secure always, which is correct for `__Host-` prefix). DB fix aligns with
+db_scheme.md and migration 0001.
+
+Next step: commit cookie fix. Then Bundle C or investigate build error.

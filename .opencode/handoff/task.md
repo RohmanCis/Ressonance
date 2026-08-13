@@ -1,6 +1,7 @@
 # Task — (none active)
 
-No active implementation task. Session closed. A6 fix pending commit.
+No active implementation task. Bundle B (Guest Core Flow) complete. Cookie
+fix in `lib/guest-session.ts` pending commit.
 
 See CURRENT.md for reconciled state authority.
 
