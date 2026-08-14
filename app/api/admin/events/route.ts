@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { randomBytes } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 
-import { createAdminEvent } from "@/lib/admin-event-repo";
+import { createAdminEvent, listAdminEvents } from "@/lib/admin-event-repo";
 import { getServerConfig } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
@@ -100,6 +100,35 @@ export async function POST(request: NextRequest) {
       { event: result.event, public_url: publicUrl(result.event.public_id) },
       { status: 201 },
     );
+  } catch {
+    return NextResponse.json(
+      { error: { code: "INTERNAL_ERROR", message: "Internal server error." } },
+      { status: 500 },
+    );
+  }
+}
+
+/**
+ * GET /api/admin/events — List admin events (API Contract 5.10).
+ * Requires a valid admin session; returns the authenticated admin's own events,
+ * newest first (created_at descending). The service-role client bypasses RLS;
+ * ownership is enforced by filtering on the authenticated admin id. No DB
+ * primary key or admin_id is returned.
+ */
+export async function GET() {
+  const supabase = await createClient();
+  const { data: auth, error } = await supabase.auth.getUser();
+  if (error || !auth.user) {
+    return NextResponse.json(
+      { error: { code: "AUTHENTICATION_REQUIRED", message: "A valid admin session is required." } },
+      { status: 401 },
+    );
+  }
+
+  const db = createServiceRoleClient() as unknown as SupabaseClient;
+  try {
+    const events = await listAdminEvents(db, auth.user.id);
+    return NextResponse.json({ events }, { status: 200 });
   } catch {
     return NextResponse.json(
       { error: { code: "INTERNAL_ERROR", message: "Internal server error." } },

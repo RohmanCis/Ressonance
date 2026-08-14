@@ -1,29 +1,44 @@
-# T030-R — Result (Retake in photo review overlay)
+# T031 — Result (Admin Event Index)
 
-## Status: COMPLETE
+## Status: COMPLETE (orchestrator-reconciled)
+
+## Canonical amendments (owner-approved 2026-08-15, applied this task)
+- `docs/API_CONTRACT.md` — new §5.10 `GET /api/admin/events` (owned events, newest-first, `{events:[Event §4]}`, 401/500; no pagination/filter for MVP).
+- `docs/UI_UX.md` — §3 Admin routes: Admin Event Index entry; new §5.5 screen spec (ACTIVE prominent, history accessible, Open, Access/QR on ACTIVE, create action, unauth → sign-in, ACTIVE_EVENT_EXISTS recovery → index).
 
 ## Files changed
-- `lib/pending-photos.ts` — added pure `canRetakePhoto(status: PendingStatus): boolean`; true only for `pending`|`error`.
-- `lib/pending-photos.test.ts` — added "pending-photos retake logic" describe: `canRetakePhoto` truth table (all 5 statuses); budget invariant (remove one pending frees a slot, replacement capture consumes it, net `localBudgetRemaining` unchanged).
-- `components/guest-event-entry.tsx` — added `retakePhoto(index)` handler (revoke `previewUrl`, remove item, close overlay; no auto-upload, no session mutation); wired `canRetake={canRetakePhoto(...)}` + `onRetake` at overlay call site; `ReviewOverlay` gains `canRetake`/`onRetake` props; Retake button rendered between Back and Delete, styled as primary (`min-h-12`, `bg-primary`, `rounded-md`, `font-semibold`, `text-primary-foreground`, same focus-visible ring classes), visible only when `canRetake`. Delete gating (`status !== "confirmed"`) untouched.
-- `e2e/mobile-media-qa.spec.ts` — added tests #13 (retake: dialog closed, strip empty, no Send, "5 photos remaining" restored, zero POST `/photos`) and #14 (confirmed: Back present, Retake and Delete absent).
+API lane (fixer):
+- `lib/admin-event-repo.ts` — `listAdminEvents(db, adminId)`: owned events, `created_at` DESC, throws on error.
+- `app/api/admin/events/route.ts` — GET handler: 401 AUTHENTICATION_REQUIRED / 200 `{events}` / 500 INTERNAL_ERROR; POST untouched.
+- `app/api/admin/events/route.test.ts` — 5 GET tests (401, 200 newest-first + ownership + no admin_id/PK leak, empty, 500).
+- `test/admin-event-db.ts` — fake extended: `selectError` + `eq().order()` chain.
+- `lib/admin-event-repo.test.ts` — 4 repo tests.
 
-## Validation
-- `npx tsc --noEmit` — PASS (no output).
-- `npx vitest run` — 258/258 PASS (256 pre-existing + 2 new).
-- `npm run lint` — 0 new errors; 1 error in `e2e/print-qa.spec.ts:34` (`no-explicit-any`) is PRE-EXISTING (file untouched, not in diff). Warnings pre-existing.
-- `npx playwright test e2e/mobile-media-qa.spec.ts` — 14/14 PASS.
+UI lane (designer):
+- `app/admin/page.tsx` — server cookie-presence gate: no sb auth cookie → redirect `/admin/sign-in`; else render index (API remains authoritative; client redirects on 401).
+- `components/admin/admin-event-index.tsx` — NEW: loading/failure-retry/empty/ready; ACTIVE coral card (Open + Access/QR); past-events list with Open; Create new event; 401 → sign-in.
+- `components/admin/admin-sign-in.tsx` — real component (was shim); post-sign-in → `/admin`.
+- `e2e/admin-index.spec.ts` — NEW: 8 tests (sign-in→index lands, ACTIVE visible, CLOSED visible, Open→dashboard, Access/QR, Create end-to-end, ACTIVE_EVENT_EXISTS recovery→index not sign-in, unauth redirect) + failure-retry/empty-state coverage (16 total incl. variants).
+
+Orchestrator cleanup:
+- `components/admin/admin-ui.tsx` — removed dead `AdminSignIn` export (superseded by `admin-sign-in.tsx`; nothing imported it; lint confirmed 0 new).
+
+## Validation (orchestrator-rerun after all merges)
+- `npx tsc --noEmit` — PASS
+- `npx vitest run` — 266/266 PASS (baseline 258 + 8 new)
+- `npm run lint` — baseline only (1 pre-existing error e2e/print-qa.spec.ts:34 + 7 pre-existing warnings); 0 new
+- `npx playwright test e2e/admin-index.spec.ts e2e/smoke.spec.ts e2e/qr-qa.spec.ts` — 16 passed / 1 skipped / 0 failed
 
 ## SSOT conflict
-None. Behavior matches UI_UX §4.3-5 and UI_DESIGN §11. Prior Point #1 report-only gaps (Send always-shown wording, etc.) remain open, out of T030-R scope.
+None. Implemented per newly amended API_CONTRACT §5.10 + UI_UX §5.5. No guest behavior, auth, or existing dashboard routes changed. Prior open doc-drift items (UI_UX §4.2/§4.3 wording, INVALID_JSON, stale open-decision lists) remain open, out of T031 scope.
 
 ## Architecture drift
-None. No new endpoints, schema, deps, or error codes. Retake reuses existing local-buffer removal; camera viewfinder is already the ready state.
+None. One new locked-contract endpoint (approved); no new deps; service-role + ownership-check pattern preserved.
 
-## Assumptions
-- `retakePhoto` shares the same removal semantics as `deletePhoto` (revoke + remove + close overlay); spec allows, Delete kept separate and unchanged.
-- Retake button labeled by visible text "Retake" (accessible name matches).
-- `expired` items not retakeable (`canRetakePhoto` false) — spec lists only `pending`/`error`.
+## Remaining risks
+- `/admin` gate is cookie-presence hint; expired-cookie session renders index briefly then client redirects on 401 — acceptable, API authoritative.
+- Live visual QA of `/admin` with a real authenticated admin (seeded ACTIVE event) still outstanding (pre-existing deferral).
+- `window.location.href` navigation (sign-in/create) is full reload — consistent with existing admin pages.
 
 ## Next step
-Orchestrator reconcile: DONE — T030-R marked complete after independent re-verification (tsc PASS, vitest 258/258, lint 0 new, Playwright 14/14). CURRENT.md updated. Uncommitted by owner instruction.
+Owner review; then R-bundle release hardening (R1 DB-backed session-create rate limit, R2 error logging, R3 deploy+live QA) per approved prioritization. Uncommitted by owner instruction.

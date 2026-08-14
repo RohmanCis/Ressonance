@@ -350,19 +350,33 @@ The backend verifies admin authentication, resolves the media through GuestSessi
 
 **Errors:** `401 AUTHENTICATION_REQUIRED`, `403 FORBIDDEN`, `404 NOT_FOUND`, `502 MEDIA_ACCESS_FAILED`.
 
-### 5.9 Download individual media
+### 5.10 List admin events
 
 ```text
-GET /api/admin/media/{media_id}/download
+GET /api/admin/events
 ```
 
 **Authentication:** Supabase Auth session required.
 
-**Success:** `302 Found` redirect to a newly generated short-lived signed URL. The API must not return the signed URL as JSON from this endpoint and must not proxy the media in the normal flow. Clients follow the redirect to download the private object.
+**Success:** `200`
 
-The backend repeats the same ownership check as media preview. Download is individual only; bulk ZIP is not defined.
+```json
+{
+  "events": [
+    {
+      "public_id": "opaque-public-id",
+      "title": "Summer Party",
+      "status": "ACTIVE",
+      "created_at": "2026-08-11T12:00:00Z",
+      "closed_at": null
+    }
+  ]
+}
+```
 
-**Errors:** `401 AUTHENTICATION_REQUIRED`, `403 FORBIDDEN`, `404 NOT_FOUND`, `502 MEDIA_ACCESS_FAILED`.
+Returns only events owned by the authenticated admin, newest first (by `created_at` descending). Each item uses the Event shape (§4). No pagination, filtering, or search parameters are defined for MVP; the endpoint returns the admin's full event set. No database primary key is returned.
+
+**Errors:** `401 AUTHENTICATION_REQUIRED`, `500 INTERNAL_ERROR`.
 
 ## 6. Guest endpoints
 

@@ -12,6 +12,7 @@ import { createFakeDb, type FakeEventRow } from "@/test/admin-event-db";
 
 let events: FakeEventRow[] = [];
 let insertError: { message?: string } | null = null;
+let selectError: { message?: string } | null = null;
 let getUser: { ok: true; id: string } | { ok: false } = { ok: false };
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -26,10 +27,10 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 vi.mock("@/lib/supabase/service-role", () => ({
-  createServiceRoleClient: () => createFakeDb({ events, insertError }),
+  createServiceRoleClient: () => createFakeDb({ events, insertError, selectError }),
 }));
 
-import { POST } from "./route";
+import { GET, POST } from "./route";
 
 function makeRequest(body?: unknown): NextRequest {
   return new NextRequest("http://localhost/api/admin/events", {
@@ -49,6 +50,7 @@ beforeEach(() => {
   vi.stubEnv("SUPABASE_STORAGE_BUCKET", "bucket");
   events = [];
   insertError = null;
+  selectError = null;
   getUser = { ok: true, id: "admin-1" };
 });
 
@@ -124,6 +126,80 @@ describe("POST /api/admin/events", () => {
   it("returns 500 INTERNAL_ERROR on an unexpected db error", async () => {
     insertError = { message: "connection reset" };
     const res = await POST(makeRequest({ title: "Summer Party" }));
+    expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body.error.code).toBe("INTERNAL_ERROR");
+  });
+});
+
+describe("GET /api/admin/events", () => {
+  function seed(rows: FakeEventRow[]) {
+    events.push(...rows);
+  }
+
+  it("returns 401 AUTHENTICATION_REQUIRED without a valid session", async () => {
+    getUser = { ok: false };
+    const res = await GET();
+    expect(res.status).toBe(401);
+    const body = await res.json();
+    expect(body.error.code).toBe("AUTHENTICATION_REQUIRED");
+  });
+
+  it("returns 200 with the admin's events, newest first, no admin_id/PK leak", async () => {
+    seed([
+      {
+        public_id: "evt-old",
+        title: "Old Party",
+        status: "CLOSED",
+        created_at: "2026-08-01T10:00:00Z",
+        closed_at: "2026-08-02T10:00:00Z",
+        admin_id: "admin-1",
+      },
+      {
+        public_id: "evt-new",
+        title: "Summer Party",
+        status: "ACTIVE",
+        created_at: "2026-08-10T12:00:00Z",
+        closed_at: null,
+        admin_id: "admin-1",
+      },
+      {
+        public_id: "evt-other",
+        title: "Not Mine",
+        status: "ACTIVE",
+        created_at: "2026-08-11T12:00:00Z",
+        closed_at: null,
+        admin_id: "admin-2",
+      },
+    ]);
+    const res = await GET();
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.events).toHaveLength(2);
+    expect(body.events.map((e: { public_id: string }) => e.public_id)).toEqual(["evt-new", "evt-old"]);
+    expect(body.events[0]).toEqual({
+      public_id: "evt-new",
+      title: "Summer Party",
+      status: "ACTIVE",
+      created_at: "2026-08-10T12:00:00Z",
+      closed_at: null,
+    });
+    const text = JSON.stringify(body);
+    expect(text).not.toContain("admin_id");
+    expect(text).not.toContain("admin-2");
+    expect(text).not.toContain('"id"');
+  });
+
+  it("returns 200 with an empty events array when the admin has no events", async () => {
+    const res = await GET();
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual({ events: [] });
+  });
+
+  it("returns 500 INTERNAL_ERROR when the db query fails", async () => {
+    selectError = { message: "connection reset" };
+    const res = await GET();
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(body.error.code).toBe("INTERNAL_ERROR");

@@ -78,6 +78,17 @@ export async function closeAdminEvent(db: Db, publicId: string): Promise<CloseEv
   return { kind: "ok", event: data as AdminEventRecord };
 }
 
+/** List events owned by an admin, newest first by created_at (API Contract §5.10). */
+export async function listAdminEvents(db: Db, adminId: string): Promise<AdminEventRecord[]> {
+  const { data, error } = await db
+    .from("events")
+    .select("public_id, title, status, created_at, closed_at")
+    .eq("admin_id", adminId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data as AdminEventRecord[]) ?? [];
+}
+
 function isConstraintViolation(error: unknown, constraint: string): boolean {
   if (!error || typeof error !== "object") return false;
   const message = (error as { message?: string }).message ?? "";

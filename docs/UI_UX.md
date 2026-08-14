@@ -31,6 +31,7 @@ Excluded: AI or moderation, transcription, guest accounts, social login, guest p
 ### Admin
 
 - Admin sign-in: credentials, authentication feedback, and signed-in transition.
+- Admin Event Index (`/admin`, authenticated): the admin's own events, with the ACTIVE event visually prominent, CLOSED/history events remaining accessible, an Open action per event, an Access/QR action for the ACTIVE event, and a create-new-event action.
 - Event dashboard: event state, create/close actions, submission timeline, search, preview/playback, and individual download.
 - Event access/QR: public URL and QR representation with copy/print affordances.
 
@@ -167,6 +168,14 @@ Do not present the browser timer as proof of accepted duration. Do not persist o
 **Content:** Public URL; QR representation; copy and print affordances; success or failure feedback for each action.
 
 **States:** loading; ready; copy success; print in progress or unavailable; access not found/forbidden; network failure; retryable unexpected failure. The URL may be displayed for sharing, but signed media URLs must never be persisted or shown here.
+
+### 5.5 Admin Event Index
+
+**Purpose:** Show the authenticated admin's own events and provide the entry point for event management after sign-in.
+
+**Content:** The admin's events with the ACTIVE event visually prominent; CLOSED/history events remain accessible. An Open action per event leading to the event dashboard. An Access/QR action for the ACTIVE event. A create-new-event action. Unauthenticated access redirects to sign-in.
+
+**States:** loading; ready with events (ACTIVE prominent, history accessible); ready with no events (empty state pointing to creation); unauthenticated redirect to sign-in; network/unexpected failure with deliberate retry. `ACTIVE_EVENT_EXISTS` recovery returns here instead of forcing another sign-in.
 
 ## 6. Error-state presentation
 

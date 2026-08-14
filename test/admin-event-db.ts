@@ -17,6 +17,7 @@ export interface FakeDbState {
   events: FakeEventRow[];
   insertError?: { message?: string } | null;
   updateError?: { message?: string } | null;
+  selectError?: { message?: string } | null;
 }
 
 function omitAdmin(row: FakeEventRow): Omit<FakeEventRow, "admin_id"> {
@@ -55,6 +56,19 @@ export function createFakeDb(state: FakeDbState) {
           return {
             eq(col: string, val: string) {
               return {
+                order(orderCol: string, opts?: { ascending?: boolean }) {
+                  if (state.selectError) return { data: null, error: state.selectError };
+                  const rows = state.events
+                    .filter((e) => e[col as keyof FakeEventRow] === val)
+                    .map(omitAdmin)
+                    .sort((a, b) => {
+                      const dir = opts?.ascending === false ? -1 : 1;
+                      const av = a[orderCol as keyof Omit<FakeEventRow, "admin_id">] ?? "";
+                      const bv = b[orderCol as keyof Omit<FakeEventRow, "admin_id">] ?? "";
+                      return av < bv ? -dir : av > bv ? dir : 0;
+                    });
+                  return { data: rows, error: null };
+                },
                 maybeSingle: async () => {
                   const hit = state.events.find((e) => e[col as keyof FakeEventRow] === val);
                   return hit ? { data: hit, error: null } : { data: null, error: null };

@@ -1,45 +1,36 @@
-# T030-R — Implement Retake in photo review overlay
+# T031 — Task: Admin Event Index UI (Phase 2)
 
-Approved gap: UI_UX §4.3-5 + UI_DESIGN §11 document retake; code has Back+Delete only.
+Read `.opencode/handoff/result.md` (API lane, complete) + `docs/UI_UX.md` §5.5 (new, owner-approved) + `docs/UI_DESIGN.md` (admin shell §10, tokens, spacing, motion) before work.
 
-## Behavior spec
-1. `ReviewOverlay` gains a "Retake" button, shown only when the photo is unsent
-   (status `pending` or `error`). Hidden for `uploading` and `confirmed`.
-2. Retake action: revoke the item's `previewUrl`, remove it from `pendingPhotos`,
-   close the overlay. The camera-first viewfinder is already the ready state —
-   no forced capture state, no auto-upload, no session mutation.
-3. Budget invariant: removing a `pending` item frees one local slot; the
-   replacement capture consumes one. `localBudgetRemaining` must show no net
-   double-decrease (automatic via in-flight count; add a unit test proving it).
-4. Delete behavior unchanged (gating `status !== "confirmed"` remains).
-5. Button order in overlay: Back | Retake | Delete. Retake styled like the
-   existing primary action (`bg-primary`, `min-h-12`, existing focus ring classes).
-   Retake aria/label: "Retake".
+## Goal
+`/admin` = authenticated Admin Event Index. API exists: `GET /api/admin/events` → `{ events: [ {public_id,title,status,created_at,closed_at} ] }`, newest-first, owned only. 401 AUTHENTICATION_REQUIRED when unauthenticated.
 
-## Files
-- `components/guest-event-entry.tsx` — add `onRetake`/`canRetake` to
-  ReviewOverlay (lines ~822-875), add `retakePhoto(index)` handler near
-  `deletePhoto` (~240), wire at overlay call site (~558-565).
-- `lib/pending-photos.ts` — add pure `canRetakePhoto(status: PendingStatus): boolean`
-  (true for `pending`|`error`).
-- `lib/pending-photos.test.ts` — unit tests: `canRetakePhoto` truth table;
-  budget invariant (remove pending + add pending → `localBudgetRemaining` unchanged).
-- `e2e/mobile-media-qa.spec.ts` — two tests, follow existing mock helpers:
-  a) picker file → Photo 1 → open review → Retake → dialog closed, strip empty,
-     no Send button, counter back to full, zero POST /photos requests.
-  b) upload 1 photo (mock 201) → confirmed → open review → Retake button absent.
+## Required behavior (UI_UX §5.5)
+- Unauthenticated `/admin` → redirect `/admin/sign-in`.
+- Authenticated: list admin's events; ACTIVE visually prominent; CLOSED/history accessible.
+- Per event: Open action → `/admin/events/{public_id}` (existing dashboard, unchanged).
+- ACTIVE event: Access/QR action → `/admin/events/{public_id}/access` (existing page, unchanged).
+- Create new event action → `/admin/events/new` (existing page, unchanged).
+- Empty state: no events → point to creation.
+- States: loading; ready; empty; unauth redirect; network/unexpected failure with deliberate retry.
+- After successful sign-in → land on `/admin` (update existing sign-in transition if it points elsewhere).
+- `ACTIVE_EVENT_EXISTS` recovery must resolve to the index (no forced re-sign-in). Note: `components/admin/admin-create-event.tsx` already links "Find existing event" → `/admin`; once `/admin` is the real index this resolves naturally — verify, don't hack.
 
-## Validation (run all, report output)
-- `npx tsc --noEmit`
-- `npx vitest run`
-- `npm run lint` (0 new errors; pre-existing warnings OK)
-- `npx playwright test e2e/mobile-media-qa.spec.ts` (14/14 expected)
+## Implementation notes
+- `app/admin/page.tsx` currently `redirect("/admin/sign-in")`. Replace: server-side auth check (follow existing admin page auth pattern — inspect `app/admin/events/new/page.tsx` or `components/admin/admin-ui.tsx` AuthGate usage), then render new client component (e.g. `components/admin/admin-event-index.tsx`) that fetches `GET /api/admin/events` and renders.
+- Reuse existing design system primitives from `components/admin/admin-ui.tsx` (Shell, Status, Button) + shadcn/ui; follow UI_DESIGN tokens: admin heading 24/32 650, controls 44px, visible labels, tabular figures for timestamps, max-width 90rem, coral primary for ACTIVE prominence, quiet memory-table direction.
+- Accessibility: keyboard reachable actions, focus-visible rings consistent with existing admin pages, status announced, semantic list/headings.
+- Responsive: desktop-friendly, usable on small screens (per UI_UX §2).
+- Copy: grounded, normal wording (existing admin pages' tone: "Start a fresh page in the archive." etc.). Keep consistent.
 
-## Authority
-- docs/UI_UX.md §4.2, §4.3; docs/UI_DESIGN.md §11; AGENTS.md §3, §9
+## Files allowed
+`app/admin/page.tsx`, new `components/admin/admin-event-index.tsx`, `components/admin/admin-sign-in.tsx` (only if post-sign-in target needs updating), `components/admin/admin-create-event.tsx` (only if recovery link needs fixing), new e2e spec(s). Nothing else; no API/canonical/guest changes.
 
-## Constraints
-No new endpoints, schema, deps, error codes. No unrelated UX changes. No
-canonical doc edits. Do not commit/push. Write `.opencode/handoff/result.md`
-at completion (status, files, validation, SSOT conflict, drift, next step).
-If a real contract conflict appears, STOP and report it in result.md.
+## e2e tests (required)
+Inspect `e2e/` for existing admin auth pattern (how specs sign in / seed events; mirror it — see smoke + qr-qa specs). Add spec covering: sign-in → lands on index; ACTIVE event visible + prominent; CLOSED event visible; Open navigates to dashboard; Access/QR navigates for ACTIVE; Create navigates + creation succeeds end-to-end if existing specs allow; ACTIVE_EVENT_EXISTS recovery link → index, NOT sign-in; unauthenticated /admin → sign-in.
+
+## Validation (run, report)
+`npx tsc --noEmit`; `npx vitest run` (266 baseline, all green); `npm run lint` (0 new — baseline 1 pre-existing error e2e/print-qa.spec.ts:34 + 7 warnings); `npx playwright test <your spec>` (+ confirm existing smoke/qr-qa still pass: `npx playwright test e2e/smoke.spec.ts e2e/qr-qa.spec.ts` — adjust paths to actual files found).
+
+## On finish
+Rewrite `.opencode/handoff/result.md`: status, files changed, validation, SSOT conflict check, next step. Report assumptions.
