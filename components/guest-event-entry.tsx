@@ -3,6 +3,7 @@
 import { ChangeEvent, FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useCamera } from "@/hooks/use-camera";
 import {
+  canRetakePhoto,
   isEventClosedError,
   isPhotoLimitError,
   isRateLimited,
@@ -238,6 +239,17 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
 
   // --- Delete pending photo ---
   function deletePhoto(index: number) {
+    setPendingPhotos((prev) => {
+      const item = prev[index];
+      if (item?.previewUrl) URL.revokeObjectURL(item.previewUrl);
+      return prev.filter((_, i) => i !== index);
+    });
+    setReviewIndex(null);
+  }
+
+  // --- Retake pending photo (UI_UX §4.3-5): remove item, camera viewfinder
+  // is already the ready state. No auto-upload, no session mutation.
+  function retakePhoto(index: number) {
     setPendingPhotos((prev) => {
       const item = prev[index];
       if (item?.previewUrl) URL.revokeObjectURL(item.previewUrl);
@@ -558,8 +570,10 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
         {reviewIndex !== null && reviewIndex < pendingPhotos.length && (
           <ReviewOverlay
             photo={pendingPhotos[reviewIndex]}
+            canRetake={canRetakePhoto(pendingPhotos[reviewIndex].status)}
             canDelete={pendingPhotos[reviewIndex].status !== "confirmed"}
             onClose={() => setReviewIndex(null)}
+            onRetake={() => retakePhoto(reviewIndex)}
             onDelete={() => deletePhoto(reviewIndex)}
           />
         )}
@@ -821,13 +835,17 @@ function PendingStatusBadge({ status }: { status: PendingPhoto["status"] }) {
 
 function ReviewOverlay({
   photo,
+  canRetake,
   canDelete,
   onClose,
+  onRetake,
   onDelete,
 }: {
   photo: PendingPhoto;
+  canRetake: boolean;
   canDelete: boolean;
   onClose: () => void;
+  onRetake: () => void;
   onDelete: () => void;
 }) {
   return (
@@ -859,6 +877,15 @@ function ReviewOverlay({
           >
             Back
           </button>
+          {canRetake && (
+            <button
+              type="button"
+              onClick={onRetake}
+              className="min-h-12 flex-1 rounded-md bg-primary px-4 font-semibold text-primary-foreground focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            >
+              Retake
+            </button>
+          )}
           {canDelete && (
             <button
               type="button"

@@ -10,6 +10,7 @@ import {
   isEventClosedError,
   isPhotoLimitError,
   isRateLimited,
+  canRetakePhoto,
   photoErrorMessage,
   type PendingPhoto,
 } from "@/lib/pending-photos";
@@ -38,6 +39,27 @@ describe("pending-photos quota logic", () => {
 
   it("respects PHOTO_LIMIT constant", () => {
     expect(PHOTO_LIMIT).toBe(5);
+  });
+});
+
+describe("pending-photos retake logic", () => {
+  it("canRetakePhoto is true only for pending and error", () => {
+    const statuses: PendingPhoto["status"][] = ["pending", "uploading", "confirmed", "error", "expired"];
+    const expected = { pending: true, uploading: false, confirmed: false, error: true, expired: false };
+    for (const status of statuses) {
+      expect(canRetakePhoto(status)).toBe(expected[status]);
+    }
+  });
+
+  it("retake budget invariant: remove one pending + add one pending leaves localBudgetRemaining unchanged", () => {
+    const start = localBudgetRemaining(0, [makePhoto("pending"), makePhoto("pending")]);
+    expect(start).toBe(3);
+    // Remove the item being retaken → one slot freed.
+    const afterRemove = localBudgetRemaining(0, [makePhoto("pending")]);
+    expect(afterRemove).toBe(start + 1);
+    // Replacement capture consumes it again → no net change.
+    const afterRecapture = localBudgetRemaining(0, [makePhoto("pending"), makePhoto("pending")]);
+    expect(afterRecapture).toBe(start);
   });
 });
 

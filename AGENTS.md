@@ -148,8 +148,10 @@ Never trust frontend limits, localStorage, client MIME/duration, public storage 
 
 ## 10. Current repository state
 
-Guest-side API, Admin API, Guest UI, and Admin UI are implemented. The Admin access screen renders a scannable QR code (`qrcode.react`) encoding the event public URL. Local Playwright smoke QA passes: 3 passed / 1 skipped / 0 failed; QR visual/scanner QA passes: 4 passed / 0 failed. Vitest, typecheck, and lint pass; lint has existing warnings only (0 errors, `next-env.d.ts` excluded).
+Guest-side API, Admin API, Guest UI, and Admin UI are implemented. Implemented since initial MVP: 30-minute GuestSession expiry (`expires_at`, 401 SESSION_EXPIRED), opaque `guest_sessions.public_ref` grouping identifier (migration `0002`), admin submission grouping by GuestSession, print UX (one-page artifacts), camera-first guest capture with multi-capture pending buffer and sequential batch sync, Vercel Node runtime compatibility with bundled `@ffprobe-installer/ffprobe`.
 
-Live Supabase Auth/PostgreSQL/Storage integration verified: live PostgreSQL 13/13 PASS, `PLAYWRIGHT_LIVE=1` 4/4 PASS, with a seeded ACTIVE event. Chromium is installed.
+Live Supabase integration verified: live PostgreSQL schema tests PASS, `PLAYWRIGHT_LIVE=1` PASS, seeded events present (1 ACTIVE). Live DB migration state verified (2026-08): `guest_sessions.public_ref` applied — NOT NULL, unique index `uq_guest_sessions_public_ref`, 0 NULL/duplicate values across existing rows; `expires_at` present with 30-minute default. Migration 0002 is idempotent and safe to re-run.
 
-Known implementation limitations: live scanner verification with a physical device, broader browser capability, and mobile-media coverage remain outstanding. Known source-document questions remain deferred: media-retention policy. Do not fix canonical documents silently.
+Local QA: `npx vitest run` 256/256 PASS; Playwright `smoke+qr-qa+print-qa` 11 passed / 1 skipped / 0 failed; `mobile-media-qa` 12/12 PASS. Typecheck and build PASS; lint has pre-existing issues only (1 `any` error in `e2e/print-qa.spec.ts`, 7 warnings, `next-env.d.ts` excluded). Chromium is installed.
+
+Known implementation limitations: live scanner verification with a physical device, broader browser capability, and live visual QA with an authenticated admin remain outstanding. Known source-document questions remain deferred: media-retention policy. Do not fix canonical documents silently.

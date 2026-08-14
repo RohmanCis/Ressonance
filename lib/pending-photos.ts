@@ -64,6 +64,14 @@ export function isSyncing(pending: PendingPhoto[]): boolean {
 }
 
 /**
+ * Whether an item can be retaken (replaced by a new capture).
+ * Only unsent items — `pending` or `error` — can be retaken (UI_UX §4.3-5).
+ */
+export function canRetakePhoto(status: PendingStatus): boolean {
+  return status === "pending" || status === "error";
+}
+
+/**
  * Determine if the 401 error code means the session is expired/invalid.
  * Used to decide whether to abort sync and transition to expiry state.
  */

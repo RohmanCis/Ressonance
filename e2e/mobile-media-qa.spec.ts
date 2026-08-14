@@ -409,4 +409,74 @@ test.describe("Mobile-media QA", () => {
     // Pending strip should be empty — no Send button.
     await expect(page.getByRole("button", { name: /Send/ })).toHaveCount(0);
   });
+
+  // 13. PHOTO RETAKE: retake removes unsent photo, restores budget, no upload
+  test("photo: retake removes unsent photo, restores budget, no upload", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    mockStatefulSession(page);
+    let photoPosts = 0;
+    page.unroute(`**/api/events/${EVENT_ID}/photos`);
+    page.route(`**/api/events/${EVENT_ID}/photos`, async (route) => {
+      photoPosts++;
+      await route.fulfill({
+        status: 201, contentType: "application/json",
+        body: JSON.stringify({ submission: { id: "p1", type: "PHOTO" }, usage: { guest_name: "QA Tester", photos_submitted: 1, photos_remaining: 4, voice_note_submitted: false, voice_note_available: true } }),
+      });
+    });
+
+    await startSession(page);
+    await expect(page.getByText("5 photos remaining")).toBeVisible();
+
+    // Capture a photo.
+    const fileInput = page.locator('input[type="file"][accept="image/*"]');
+    await fileInput.setInputFiles({ name: "photo1.jpg", mimeType: "image/jpeg", buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]) });
+    await expect(page.getByRole("button", { name: /Photo 1/ })).toBeVisible({ timeout: 3000 });
+    await expect(page.getByText("4 photos remaining")).toBeVisible();
+
+    // Open review and Retake.
+    await page.getByRole("button", { name: /Photo 1/ }).click();
+    const dialog = page.getByRole("dialog", { name: "Photo review" });
+    await expect(dialog).toBeVisible({ timeout: 3000 });
+    await dialog.getByRole("button", { name: "Retake" }).click();
+
+    // Dialog closed, strip empty, no Send, budget restored to full.
+    await expect(dialog).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /Photo 1/ })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /Send/ })).toHaveCount(0);
+    await expect(page.getByText("5 photos remaining")).toBeVisible();
+
+    // No upload happened.
+    expect(photoPosts).toBe(0);
+  });
+
+  // 14. PHOTO REVIEW: confirmed photo has no Retake or Delete, Back only
+  test("photo: confirmed review has Back only, no Retake or Delete", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    const session = mockStatefulSession(page);
+    page.unroute(`**/api/events/${EVENT_ID}/photos`);
+    page.route(`**/api/events/${EVENT_ID}/photos`, async (route) => {
+      session.addPhoto();
+      await route.fulfill({
+        status: 201, contentType: "application/json",
+        body: JSON.stringify({ submission: { id: "p1", type: "PHOTO" }, usage: { guest_name: "QA Tester", photos_submitted: session.getPhotos(), photos_remaining: 5 - session.getPhotos(), voice_note_submitted: session.getVoice(), voice_note_available: !session.getVoice() } }),
+      });
+    });
+
+    await startSession(page);
+
+    // Capture + send → confirmed.
+    const fileInput = page.locator('input[type="file"][accept="image/*"]');
+    await fileInput.setInputFiles({ name: "photo1.jpg", mimeType: "image/jpeg", buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]) });
+    await expect(page.getByRole("button", { name: /Photo 1/ })).toBeVisible({ timeout: 3000 });
+    await page.getByRole("button", { name: /Send 1 photo/ }).click();
+    await expect(page.getByText("1 photo saved.")).toBeVisible({ timeout: 5000 });
+
+    // Open review: Back present; Retake and Delete absent for confirmed.
+    await page.getByRole("button", { name: /Photo 1/ }).click();
+    const dialog = page.getByRole("dialog", { name: "Photo review" });
+    await expect(dialog).toBeVisible({ timeout: 3000 });
+    await expect(dialog.getByRole("button", { name: "Back" })).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Retake" })).toHaveCount(0);
+    await expect(dialog.getByRole("button", { name: "Delete" })).toHaveCount(0);
+  });
 });
