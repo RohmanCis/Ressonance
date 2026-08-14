@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 
-// T022 Mobile-Media QA — route-intercepted (no live backend).
+// T030 Mobile-Media QA — camera-first capture flow (route-intercepted).
 // Device: Chromium 130+ on Windows, emulating mobile viewport (375x812).
 // Uses --use-fake-device-for-media-stream + --use-fake-ui-for-media-stream
 // to simulate camera/mic without real hardware.
@@ -61,7 +61,8 @@ async function startSession(page: Page) {
   await expect(page.getByRole("heading", { name: "QA Media Event" })).toBeVisible();
   await page.getByLabel(/Your name/).fill("QA Tester");
   await page.getByRole("button", { name: "Start" }).click();
-  await expect(page.getByText("Photos remaining:")).toBeVisible({ timeout: 5000 });
+  // Post-Start shows capture screen with remaining counter.
+  await expect(page.getByRole("heading", { name: "Take photos" })).toBeVisible({ timeout: 5000 });
 }
 
 async function recordAndStop(page: Page, durationMs = 1500) {
@@ -79,8 +80,8 @@ test.describe("Mobile-media QA", () => {
     mockEventApi(page);
   });
 
-  // 1. PHOTO FLOW
-  test("photo: file selection, review, replace, upload success, usage update", async ({ page }) => {
+  // 1. PHOTO FLOW: file selection, pending strip, sync, usage update
+  test("photo: file selection, pending strip, sync success, usage update", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     const session = mockStatefulSession(page);
     page.unroute(`**/api/events/${EVENT_ID}/photos`);
@@ -93,28 +94,21 @@ test.describe("Mobile-media QA", () => {
     });
 
     await startSession(page);
-    await expect(page.getByRole("heading", { name: "Add a photo" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Take photos" })).toBeVisible();
 
-    // Choose file (nth(1) = "Choose a file").
-    const fileInput = page.locator('input[type="file"][accept="image/*"]').nth(1);
+    // Choose file via fallback picker.
+    const fileInput = page.locator('input[type="file"][accept="image/*"]');
     await fileInput.setInputFiles({ name: "test-photo.jpg", mimeType: "image/jpeg", buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46]) });
 
-    // Review state.
-    await expect(page.getByText("Review your photo before saving.")).toBeVisible();
-    await expect(page.getByAltText("Selected photo preview")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Save photo" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Remove" })).toBeVisible();
+    // Pending strip shows the captured photo.
+    await expect(page.getByRole("button", { name: /Photo 1/ })).toBeVisible({ timeout: 3000 });
 
-    // Replace: remove → re-select.
-    await page.getByRole("button", { name: "Remove" }).click();
-    await expect(page.getByText("Choose a photo.")).toBeVisible();
-    await fileInput.setInputFiles({ name: "test-photo-2.jpg", mimeType: "image/jpeg", buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]) });
-    await expect(page.getByAltText("Selected photo preview")).toBeVisible();
+    // Send (sync) button appears.
+    await expect(page.getByRole("button", { name: /Send 1 photo/ })).toBeVisible();
+    await page.getByRole("button", { name: /Send 1 photo/ }).click();
 
-    // Submit.
-    await page.getByRole("button", { name: "Save photo" }).click();
-    await expect(page.getByText("Photo saved.")).toBeVisible({ timeout: 5000 });
-    // Usage updated from server response.
+    // Success: usage updated from server response.
+    await expect(page.getByText("1 photo saved.")).toBeVisible({ timeout: 5000 });
     await expect(page.getByText("Photos remaining:")).toContainText("4/5", { timeout: 5000 });
   });
 
@@ -125,16 +119,18 @@ test.describe("Mobile-media QA", () => {
     mockPhotoUpload(page, 422, { error: { code: "UNSUPPORTED_MEDIA", message: "Unsupported image format." } });
 
     await startSession(page);
-    const fileInput = page.locator('input[type="file"][accept="image/*"]').nth(1);
+    const fileInput = page.locator('input[type="file"][accept="image/*"]');
     await fileInput.setInputFiles({ name: "bad.txt", mimeType: "text/plain", buffer: Buffer.from("not an image") });
-    await page.getByRole("button", { name: "Save photo" }).click();
 
-    await expect(page.getByText("This image format is not supported.")).toBeVisible({ timeout: 5000 });
-    await expect(page.getByAltText("Selected photo preview")).toBeVisible();
+    await expect(page.getByRole("button", { name: /Photo 1/ })).toBeVisible({ timeout: 3000 });
+    await page.getByRole("button", { name: /Send 1 photo/ }).click();
+
+    // Error shows in sync summary or review.
+    await expect(page.getByText(/could not be saved|not supported/i)).toBeVisible({ timeout: 5000 });
   });
 
   // 3. PHOTO LIMIT
-  test("photo: limit reached disables photo action", async ({ page }) => {
+  test("photo: limit reached disables capture and shows message", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     mockStatefulSession(page, { photos: 5 });
     await startSession(page);
@@ -315,11 +311,11 @@ test.describe("Mobile-media QA", () => {
     await expect(page.getByText("Photos remaining:")).toContainText("5/5");
     await expect(page.getByText("Voice note:")).toContainText("Available");
 
-    // Photo.
-    const fileInput = page.locator('input[type="file"][accept="image/*"]').nth(1);
+    // Photo via file picker.
+    const fileInput = page.locator('input[type="file"][accept="image/*"]');
     await fileInput.setInputFiles({ name: "test.jpg", mimeType: "image/jpeg", buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0]) });
-    await page.getByRole("button", { name: "Save photo" }).click();
-    await expect(page.getByText("Photo saved.")).toBeVisible({ timeout: 5000 });
+    await page.getByRole("button", { name: /Send 1 photo/ }).click();
+    await expect(page.getByText("1 photo saved.")).toBeVisible({ timeout: 5000 });
     await expect(page.getByText("Photos remaining:")).toContainText("4/5", { timeout: 5000 });
 
     // Voice.
@@ -358,5 +354,59 @@ test.describe("Mobile-media QA", () => {
 
     // "Keep recording for at least 5 seconds" guidance should NOT show.
     await expect(page.getByText("Keep recording for at least 5 seconds")).toHaveCount(0);
+  });
+
+  // 11. PHOTO: multiple captures before sync (batch)
+  test("photo: multiple captures then batch sync", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    const session = mockStatefulSession(page);
+    let uploadCount = 0;
+    page.unroute(`**/api/events/${EVENT_ID}/photos`);
+    page.route(`**/api/events/${EVENT_ID}/photos`, async (route) => {
+      uploadCount++;
+      session.addPhoto();
+      await route.fulfill({
+        status: 201, contentType: "application/json",
+        body: JSON.stringify({ submission: { id: `p${uploadCount}`, type: "PHOTO" }, usage: { guest_name: "QA Tester", photos_submitted: session.getPhotos(), photos_remaining: 5 - session.getPhotos(), voice_note_submitted: session.getVoice(), voice_note_available: !session.getVoice() } }),
+      });
+    });
+
+    await startSession(page);
+
+    // Capture 2 photos via file picker.
+    const fileInput = page.locator('input[type="file"][accept="image/*"]');
+    await fileInput.setInputFiles({ name: "photo1.jpg", mimeType: "image/jpeg", buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]) });
+    await expect(page.getByRole("button", { name: /Photo 1/ })).toBeVisible({ timeout: 3000 });
+    await fileInput.setInputFiles({ name: "photo2.jpg", mimeType: "image/jpeg", buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]) });
+    await expect(page.getByRole("button", { name: /Photo 2/ })).toBeVisible({ timeout: 3000 });
+
+    // Send both.
+    await page.getByRole("button", { name: /Send 2 photos/ }).click();
+
+    // Both saved.
+    await expect(page.getByText("2 photos saved.")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("Photos remaining:")).toContainText("3/5", { timeout: 5000 });
+  });
+
+  // 12. PHOTO: delete pending photo before sync
+  test("photo: delete pending photo frees budget", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    mockStatefulSession(page);
+    mockPhotoUpload(page, 201, { submission: { id: "p1", type: "PHOTO" }, usage: { guest_name: "QA Tester", photos_submitted: 1, photos_remaining: 4, voice_note_submitted: false, voice_note_available: true } });
+
+    await startSession(page);
+
+    // Capture a photo.
+    const fileInput = page.locator('input[type="file"][accept="image/*"]');
+    await fileInput.setInputFiles({ name: "photo1.jpg", mimeType: "image/jpeg", buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]) });
+    await expect(page.getByRole("button", { name: /Photo 1/ })).toBeVisible({ timeout: 3000 });
+
+    // Open review overlay and delete.
+    await page.getByRole("button", { name: /Photo 1/ }).click();
+    await expect(page.getByRole("dialog", { name: "Photo review" })).toBeVisible({ timeout: 3000 });
+    await page.getByRole("button", { name: "Delete" }).click();
+
+    // Pending strip should be empty — no Send button.
+    await expect(page.getByRole("button", { name: /Send/ })).toHaveCount(0);
   });
 });

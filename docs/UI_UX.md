@@ -58,39 +58,49 @@ No additional guest or admin screen, route, endpoint, or workflow is defined.
 - Network failure/offline: explain that Start did not complete; keep entered name; allow a deliberate retry when connected.
 - Unexpected failure: explain that the session could not start; allow safe retry.
 
-### 4.2 Post-Start home
+### 4.2 Post-Start capture screen
 
-**Purpose:** Offer the two submission actions and show authoritative usage returned by the server.
+**Purpose:** Make camera capture the primary guest experience after Start, while offering voice-note submission as a separate secondary action.
 
-**Content:** Event title; guest name or `Anonymous Guest`; photo action; voice-note action; usage such as `Photos remaining: 3/5` and `Voice note: Available`; status and recovery messages.
+**Content:** Event title; guest name or `Anonymous Guest`; camera viewfinder with shutter; a remaining-photo indicator that reflects a local capture budget; a pending photo strip of captured-but-unsent and server-confirmed items; a Send action to synchronize pending photos; a voice-note action that is separate from the photo capture queue; status and recovery messages.
 
-**Actions:** Choose photo or voice note. Continue submitting until limits or event status prevent it.
+**Capture budget indicator:** The remaining-photo indicator is a UX hint computed as `5 − (server-confirmed accepted count) − (local pending capture count)`. It may show zero before the server confirms anything. It is never authoritative for the 5-photo limit; backend limit enforcement remains authoritative (§4.3, §7).
+
+**Actions:** Capture photos into a local pending buffer; synchronize pending photos via Send; enter the voice-note flow; review, delete, or retake pending captures before synchronization. Continue until limits or event status prevent it.
 
 **States:**
 
 - Loading: retrieve or confirm session usage; announce status.
-- Ready: show available actions and usage.
+- Ready (camera available): show viewfinder, shutter, remaining indicator, pending strip, Send, and voice-note action.
+- Ready (camera unsupported or denied): show file-selection fallback; pending strip, remaining indicator, Send, and voice-note action remain available.
 - Empty: usage of zero submissions is a valid ready state, not an error.
-- Limit reached: show the server-confirmed limit; disable the matching action as a hint; explain that the limit applies to this guest session.
-- Closed after Start: retain view access and usage where available; disable all submission actions; explain that the event is closed.
-- Session expired/invalid: discard in-memory session and usage state; show an expiry/session-invalid message; return to the pre-session state and require Start again. Never silently retry or restore authority from localStorage.
-- Offline/network failure: preserve only unsent in-memory form/recording state where safe; explain that no submission was confirmed; provide deliberate retry where safe.
+- Limit reached: show the server-confirmed limit; disable the shutter as a hint; explain that the limit applies to this guest session. Voice note remains available if its limit is not reached.
+- Closed after Start: retain view access and usage where available; disable all submission actions; explain that the event is closed. Pending captures remain visible but cannot be submitted.
+- Session expired/invalid: discard in-memory session authority and usage state. Pending captures remain visible and are marked as not saved. Show an expiry/session-invalid message and require Start again. The expired session is never reused, and no quota is transferred between sessions. If the guest presses Start again, a new independent session and quota are created; any unsent captures from the previous session may be offered for explicit carry-over into the new session, where they count against the new session's budget. Carry-over requires explicit user action — it is never automatic. If the guest declines carry-over or the page is reloaded, pending captures are discarded. Never silently retry or restore authority from localStorage.
+- Offline/network failure: preserve unsent in-memory captures where safe; explain that no submission was confirmed; provide deliberate retry where safe.
 
 ### 4.3 Photo flow
 
-**Purpose:** Capture or select one photo, submit it, and report its result.
+**Purpose:** Capture multiple photos into a local pending buffer, manage them before synchronization, synchronize them as a batch using existing server endpoints, and report per-item results.
+
+**Batch synchronization:** Synchronization sends pending photos sequentially using the existing single-photo endpoint (`POST /api/events/{public_id}/photos`). No new endpoint, batch endpoint, or API contract change is introduced. Each upload response returns authoritative usage; the client updates from the response, not from optimistic local counters.
+
+**Capture budget:** The local remaining-photo indicator is a UX hint computed as `5 − (server-confirmed accepted count) − (local pending capture count)`. It may reach zero before any upload. It is never authoritative; the backend limit check remains authoritative. When the local indicator reaches zero, the shutter is disabled as a hint. If the server later rejects an item (e.g. `PHOTO_LIMIT_REACHED`), the freed budget is reflected by recalculating from the server-confirmed count.
+
+**Pending item states:** Each photo in the pending buffer is in one of: `pending` (captured, not yet uploaded), `uploading` (in-flight to server), `confirmed` (server accepted, 201), `error` (server rejected or network failed, retry available), or `expired` (session expired before upload).
 
 **States and transitions:**
 
-1. Ready: offer camera capture and file selection where the browser supports them.
+1. Camera ready: show the viewfinder and shutter. The remaining-photo indicator and pending strip are visible. The guest may capture repeatedly without uploading after each capture. A file-selection fallback is offered when camera capture is unavailable.
 2. Permission request: explain camera access before the browser prompt.
-3. Permission denied/unsupported: explain the unavailable capability; offer supported file selection when available; do not imply that the photo was submitted.
-4. Selected/captured: show a review of the item and a clear remove or replace choice before submission.
-5. Submitting: show per-item progress; disable duplicate submission; announce progress without requiring visual-only feedback.
-6. Success: confirm persistence, update usage from the response, and offer another photo if the server reports remaining capacity.
-7. Error: associate the issue with the item, preserve it when retry is safe, and provide correction or retry. A failed upload is not counted as success.
+3. Permission denied/unsupported: explain the unavailable capability; offer supported file selection when available; do not imply that any photo was submitted. The pending strip and Send action remain available for any captures already taken.
+4. Captured: the photo is added to the pending strip as `pending`. The camera remains ready for the next capture. No immediate upload occurs. The remaining-photo indicator decreases by one.
+5. Review: tapping a pending thumbnail shows a full-size preview with delete and retake choices. Delete removes the item and frees the local budget. Retake removes the item and returns the camera to ready. Confirmed items cannot be deleted — no delete endpoint exists.
+6. Syncing (Send): pending items are uploaded sequentially. Each item transitions to `uploading`, then to `confirmed` on 201 or `error` on failure. Per-item progress is shown. Duplicate Send is disabled while syncing is in progress.
+7. Sync complete: show a summary of accepted and rejected items. Update the remaining-photo indicator from the server-confirmed count. Offer continued capture if budget remains.
+8. Error: associate the error code with the item; preserve the item when retry is safe; provide correction or retry. A failed upload is not counted as success. A failed item does not block other pending items. On `PHOTO_LIMIT_REACHED` (409), the item is marked `error`; remaining pending items stay `pending` and may be deleted by the guest. On `RATE_LIMITED` (429), pause the sync queue, honor `Retry-After` when present, then resume. On `SESSION_EXPIRED` or `SESSION_INVALID` (401), abort sync, discard session authority, and follow the session-expired behavior in §4.2. On `EVENT_CLOSED` (422), mark the item `error` with no retry.
 
-Client previews and counters may improve usability but do not decide file validity or remaining capacity.
+Client previews, the local capture budget, and pending counters are UX hints. They do not decide file validity, remaining capacity, or submission success. Server-confirmed counts from the upload response are authoritative.
 
 ### 4.4 Voice-note flow
 
@@ -195,10 +205,10 @@ HTTP status, stable error code, and safe server message determine the presentati
 
 - Announce every async start and completion: event loading, session start, permission result, capture/recording state, upload progress, success, and failure.
 - Keep the active control disabled during submission. Re-enable it only after success or a recoverable failure.
-- Show success only after `201` or the relevant successful admin response. Update usage from the server response, not from optimistic counters.
+- Show success per item only after its `201` response. Update usage from the server response, not from optimistic counters. During batch photo synchronization, show per-item progress and a summary of accepted and rejected items after the batch settles.
 - Retry only operations that are safe to repeat. A failed or interrupted media request must not be silently retried.
 - Use `Retry-After` when supplied for `RATE_LIMITED`; otherwise give no invented duration.
-- Preserve user-entered name, search text, and unsubmitted media when safe. Discard guest authority state on session invalidation or expiry.
+- Preserve user-entered name, search text, and unsubmitted media when safe. On session invalidation or expiry, discard in-memory session authority and usage state. Unsent in-memory captures may remain visible and are marked as not saved. The expired session is never reused and no quota is transferred between sessions. Unsent captures must not be submitted using or resurrecting the expired session. If the guest presses Start again, a new independent session and quota are created; any unsent captures from the previous session may be offered for explicit carry-over into the new session, where they count against the new session's budget. Carry-over requires explicit user action — it is never automatic. If the guest declines carry-over or the page is reloaded, pending captures are discarded.
 
 ## 8. Guest-name fallback
 
