@@ -20,6 +20,7 @@ Source of Truth: PRD v1.3 + Domain Model + ERD (all locked)
 | closed_at consistency | CHECK constraint: NULL when ACTIVE, NOT NULL when CLOSED/ARCHIVED |
 | Media event_id | Not stored — accessed via GuestSession (no denormalization) |
 | session_token | Separate from PK — credential vs identity separation |
+| public_ref | Opaque non-credential GuestSession grouping identifier; separate from PK and `session_token`; exposed in admin submission listings |
 | Session expiration | `expires_at` column on `guest_sessions`; 30-minute lifetime from creation |
 | original_filename | Dropped — no business value for browser-captured media |
 
@@ -94,12 +95,15 @@ CREATE TABLE guest_sessions (
     id             UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     event_id       UUID        NOT NULL REFERENCES events(id) ON DELETE RESTRICT,
     session_token  TEXT        NOT NULL,
+    public_ref     TEXT        NOT NULL,
     guest_name     TEXT,
     created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     expires_at     TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '30 minutes'),
 
     CONSTRAINT uq_guest_sessions_token
-        UNIQUE (session_token)
+        UNIQUE (session_token),
+    CONSTRAINT uq_guest_sessions_public_ref
+        UNIQUE (public_ref)
 );
 
 -- Cookie credential lookup (hot path — must be fast): served by the
@@ -107,6 +111,11 @@ CREATE TABLE guest_sessions (
 -- session_token. It stores the SHA-256 digest of the HttpOnly cookie
 -- credential (ADR-004 / Technical Design §5); the raw credential stays
 -- separate from the PK and is never stored or exposed.
+
+-- public_ref: opaque, non-credential grouping identifier generated at session
+-- creation. Exposed in admin submission listings (API Contract §4 Submission)
+-- so media can be grouped by GuestSession without leaking the DB PK or the
+-- session credential. Mirrors the events.public_id / events.id split.
 
 -- Session expiration: expires_at is set to created_at + 30 minutes at
 -- session creation. The backend rejects all submissions from an expired
@@ -166,6 +175,7 @@ CREATE TABLE voice_notes (
 | `events` | status values | CHECK | DB |
 | `events` | closed_at consistency | CHECK | DB |
 | `guest_sessions` | session_token unique | UNIQUE | DB |
+| `guest_sessions` | public_ref unique | UNIQUE | DB |
 | `voice_notes` | max 1 per session | UNIQUE | DB |
 | `photos` | max 5 per session | Count check in transaction | Backend |
 | All FK | no cascade delete | ON DELETE RESTRICT | DB |
@@ -184,6 +194,7 @@ CREATE TABLE voice_notes (
 | `uq_events_one_active_per_admin` | `events` | `admin_id` WHERE `status = 'ACTIVE'` | Partial UNIQUE | 1-active constraint |
 | `idx_events_admin_id` | `events` | `admin_id` | INDEX | List admin's events |
 | `uq_guest_sessions_token` | `guest_sessions` | `session_token` | UNIQUE (via constraint) | Cookie lookup (hot path) |
+| `uq_guest_sessions_public_ref` | `guest_sessions` | `public_ref` | UNIQUE (via constraint) | Admin grouping key (opaque, non-credential) |
 | `idx_guest_sessions_event_id` | `guest_sessions` | `event_id` | INDEX | Dashboard: event → sessions |
 | `idx_photos_guest_session_id` | `photos` | `guest_session_id` | INDEX | Photo count per session |
 | `uq_voice_notes_one_per_session` | `voice_notes` | `guest_session_id` | UNIQUE | Max 1 voice note |

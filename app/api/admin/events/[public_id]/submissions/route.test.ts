@@ -43,8 +43,8 @@ function seed() {
   state = {
     events: [{ id: "event-1", public_id: "evt-1", admin_id: "admin-1" }],
     sessions: [
-      { id: "session-1", event_id: "event-1", guest_name: "Fante" },
-      { id: "session-2", event_id: "event-1", guest_name: "Ana" },
+      { id: "session-1", event_id: "event-1", guest_name: "Fante", public_ref: "ref-s1" },
+      { id: "session-2", event_id: "event-1", guest_name: "Ana", public_ref: "ref-s2" },
     ],
     photos: [
       {
@@ -124,9 +124,9 @@ describe("GET /api/admin/events/{public_id}/submissions", () => {
     const body = JSON.parse(text);
     expect(body).toEqual({
       submissions: [
-        { id: "voice-1", type: "VOICE_NOTE", guest_name: "Fante", created_at: "2026-08-11T12:16:40Z", mime_type: "audio/webm", file_size: 300, duration_seconds: 12 },
-        { id: "photo-2", type: "PHOTO", guest_name: "Ana", created_at: "2026-08-11T12:16:00Z", mime_type: "image/png", file_size: 200, duration_seconds: null },
-        { id: "photo-1", type: "PHOTO", guest_name: "Fante", created_at: "2026-08-11T12:15:21Z", mime_type: "image/jpeg", file_size: 100, duration_seconds: null },
+        { id: "voice-1", type: "VOICE_NOTE", guest_name: "Fante", guest_session_ref: "ref-s1", created_at: "2026-08-11T12:16:40Z", mime_type: "audio/webm", file_size: 300, duration_seconds: 12 },
+        { id: "photo-2", type: "PHOTO", guest_name: "Ana", guest_session_ref: "ref-s2", created_at: "2026-08-11T12:16:00Z", mime_type: "image/png", file_size: 200, duration_seconds: null },
+        { id: "photo-1", type: "PHOTO", guest_name: "Fante", guest_session_ref: "ref-s1", created_at: "2026-08-11T12:15:21Z", mime_type: "image/jpeg", file_size: 100, duration_seconds: null },
       ],
     });
     expect(text).not.toContain("storage_key");
@@ -140,7 +140,7 @@ describe("GET /api/admin/events/{public_id}/submissions", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.submissions).toEqual([
-      { id: "photo-2", type: "PHOTO", guest_name: "Ana", created_at: "2026-08-11T12:16:00Z", mime_type: "image/png", file_size: 200, duration_seconds: null },
+      { id: "photo-2", type: "PHOTO", guest_name: "Ana", guest_session_ref: "ref-s2", created_at: "2026-08-11T12:16:00Z", mime_type: "image/png", file_size: 200, duration_seconds: null },
     ]);
   });
 

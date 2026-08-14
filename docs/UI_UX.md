@@ -125,7 +125,7 @@ Do not present the browser timer as proof of accepted duration. Do not persist o
 
 **Purpose:** Manage the event and inspect submissions.
 
-**Content:** Event title and status; close action while ACTIVE; access/QR action; guest-name search; newest-first submission timeline. Each submission shows media type, guest label, timestamp, and applicable preview/playback control.
+**Content:** Event title and status; close action while ACTIVE; access/QR action; guest-name search; newest-first submission timeline. Submissions may be clustered by contributor session (`guest_session_ref`) as a presentation grouping; group and item order remain newest-first. Each submission shows media type, guest label, timestamp, and applicable preview/playback control.
 
 **States:**
 

@@ -15,6 +15,7 @@ export interface FakeSessionIdRow {
   id: string;
   event_id: string;
   guest_name: string | null;
+  public_ref: string;
 }
 export interface FakePhotoRow {
   id: string;

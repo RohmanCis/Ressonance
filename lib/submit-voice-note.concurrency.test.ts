@@ -71,8 +71,8 @@ beforeAll(async () => {
 
   rawToken = generateSessionToken();
   const session = await p.query(
-    "INSERT INTO guest_sessions (event_id, session_token, guest_name) VALUES ($1, $2, $3) RETURNING id",
-    [eventId, hashSessionToken(rawToken), "Racer"],
+    "INSERT INTO guest_sessions (event_id, session_token, public_ref, guest_name) VALUES ($1, $2, $3, $4) RETURNING id",
+    [eventId, hashSessionToken(rawToken), "ref-voice-conc-" + Date.now(), "Racer"],
   );
   sessionId = session.rows[0].id;
 });

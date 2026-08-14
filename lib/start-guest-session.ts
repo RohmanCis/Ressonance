@@ -1,4 +1,5 @@
 import {
+  generateGuestSessionPublicRef,
   generateSessionToken,
   hashSessionToken,
 } from "@/lib/guest-session";
@@ -28,6 +29,7 @@ export interface SessionRepo {
   createGuestSession(input: {
     eventId: string;
     sessionTokenHash: string;
+    publicRef: string;
     guestName: string | null;
   }): Promise<GuestSessionRef>;
 }
@@ -85,9 +87,11 @@ export async function startGuestSession(
   if (event.status !== "ACTIVE") return { kind: "event_closed" };
 
   const token = generateSessionToken();
+  const publicRef = generateGuestSessionPublicRef();
   await repo.createGuestSession({
     eventId: event.id,
     sessionTokenHash: hashSessionToken(token),
+    publicRef,
     guestName: name.name,
   });
 

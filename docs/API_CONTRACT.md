@@ -127,6 +127,7 @@ The counts are informational. Backend checks remain authoritative.
   "id": "media-id",
   "type": "PHOTO",
   "guest_name": "Fante",
+  "guest_session_ref": "opaque-session-ref",
   "created_at": "2026-08-11T12:15:21Z",
   "mime_type": "image/jpeg",
   "file_size": 123456,
@@ -134,7 +135,7 @@ The counts are informational. Backend checks remain authoritative.
 }
 ```
 
-Submission listings never contain `storage_key` or a public storage URL. Access is requested through the media endpoint below.
+`guest_session_ref` is an opaque, non-credential identifier for the GuestSession that owns the submission. It is generated at session creation, is separate from the database primary key and `session_token`, and is stable across all submissions from one GuestSession. It enables grouping submissions by contributor session in the admin timeline. Submission listings never contain `storage_key`, the database primary key, `session_token`, or a public storage URL. Access is requested through the media endpoint below.
 
 ## 5. Admin endpoints
 
@@ -312,6 +313,7 @@ GET /api/admin/events/{public_id}/submissions
       "id": "media-id",
       "type": "PHOTO",
       "guest_name": "Fante",
+      "guest_session_ref": "opaque-session-ref",
       "created_at": "2026-08-11T12:15:21Z",
       "mime_type": "image/jpeg",
       "file_size": 123456,
@@ -321,7 +323,7 @@ GET /api/admin/events/{public_id}/submissions
 }
 ```
 
-Results are chronological by submission time, newest first. No client sort, pagination, bulk operation, or advanced filter is defined for MVP.
+Results are chronological by submission time, newest first. The admin timeline may cluster submissions by `guest_session_ref` (contributor session) as a presentation grouping; the response order remains newest-first. No client sort, pagination, bulk operation, or advanced filter is defined for MVP.
 
 **Authorization:** The authenticated admin must own the event.
 

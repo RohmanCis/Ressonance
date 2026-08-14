@@ -18,6 +18,7 @@ export interface SubmissionListing {
   id: string;
   type: MediaType;
   guest_name: string | null;
+  guest_session_ref: string;
   created_at: string;
   mime_type: string;
   file_size: number;
@@ -137,13 +138,13 @@ export async function listSubmissions(
 ): Promise<SubmissionListing[]> {
   let sessionQuery = db
     .from("guest_sessions")
-    .select("id, guest_name")
+    .select("id, guest_name, public_ref")
     .eq("event_id", eventId);
   if (guestName) sessionQuery = sessionQuery.eq("guest_name", guestName);
   const { data: sessions, error: sessionError } = await sessionQuery;
   if (sessionError) throw sessionError;
 
-  const sessionIds = (sessions as { id: string; guest_name: string | null }[]).map(
+  const sessionIds = (sessions as { id: string; guest_name: string | null; public_ref: string }[]).map(
     (s) => s.id,
   );
   if (sessionIds.length === 0) return [];
@@ -162,18 +163,20 @@ export async function listSubmissions(
   if (voiceRes.error) throw voiceRes.error;
 
   const nameBySession = new Map(
-    (sessions as { id: string; guest_name: string | null }[]).map((s) => [
+    (sessions as { id: string; guest_name: string | null; public_ref: string }[]).map((s) => [
       s.id,
-      s.guest_name,
+      { guest_name: s.guest_name, public_ref: s.public_ref },
     ]),
   );
 
   const listings: SubmissionListing[] = [];
   for (const p of photoRes.data ?? []) {
+    const session = nameBySession.get(p.guest_session_id);
     listings.push({
       id: p.id,
       type: "PHOTO",
-      guest_name: nameBySession.get(p.guest_session_id) ?? null,
+      guest_name: session?.guest_name ?? null,
+      guest_session_ref: session?.public_ref ?? "",
       created_at: p.created_at,
       mime_type: p.mime_type,
       file_size: p.file_size,
@@ -181,10 +184,12 @@ export async function listSubmissions(
     });
   }
   for (const v of voiceRes.data ?? []) {
+    const session = nameBySession.get(v.guest_session_id);
     listings.push({
       id: v.id,
       type: "VOICE_NOTE",
-      guest_name: nameBySession.get(v.guest_session_id) ?? null,
+      guest_name: session?.guest_name ?? null,
+      guest_session_ref: session?.public_ref ?? "",
       created_at: v.created_at,
       mime_type: v.mime_type,
       file_size: v.file_size,

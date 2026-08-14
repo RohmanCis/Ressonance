@@ -63,12 +63,15 @@ CREATE TABLE guest_sessions (
     id             UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     event_id       UUID        NOT NULL REFERENCES events(id) ON DELETE RESTRICT,
     session_token  TEXT        NOT NULL,
+    public_ref     TEXT        NOT NULL,
     guest_name     TEXT,
     created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     expires_at     TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '30 minutes'),
 
     CONSTRAINT uq_guest_sessions_token
-        UNIQUE (session_token)
+        UNIQUE (session_token),
+    CONSTRAINT uq_guest_sessions_public_ref
+        UNIQUE (public_ref)
 );
 
 -- GuestSession expiration policy (T026): max lifetime 30 minutes from creation.

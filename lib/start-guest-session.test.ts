@@ -5,11 +5,12 @@ import { startGuestSession, type SessionRepo } from "@/lib/start-guest-session";
 
 function makeRepo(overrides: Partial<SessionRepo> = {}): {
   repo: SessionRepo;
-  calls: { eventId: string; sessionTokenHash: string; guestName: string | null }[];
+  calls: { eventId: string; sessionTokenHash: string; publicRef: string; guestName: string | null }[];
 } {
   const calls: {
     eventId: string;
     sessionTokenHash: string;
+    publicRef: string;
     guestName: string | null;
   }[] = [];
   const repo: SessionRepo = {
@@ -66,6 +67,8 @@ describe("startGuestSession", () => {
     expect(calls[0].sessionTokenHash).not.toBe(result.token);
     expect(calls[0].eventId).toBe("event-1");
     expect(calls[0].guestName).toBe("Fante");
+    expect(calls[0].publicRef).toMatch(/^[A-Za-z0-9_-]{16,}$/);
+    expect(calls[0].publicRef).not.toBe(result.token);
   });
 
   it("treats empty/absent name as anonymous (null)", async () => {

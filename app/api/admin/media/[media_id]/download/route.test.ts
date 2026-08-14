@@ -52,7 +52,7 @@ function makeRequest(mediaId: string): NextRequest {
 function seed() {
   state = {
     events: [{ id: "event-1", public_id: "evt-1", admin_id: "admin-1" }],
-    sessions: [{ id: "session-1", event_id: "event-1", guest_name: "Fante" }],
+    sessions: [{ id: "session-1", event_id: "event-1", guest_name: "Fante", public_ref: "ref-s1" }],
     photos: [
       {
         id: "photo-1",

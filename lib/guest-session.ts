@@ -20,6 +20,17 @@ export function generateSessionToken(bytes = 32): string {
 }
 
 /**
+ * Opaque, non-credential grouping identifier for a GuestSession (API Contract
+ * §4 Submission). Separate from the DB PK (`id`) and the credential
+ * (`session_token`); exposed in admin submission listings so media can be
+ * grouped by GuestSession without leaking the PK or credential. Mirrors the
+ * `events.public_id` / `events.id` split.
+ */
+export function generateGuestSessionPublicRef(bytes = 16): string {
+  return randomBytes(bytes).toString("base64url");
+}
+
+/**
  * Stable SHA-256 digest of the raw token. This is the value stored in and
  * looked up against `guest_sessions.session_token` (ADR-004).
  */

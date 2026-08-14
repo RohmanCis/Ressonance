@@ -121,6 +121,7 @@ export async function POST(
         .insert({
           event_id: input.eventId,
           session_token: input.sessionTokenHash,
+          public_ref: input.publicRef,
           guest_name: input.guestName,
         })
         .select("id")
