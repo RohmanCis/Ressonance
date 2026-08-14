@@ -1,24 +1,23 @@
-# Result: Session close — B1–B3 commit + push
+# Result: Session close — docs reconciliation commit + push
 
 ## Status
 COMPLETE.
 
-## Vercel Cron auth verification (@librarian, official docs 2026-08-15)
-- `Authorization: Bearer ${CRON_SECRET}` auto-sent: CONFIRMED (https://vercel.com/docs/cron-jobs/manage-cron-jobs).
-- GET method: CONFIRMED (https://vercel.com/docs/cron-jobs).
-- `vercel.json` crons schema + UTC schedule: `0 3 * * *` valid daily on Hobby/Pro (https://vercel.com/docs/cron-jobs/usage-and-pricing).
-- Unset CRON_SECRET: not explicitly documented; official example rejects `!cronSecret` → our fail-closed 500 matches the documented defensive pattern.
-- Duration: 300s default ample for bounded run (~10 events).
-- Verdict: implementation matches docs. NO code changes made.
+## Session changes (this session only)
+- docs/API_CONTRACT.md, docs/PRD.md, docs/TECHNICAL_DESIGN.md, docs/ARCHITECTURE_DECISIONS.md, docs/db_scheme.md, docs/UI_UX.md, AGENTS.md — two documentation passes: canonical cleanup (incl. new §5.9 as implemented) + six owner decisions recorded.
+- docs/UI_DESIGN.md, code, tests, migrations, config: untouched.
+- .opencode/handoff/* — harness lifecycle writes only.
 
-## Committed
-All approved B1–B3 changes (single commit on `b6ee0e5`):
-- B1: GET param fix `app/api/admin/events/route.ts` + 4 test callers.
-- B2: 4 MB default caps (`lib/photo-file.ts`, `lib/audio-file.ts`, `.env.example`); owner decisions recorded (PRD §26, API_CONTRACT §3/§7/§8, ADR-008, TECHNICAL_DESIGN §15, db_scheme).
-- B3: `lib/media-cleanup.ts` + tests, `app/api/cron/media-cleanup/route.ts` + tests, `vercel.json`, API_CONTRACT §7.1, CRON_SECRET docs in `.env.example`.
+## Validation
+Pre-commit: `git diff --check` clean; grep sweeps show no stale open references; cross-doc consistency confirmed; six decisions closed; no SSOT conflicts; no architecture drift. No pre-existing unrelated uncommitted work present (tree was clean at `0d9b3b0` before this session).
 
-## Validation (pre-commit)
-tsc PASS · build PASS · vitest 297/297 (34 files) · lint baseline 0 new · git diff --check clean.
+## Commits
+1. `docs: reconcile canonical documents with implementation and record owner decisions (API §5.9, ratified TTL/region/backup/monitoring)` — 7 canonical docs + AGENTS.md.
+2. `chore: reconcile handoff for session close` — handoff files.
+Pushed to origin/main; HEAD == origin/main; tree clean.
+
+## Blockers
+None.
 
 ## Next step
-R3 when owner approves: Vercel deploy + env vars (incl. long-random CRON_SECRET) + private-bucket/pooler/ffprobe live verification + live smoke.
+R3 when owner approves: Vercel deploy + env vars (incl. long-random CRON_SECRET) + private-bucket/ffprobe live verification + live smoke.
