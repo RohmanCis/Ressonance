@@ -4,6 +4,8 @@ Status: LOCKED
 Version: 1.0 — locked 2026-08-11  
 Source: PRD v1.3, `docs/db_scheme.md`, `docs/TECHNICAL_DESIGN.md`, and `docs/ARCHITECTURE_DECISIONS.md`
 
+Amended 2026-08-15: documentation reconciliation — adds §5.9 as implemented; closes resolved decisions. No behavior change.
+
 This contract defines behavior only. Framework, database, and storage implementation details remain outside the API surface.
 
 ## 1. Conventions
@@ -225,7 +227,7 @@ POST /api/admin/events
 }
 ```
 
-The server generates the opaque non-sequential `public_id`. Exact format remains open.
+The server generates the opaque non-sequential `public_id` as `base64url` of 16 random bytes (resolved 2026-08-15).
 
 **Errors:** `400 INVALID_INPUT`, `401 AUTHENTICATION_REQUIRED`, `409 ACTIVE_EVENT_EXISTS`, `429 RATE_LIMITED` if applicable, `500 INTERNAL_ERROR`.
 
@@ -346,9 +348,23 @@ GET /api/admin/media/{media_id}/access
 }
 ```
 
-The backend verifies admin authentication, resolves the media through GuestSession to Event, verifies event ownership, then creates a short-lived signed URL for the private Supabase Storage object. Exact TTL remains open. The URL is not permanent and is not a public storage URL.
+The backend verifies admin authentication, resolves the media through GuestSession to Event, verifies event ownership, then creates a short-lived signed URL for the private Supabase Storage object. TTL is 900 seconds (15 minutes) (ratified 2026-08-15). The URL is not permanent and is not a public storage URL.
 
 **Errors:** `401 AUTHENTICATION_REQUIRED`, `403 FORBIDDEN`, `404 NOT_FOUND`, `502 MEDIA_ACCESS_FAILED`.
+
+### 5.9 Download media
+
+```text
+GET /api/admin/media/{media_id}/download
+```
+
+**Authentication:** Supabase Auth session required.
+
+**Behavior:** verifies admin authentication, resolves the media through GuestSession to Event, verifies event ownership, generates a fresh short-lived signed URL, and responds `302 Found` redirecting to it. The signed URL is never returned as JSON. The backend does not proxy the media. Repeat of the §5.8 ownership check; individual download only (bulk is future scope).
+
+**Success:** `302` redirect to the signed URL.
+
+**Errors:** `401 AUTHENTICATION_REQUIRED`, `403 FORBIDDEN`, `404 NOT_FOUND`, `502 MEDIA_ACCESS_FAILED`, `500 INTERNAL_ERROR`.
 
 ### 5.10 List admin events
 
@@ -581,7 +597,7 @@ Invalid, corrupt, unsupported, or uninspectable audio is rejected before success
 - Supabase Storage uses a private bucket. Guests never receive storage URLs, signed URLs, or storage keys.
 - The backend writes the object, persists metadata, and reports success only after required persistence succeeds. Failed metadata persistence triggers cleanup of the newly written object where possible.
 - Admin preview and download both require authentication and event ownership, then use short-lived signed URLs.
-- Signed URL TTL remains open. URLs are temporary capabilities and must not be persisted or exposed in submission listings.
+- Signed URL TTL is 900 seconds (15 minutes) (ratified 2026-08-15). URLs are temporary capabilities and must not be persisted or exposed in submission listings.
 
 ### 7.1 Internal media cleanup (operational)
 
@@ -601,15 +617,15 @@ Internal operational endpoint, not a guest/admin product feature. Invoked daily 
 
 ## 8. Unresolved API decisions
 
-1. Exact rate-limit windows, quotas, and identity keys.
+1. ~~Exact rate-limit windows, quotas, and identity keys.~~ Resolved 2026-08-15: session-create is DB-backed (identity = client IP; forwarded headers trusted only behind a trusted proxy); photo/voice per-instance in-memory; windows/quotas env-configurable (ADR-008).
 2. ~~Image/audio file-size limits and supported formats.~~ Resolved 2026-08-15: 4 MB caps, JPEG/PNG/WebP/GIF + WebM/OGG/MP4 (§7).
-3. `public_id` format.
-4. `storage_key` format.
-5. Signed URL TTL.
-6. Hosting-specific same-origin base URL and local development proxy details.
-7. Monitoring, backups, and media-retention policy. Retention resolved 2026-08-15 (owner): retain media 7 days after event CLOSED, private during retention, automatic cleanup after. Mechanism: internal cron endpoint §7.1 (owner-approved, implemented).
-8. Schema constraint/index naming cleanup before migrations.
+3. ~~`public_id` format.~~ Resolved 2026-08-15: `base64url` of 16 random bytes.
+4. ~~`storage_key` format.~~ Resolved 2026-08-15: `events/{event_id}/sessions/{guest_session_id}/{photos|voice-notes}/{uuid}.{ext}` (server-only).
+5. ~~Signed URL TTL.~~ Resolved 2026-08-15: 900 seconds (15 minutes), as implemented.
+6. ~~Hosting-specific same-origin base URL and local development proxy details.~~ Resolved 2026-08-15: Vercel same-origin deployment; base URL via `NEXT_PUBLIC_APP_URL`.
+7. Monitoring, backups, and media-retention policy. Retention resolved 2026-08-15 (owner): retain media 7 days after event CLOSED, private during retention, automatic cleanup after. Mechanism: internal cron endpoint §7.1 (owner-approved, implemented). Monitoring and backups resolved 2026-08-15 (owner): structured API logs + Vercel logs, no Sentry/OTel/custom alerting; Supabase managed backups, no custom backup/restore system for MVP.
+8. ~~Schema constraint/index naming cleanup before migrations.~~ Resolved 2026-08: migrations 0001–0003 applied live; no duplicate names.
 
 ## 9. Next step
 
-Approve this contract. Then scaffold the minimal Next.js server-side API boundary and Supabase integration, beginning with authentication/session plumbing and focused contract tests; do not add endpoints outside this contract without an approved requirement.
+This contract is implemented. Endpoint or behavior changes require an approved contract amendment.

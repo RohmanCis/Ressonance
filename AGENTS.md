@@ -57,6 +57,8 @@ For details, read the relevant source document instead of expanding this list.
 - `ffprobe`/FFmpeg for server-side audio inspection
 - Same-origin deployment
 - Next.js server-side API layer
+- Vercel — same-origin production deployment
+- Vercel Cron with CRON_SECRET bearer authentication — scheduled media-retention cleanup
 
 Do not introduce an ORM, provider, framework, service, schema field, endpoint, or dependency without an approved design change.
 
@@ -148,10 +150,10 @@ Never trust frontend limits, localStorage, client MIME/duration, public storage 
 
 ## 10. Current repository state
 
-Guest-side API, Admin API, Guest UI, and Admin UI are implemented. Implemented since initial MVP: 30-minute GuestSession expiry (`expires_at`, 401 SESSION_EXPIRED), opaque `guest_sessions.public_ref` grouping identifier (migration `0002`), admin submission grouping by GuestSession, print UX (one-page artifacts), camera-first guest capture with multi-capture pending buffer and sequential batch sync, Vercel Node runtime compatibility with bundled `@ffprobe-installer/ffprobe`.
+Guest-side API, Admin API, Guest UI, and Admin UI are implemented. Implemented since initial MVP: 30-minute GuestSession expiry (`expires_at`, 401 SESSION_EXPIRED), opaque `guest_sessions.public_ref` grouping identifier (migration `0002`), admin submission grouping by GuestSession, print UX (one-page artifacts), camera-first guest capture with multi-capture pending buffer and sequential batch sync, Vercel Node runtime compatibility with bundled `@ffprobe-installer/ffprobe`, DB-backed session-create rate limiting (R1), structured API error logging (R2), Admin Event Index at `/admin` with `GET /api/admin/events` (T031), Retake in photo review (T030-R), 4 MB photo/voice upload caps (B2), 7-day media retention cleanup via Vercel Cron + CRON_SECRET (B3).
 
 Live Supabase integration verified: live PostgreSQL schema tests PASS, `PLAYWRIGHT_LIVE=1` PASS, seeded events present (1 ACTIVE). Live DB migration state verified (2026-08): `guest_sessions.public_ref` applied — NOT NULL, unique index `uq_guest_sessions_public_ref`, 0 NULL/duplicate values across existing rows; `expires_at` present with 30-minute default. Migration 0002 is idempotent and safe to re-run.
 
-Local QA: `npx vitest run` 256/256 PASS; Playwright `smoke+qr-qa+print-qa` 11 passed / 1 skipped / 0 failed; `mobile-media-qa` 12/12 PASS. Typecheck and build PASS; lint has pre-existing issues only (1 `any` error in `e2e/print-qa.spec.ts`, 7 warnings, `next-env.d.ts` excluded). Chromium is installed.
+Local QA: `npx vitest run` 297/297 (34 files) PASS; Playwright `smoke+qr-qa+print-qa` 11 passed / 1 skipped / 0 failed; `mobile-media-qa` 12/12 PASS. Typecheck and build PASS; lint has pre-existing issues only (1 `any` error in `e2e/print-qa.spec.ts`, 7 warnings, `next-env.d.ts` excluded). Chromium is installed.
 
-Known implementation limitations: live scanner verification with a physical device, broader browser capability, and live visual QA with an authenticated admin remain outstanding. Known source-document questions remain deferred: media-retention policy. Do not fix canonical documents silently.
+Known implementation limitations: live scanner verification with a physical device, broader browser capability, and live visual QA with an authenticated admin remain outstanding. Owner decisions (2026-08-15): MVP relies on Supabase managed backups (no custom backup/restore); monitoring is structured API logs + Vercel logs only (no Sentry/OTel/custom alerting); no guest-facing retention messaging for MVP (7-day post-CLOSED cleanup unchanged); existing APAC Supabase production project/region ratified; signed URL TTL ratified at 900 seconds; ARCHIVED behavior deferred/post-MVP. Do not fix canonical documents silently.

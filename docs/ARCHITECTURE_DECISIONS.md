@@ -21,7 +21,7 @@ Date: 2026-08-11
 
 **Reason:** Existing schema is PostgreSQL-specific and already expresses the critical invariants.
 
-**Required follow-up:** Resolve duplicate constraint/index names in `docs/db_scheme.md` through an approved source-document change before migrations. This design does not modify that document.
+**Required follow-up:** Resolve duplicate constraint/index names in `docs/db_scheme.md` through an approved source-document change before migrations. This design does not modify that document. Follow-up complete (2026-08): migrations 0001–0003 applied; no duplicate names.
 
 ## ADR-003 — Backend-mediated media upload
 
@@ -34,7 +34,7 @@ Date: 2026-08-11
 
 ## ADR-004 — Same-origin HttpOnly guest cookie
 
-**Status:** Locked behavior; attributes proposed  
+**Status:** Locked behavior; attributes implemented as proposed (2026-08).
 **Decision:** Create GuestSession only on Start. Issue an opaque, high-entropy credential in an HttpOnly cookie, separate from the DB primary key.
 
 **Proposed attributes:** `__Host-guest_session`, `HttpOnly`, `Secure` in production, `SameSite=Lax`, `Path=/`, no `Domain`, `Max-Age=1800` (30-minute session lifetime; `expires_at` on `guest_sessions` is the authoritative check).
@@ -66,7 +66,7 @@ Date: 2026-08-11
 
 **Reason:** Preserves privacy while avoiding unnecessary backend bandwidth.
 
-**Open:** URL lifetime, key format, lifecycle/retention.
+**Resolved:** storage key format implemented (Technical Design §6); retention resolved 2026-08-15 (owner) — 7 days after CLOSED, cron cleanup (API Contract §7.1). **Resolved 2026-08-15 (owner):** signed URL lifetime ratified at 900 seconds (15 minutes), as implemented.
 
 ## ADR-008 — Minimal rate limiting
 
@@ -77,18 +77,18 @@ Date: 2026-08-11
 
 **Owner acceptance (2026-08-15):** On Vercel serverless, the photo/voice in-memory limiters are per-instance only (defense-in-depth, not cross-instance authoritative). Accepted as an MVP limitation for this release; DB-backed limiting is NOT extended to photo/voice.
 
-**Open:** Exact windows, quotas, identity keys, trusted proxy behavior.
+**Resolved (2026-08-15):** identity keys and trusted-proxy behavior implemented (client IP; forwarded headers trusted only behind a trusted proxy); windows/quotas are env-configurable defaults.
 
 ## ADR-009 — No standalone project context document
 
 **Status:** Accepted  
 **Decision:** Keep technical context in this design and the root `AGENTS.md`; do not add `docs/PROJECT_CONTEXT.md` while the repository has no implementation.
 
-**Reason:** Avoid documentation-only scaffolding. Add a context map when modules and deployment conventions exist.
+**Reason:** Avoid documentation-only scaffolding. Add a context map when modules and deployment conventions exist. 2026-08: the repository is now implemented; the decision is retained.
 
 ## ADR-010 — Supabase Auth for admins
 
-**Status:** Approved; implementation details remain open  
+**Status:** Approved; implemented.
 **Decision:** Use Supabase Auth for Admin authentication. Keep GuestSession custom: create it on Start and issue its separate opaque credential in an HttpOnly cookie.
 
 **Reason:** Provides the approved admin identity boundary while preserving the locked guest-session model and avoiding guest accounts.

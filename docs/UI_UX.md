@@ -225,9 +225,9 @@ When no name was supplied, show `Anonymous Guest` in guest-facing session contex
 
 ## 9. Open UI questions
 
-- Exact user-facing copy and terminology.
-- Visual style, theme, typography, spacing, and imagery.
-- QR rendering library or equivalent rendering implementation.
-- Camera and recorder implementation details, supported browser matrix, and permission-denial fallback details.
-- How session expiry is surfaced in timing and wording; the expiry policy (30-minute session lifetime) is now resolved in canonical documents.
-- Whether and how to communicate media retention; retention policy remains open.
+- ~~Exact user-facing copy and terminology.~~ Resolved 2026-08: implemented; per §6, final wording was intentionally never locked.
+- ~~Visual style, theme, typography, spacing, and imagery.~~ Resolved: `docs/UI_DESIGN.md` LOCKED.
+- ~~QR rendering library or equivalent rendering implementation.~~ Resolved 2026-08: QRCodeSVG (T021).
+- ~~Camera and recorder implementation details, supported browser matrix, and permission-denial fallback details.~~ Resolved 2026-08: getUserMedia + MediaRecorder, file-selection fallback, multi-capture + batch sync (T030).
+- ~~How session expiry is surfaced in timing and wording; the expiry policy (30-minute session lifetime) is now resolved in canonical documents.~~ Resolved: 30-minute policy in canonical documents; wording implemented.
+- ~~Whether and how to communicate media retention to guests.~~ Resolved 2026-08-15 (owner): no guest-facing retention messaging for MVP; backend policy remains 7-day retention after event CLOSED with automatic cleanup.

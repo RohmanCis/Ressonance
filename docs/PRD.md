@@ -781,32 +781,32 @@ Features explicitly deferred — must not increase MVP complexity.
 
 To be decided at the technical design stage, after ERD and architecture are defined.
 
-- Frontend framework.
-- Backend framework.
-- Database technology.
-- Object storage provider.
-- Authentication provider.
-- Hosting/deployment platform.
-- Deployment topology (single domain vs separate frontend/backend) and resulting CORS/cookie configuration.
-- Exact API design.
-- Exact database schema.
-- Exact rate-limit values.
+- ~~Frontend framework.~~ Resolved 2026-08-11: one Next.js same-origin application (TypeScript) — ARCHITECTURE_DECISIONS ADR-001.
+- ~~Backend framework.~~ Resolved 2026-08-11: one Next.js same-origin application (TypeScript) — ARCHITECTURE_DECISIONS ADR-001.
+- ~~Database technology.~~ Resolved 2026-08-11: Supabase PostgreSQL — ADR-002.
+- ~~Object storage provider.~~ Resolved 2026-08-11: Supabase Storage private bucket — ADR-011.
+- ~~Authentication provider.~~ Resolved 2026-08-11: Supabase Auth (admin) — ADR-010.
+- ~~Hosting/deployment platform.~~ Resolved 2026-08: Vercel (owner).
+- ~~Deployment topology (single domain vs separate frontend/backend) and resulting CORS/cookie configuration.~~ Resolved 2026-08-11: same-origin single application — ADR-001.
+- ~~Exact API design.~~ Resolved 2026-08-11: API Contract LOCKED and implemented.
+- ~~Exact database schema.~~ Resolved: db_scheme approved; migrations 0001–0003 applied.
+- ~~Exact rate-limit values.~~ Resolved 2026-08-15: env-configurable defaults; topology per ADR-008.
 - ~~Exact file-size limits.~~ Resolved 2026-08-15 (owner): 4 MB per upload (photo and voice), sized to the hosting platform's request-body limit.
 - ~~Supported image formats.~~ Resolved: JPEG/PNG/WebP/GIF.
 - ~~Supported audio formats.~~ Resolved: WebM/OGG/MP4 audio.
-- Audio inspection tool/library for server-side duration validation.
+- ~~Audio inspection tool/library for server-side duration validation.~~ Resolved 2026-08: server-side ffprobe (T028).
 - ~~Media retention policy.~~ Resolved 2026-08-15 (owner): retain media 7 days after event CLOSED, private during retention, automatic cleanup after.
-- Backup strategy.
-- Monitoring and logging.
-- Exact QR-code library.
-- Exact camera/recording implementation.
-- Event public identifier format (UUID, short random ID, or equivalent).
+- ~~Backup strategy.~~ Resolved 2026-08-15 (owner): MVP relies on Supabase managed backups; no custom backup/restore system.
+- Monitoring and logging — split: structured API error logging implemented 2026-08; monitoring/alerting scope resolved 2026-08-15 (owner): structured API logs + Vercel logs; no Sentry/OTel/custom alerting for MVP.
+- ~~Exact QR-code library.~~ Resolved 2026-08: QRCodeSVG (T021).
+- ~~Exact camera/recording implementation.~~ Resolved 2026-08: getUserMedia + MediaRecorder with file-selection fallback (T030).
+- ~~Event public identifier format (UUID, short random ID, or equivalent).~~ Resolved 2026-08-15: base64url of 16 random bytes.
 
 ---
 
 ## 27. Next Design Stage
 
-Implementation may now begin. The approved design sequence below was completed through the technical architecture and implementation can proceed in the documented order.
+Status (2026-08-15): this sequence is complete through testing and implementation; production deployment on Vercel (R3) is the remaining step, pending owner go-ahead.
 
 Recommended sequence:
 

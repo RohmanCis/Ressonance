@@ -1,7 +1,8 @@
 # Database Schema — QR Guest Photo & Voicebook
 
-Version: 1.0  
+Version: 1.1
 Status: Approved schema design  
+Reconciled 2026-08-15 — closes open technical decisions; schema applied via migrations 0001–0003.
 Source of Truth: PRD v1.3 + Domain Model + ERD (all locked)
 
 ---
@@ -32,7 +33,7 @@ Source of Truth: PRD v1.3 + Domain Model + ERD (all locked)
 ```sql
 -- =============================================================================
 -- QR GUEST PHOTO & VOICEBOOK — DATABASE SCHEMA
--- Version: 1.0
+-- Version: 1.1
 -- =============================================================================
 
 -- Enable UUID generation
@@ -280,24 +281,13 @@ ARCHIVE→ status = 'ARCHIVED', closed_at = (tetap timestamp dari CLOSE)
 
 ---
 
-## Open Technical Decisions Affecting This Schema
+## Resolved Technical Decisions (previously open)
 
-Item berikut akan mempengaruhi schema tapi belum dapat dikunci sampai technical design selesai:
-
-- **storage_key format** — konvensi path di object storage (contoh: `events/{event_id}/photos/{uuid}.jpg`) ditentukan saat API design
-- **public_id format** — UUID, nanoid, atau short random string; panjang dan charset ditentukan saat technical design
+- **storage_key format** — `events/{event_id}/sessions/{guest_session_id}/{photos|voice-notes}/{uuid}.{ext}` (resolved 2026-08-15; Technical Design §6)
+- **public_id format** — `base64url` of 16 random bytes (resolved 2026-08-15)
 
 ---
 
 ## Next Step
 
-```
-Database Schema v1.0 (this document) — Approved
-API Contract — LOCKED (docs/API_CONTRACT.md)
-   |
-   v
-Scaffold minimal Next.js server-side API boundary + Supabase
-integration, implementasi dapat dimulai (approval staging telah diberikan)
-```
-
-API Contract (status: LOCKED) mendefinisikan endpoint, request/response shape, HTTP status codes, dan error format — semuanya implementasi dari PRD v1.3, bukan interpretasi baru. Approval staging telah diberikan; implementasi dapat dimulai.
+Schema applied to live Supabase via migrations 0001–0003 (verified 2026-08). Further schema changes require an approved change to this document plus a new migration.

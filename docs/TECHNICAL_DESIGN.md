@@ -8,7 +8,7 @@ Sources: `docs/PRD.md` v1.3, `docs/db_scheme.md` v1.0, domain model in PRD §14
 
 Use one same-origin Next.js application with TypeScript, shadcn/ui, Tailwind CSS, Supabase PostgreSQL, Supabase Storage, and Next.js server-side API routes. Keep the browser thin. Keep all limits, authorization, validation, and persistence decisions on the backend.
 
-The repository is currently documentation-only. This document recommends a stack; it does not select one silently.
+The approved stack is recorded in docs/ARCHITECTURE_DECISIONS.md and implemented; production deployment on Vercel is the remaining step.
 
 ## 2. Recommended stack
 
@@ -18,8 +18,9 @@ The repository is currently documentation-only. This document recommends a stack
 - Relational access: Supabase server-side client or direct PostgreSQL access where transaction/locking control requires it; no ORM.
 - Object storage: Supabase Storage private bucket.
 - Admin authentication: Supabase Auth. Guest authentication remains a custom GuestSession with an opaque HttpOnly cookie, separate from the database primary key.
-- Rate limiting: backend middleware/service. Initial implementation may use PostgreSQL-backed counters if deployment is single application + one DB; use a managed/shared limiter only if the deployment decision requires multiple application instances.
+- Rate limiting: session creation uses a DB-backed fixed-window limiter (migration 0003) that is authoritative across instances; photo and voice-note submission use per-instance in-memory fixed-window limiters, accepted for Vercel serverless 2026-08-15 (ADR-008). Exact limits and windows remain env-configurable.
 - Audio inspection: server-side `ffprobe`/FFmpeg inspection, synchronously before persistence.
+- Deployment: Vercel (same-origin); scheduled media-retention cleanup via Vercel Cron with CRON_SECRET bearer authentication.
 
 Why: one language, one deployable application, same-origin cookies, no CORS in production, direct backend-to-storage flow, and no premature service split.
 
@@ -141,7 +142,7 @@ Concurrent photo submissions for the same GuestSession serialize on the lock: a 
 
 ### Storage keys
 
-Use opaque generated names, never user filenames or database primary keys as credentials. A recommended shape is `events/{opaque-public-id}/sessions/{random-id}/{media-kind}/{random-object-id}.{approved-extension}`. Exact format remains open per schema §240–242. Avoid putting guest names in keys.
+Use opaque generated names, never user filenames or database primary keys as credentials. A recommended shape is `events/{opaque-public-id}/sessions/{random-id}/{media-kind}/{random-object-id}.{approved-extension}`. Resolved (2026-08-15): implemented as `events/{event_id}/sessions/{guest_session_id}/{photos|voice-notes}/{uuid}.{ext}` using internal database UUIDs. This deviates from the opaque-public-id example above; it is acceptable because storage keys are server-only and never exposed in any API response. Avoid putting guest names in keys.
 
 ### Failure and consistency
 
@@ -151,7 +152,7 @@ The submission sequence is the authoritative order above: one database transacti
 
 The backend performs synchronous inspection before accepting the voice note. It determines duration from decoded/container metadata using a trusted server-side audio inspection tool, not the browser timer and not a request field.
 
-The approved format list and exact inspector are open. Recommended initial strategy: support the smallest browser-compatible format set that the chosen MediaRecorder/browser matrix can produce, then validate container/codec and duration with `ffprobe`. Reject unsupported, corrupt, uninspectable, shorter-than-5-second, or longer-than-30-second files with a validation error. Do not persist metadata or report success for rejected audio.
+Resolved (2026-08-15): approved formats are JPEG/PNG/WebP/GIF (photo) and WebM/OGG/MP4 audio (voice note) — API Contract §7; the inspector is server-side `ffprobe`, bundled for the Vercel Node runtime (T028). Recommended initial strategy: support the smallest browser-compatible format set that the chosen MediaRecorder/browser matrix can produce, then validate container/codec and duration with `ffprobe`. Reject unsupported, corrupt, uninspectable, shorter-than-5-second, or longer-than-30-second files with a validation error. Do not persist metadata or report success for rejected audio.
 
 Synchronous inspection keeps the acceptance decision atomic from the guest's perspective and avoids an accepted-but-not-yet-valid media state. Enforce upload size and execution time limits to prevent resource exhaustion.
 
@@ -182,7 +183,7 @@ Short-lived signed URL for private object
 Admin browser --> private object storage
 ```
 
-The listing endpoint returns metadata, not public storage URLs. A media-access endpoint verifies admin authentication, event ownership, and the media's event association through GuestSession before generating a short-lived signed URL. The backend does not proxy media in the normal MVP flow. Signed URL lifetime and provider-specific options remain open.
+The listing endpoint returns metadata, not public storage URLs. A media-access endpoint verifies admin authentication, event ownership, and the media's event association through GuestSession before generating a short-lived signed URL. The backend does not proxy media in the normal MVP flow. Signed URL lifetime resolved 2026-08-15 (owner): 900 seconds (15 minutes), as implemented.
 
 ## 11. Admin event constraint
 
@@ -241,13 +242,13 @@ Exact codes, status choices, and API shapes belong in the next API Contract. Err
 
 ## 15. Open decisions requiring human approval
 
-1. Select Supabase project/region and hosting platform for the same-origin Next.js deployment.
-2. Set exact rate limits. Topology resolved 2026-08-15 (owner): session-create DB-backed; photo/voice per-instance in-memory accepted on serverless (ADR-008). Exact values remain env-configurable defaults.
+1. Hosting platform resolved (2026-08): Vercel, same-origin. Supabase project/region ratified 2026-08-15 (owner): existing APAC production project in use.
+2. Exact rate limits. Resolved 2026-08-15 (owner): session-create DB-backed; photo/voice per-instance in-memory accepted on serverless (ADR-008); exact values are env-configurable defaults.
 3. Set image/audio file-size limits and supported formats. Resolved 2026-08-15 (owner): 4 MB caps (photo and voice) sized to the hosting request-body limit; formats JPEG/PNG/WebP/GIF, WebM/OGG/MP4 audio.
-4. Confirm server-side `ffprobe`/FFmpeg availability in the hosting runtime.
-5. Decide `public_id` format and `storage_key` format.
-6. Approve API contract/error-code details, monitoring, backups, and retention policy. Retention resolved 2026-08-15 (owner): 7 days after event CLOSED, private during retention, automatic cleanup after. Mechanism approved and implemented: Vercel Cron daily → `GET /api/cron/media-cleanup` (Node runtime, `CRON_SECRET` bearer auth; API Contract §7.1); objects deleted before metadata; bounded and idempotent.
+4. Confirm server-side `ffprobe`/FFmpeg availability in the hosting runtime. Resolved by T028 (bundled `@ffprobe-installer/ffprobe`); live deployed-runtime verification is an R3 smoke item, not a design decision.
+5. Decide `public_id` format and `storage_key` format. Resolved (2026-08-15): formats per API §7; `public_id` and `storage_key` formats implemented — see §6 and API Contract.
+6. Approve API contract/error-code details, monitoring, backups, and retention policy. API contract/error-code details resolved 2026-08: implemented. Retention resolved 2026-08-15 (owner): 7 days after event CLOSED, private during retention, automatic cleanup after. Mechanism approved and implemented: Vercel Cron daily → `GET /api/cron/media-cleanup` (Node runtime, `CRON_SECRET` bearer auth; API Contract §7.1); objects deleted before metadata; bounded and idempotent. Monitoring and backups resolved 2026-08-15 (owner): structured API logs + Vercel logs, no Sentry/OTel/custom alerting; Supabase managed backups, no custom backup/restore system for MVP.
 
 ## 16. Exact next implementation step
 
-Next: write the API Contract, then create the minimal Next.js scaffold, Supabase configuration, migration test harness, and private Storage bucket policy. Do not implement guest/admin features before the API Contract is approved.
+Implemented. Production release (R3: Vercel deploy, env vars, live verification) is the remaining step, pending owner go-ahead.
