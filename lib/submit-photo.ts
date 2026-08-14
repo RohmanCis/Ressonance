@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 
+import { logApiError } from "@/lib/api-log";
 import type { GuestSession } from "@/lib/guest-session";
 import {
   photoExtension,
@@ -124,13 +125,11 @@ async function tryDelete(storage: PhotoStorage, key: string): Promise<void> {
   try {
     await storage.delete(key);
   } catch (err) {
-    console.error(
-      JSON.stringify({
-        event: "photo_cleanup_failed",
-        storageKey: key,
-        error: String(err),
-      }),
-    );
+    logApiError({
+      event: "photo_cleanup_failed",
+      error: err,
+      context: { storageKey: key },
+    });
   }
 }
 

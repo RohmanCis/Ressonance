@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 import { createAdminEvent, listAdminEvents } from "@/lib/admin-event-repo";
+import { logApiError } from "@/lib/api-log";
 import { getServerConfig } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
@@ -54,7 +55,8 @@ export async function POST(request: NextRequest) {
   let body: unknown;
   try {
     body = await request.json();
-  } catch {
+  } catch (err) {
+    logApiError({ event: "request_body_parse_failed", request, code: "INVALID_INPUT", error: err });
     return NextResponse.json(
       { error: { code: "INVALID_INPUT", message: "Malformed JSON request body." } },
       { status: 400 },
@@ -100,7 +102,8 @@ export async function POST(request: NextRequest) {
       { event: result.event, public_url: publicUrl(result.event.public_id) },
       { status: 201 },
     );
-  } catch {
+  } catch (err) {
+    logApiError({ event: "admin_create_event_failed", request, code: "INTERNAL_ERROR", error: err });
     return NextResponse.json(
       { error: { code: "INTERNAL_ERROR", message: "Internal server error." } },
       { status: 500 },
@@ -115,7 +118,7 @@ export async function POST(request: NextRequest) {
  * ownership is enforced by filtering on the authenticated admin id. No DB
  * primary key or admin_id is returned.
  */
-export async function GET() {
+export async function GET(request?: NextRequest) {
   const supabase = await createClient();
   const { data: auth, error } = await supabase.auth.getUser();
   if (error || !auth.user) {
@@ -129,7 +132,8 @@ export async function GET() {
   try {
     const events = await listAdminEvents(db, auth.user.id);
     return NextResponse.json({ events }, { status: 200 });
-  } catch {
+  } catch (err) {
+    logApiError({ event: "admin_list_events_failed", request, code: "INTERNAL_ERROR", error: err });
     return NextResponse.json(
       { error: { code: "INTERNAL_ERROR", message: "Internal server error." } },
       { status: 500 },

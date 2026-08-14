@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
 import { findAdminEvent } from "@/lib/admin-event-repo";
+import { logApiError } from "@/lib/api-log";
 import { getServerConfig } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
@@ -19,7 +20,7 @@ function publicUrl(publicId: string): string {
  * used to render/share the QR; no QR entity or storage data is created/returned.
  */
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ public_id: string }> },
 ) {
   const { public_id } = await context.params;
@@ -47,7 +48,8 @@ export async function GET(
       { public_id: event.public_id, public_url: publicUrl(event.public_id) },
       { status: 200 },
     );
-  } catch {
+  } catch (err) {
+    logApiError({ event: "admin_access_failed", request, code: "INTERNAL_ERROR", error: err });
     return NextResponse.json(
       { error: { code: "INTERNAL_ERROR", message: "Internal server error." } },
       { status: 500 },

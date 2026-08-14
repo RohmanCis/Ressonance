@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
 import { closeAdminEvent, findAdminEvent } from "@/lib/admin-event-repo";
+import { logApiError } from "@/lib/api-log";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
@@ -14,7 +15,7 @@ export const runtime = "nodejs";
  * to 409 EVENT_ALREADY_CLOSED.
  */
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ public_id: string }> },
 ) {
   const { public_id } = await context.params;
@@ -53,7 +54,8 @@ export async function POST(
     }
 
     return NextResponse.json({ event: result.event }, { status: 200 });
-  } catch {
+  } catch (err) {
+    logApiError({ event: "admin_close_event_failed", request, code: "INTERNAL_ERROR", error: err });
     return NextResponse.json(
       { error: { code: "INTERNAL_ERROR", message: "Internal server error." } },
       { status: 500 },

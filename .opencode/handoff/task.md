@@ -1,36 +1,54 @@
-# T031 — Task: Admin Event Index UI (Phase 2)
+# Task: R2 — Structured error logging (API layer)
 
-Read `.opencode/handoff/result.md` (API lane, complete) + `docs/UI_UX.md` §5.5 (new, owner-approved) + `docs/UI_DESIGN.md` (admin shell §10, tokens, spacing, motion) before work.
+Satisfy TECHNICAL_DESIGN.md:219 — "Errors must be logged with correlation IDs, without cookies, raw media, or secrets." NO migrations. NO response-body/header/status changes. NO new deps. NO middleware.ts/instrumentation.ts.
 
-## Goal
-`/admin` = authenticated Admin Event Index. API exists: `GET /api/admin/events` → `{ events: [ {public_id,title,status,created_at,closed_at} ] }`, newest-first, owned only. 401 AUTHENTICATION_REQUIRED when unauthenticated.
+## Context (recon)
+- ~21 route catch blocks are bare `catch {` — error discarded, nothing logged, all return `{ error: { code: "INTERNAL_ERROR", message: "Internal server error." } }` 500. 13 route files (4 guest + 9 admin), all `runtime = "nodejs"`, Next 15.
+- Only existing logs: `lib/submit-photo.ts:127-133` and `lib/submit-voice-note.ts:139-145` (`console.error(JSON.stringify({ event: "photo_cleanup_failed"|"voice_note_cleanup_failed", storageKey, error: String(err) }))`).
+- No logger util, no request-id usage, no log-assertion tests anywhere.
 
-## Required behavior (UI_UX §5.5)
-- Unauthenticated `/admin` → redirect `/admin/sign-in`.
-- Authenticated: list admin's events; ACTIVE visually prominent; CLOSED/history accessible.
-- Per event: Open action → `/admin/events/{public_id}` (existing dashboard, unchanged).
-- ACTIVE event: Access/QR action → `/admin/events/{public_id}/access` (existing page, unchanged).
-- Create new event action → `/admin/events/new` (existing page, unchanged).
-- Empty state: no events → point to creation.
-- States: loading; ready; empty; unauth redirect; network/unexpected failure with deliberate retry.
-- After successful sign-in → land on `/admin` (update existing sign-in transition if it points elsewhere).
-- `ACTIVE_EVENT_EXISTS` recovery must resolve to the index (no forced re-sign-in). Note: `components/admin/admin-create-event.tsx` already links "Find existing event" → `/admin`; once `/admin` is the real index this resolves naturally — verify, don't hack.
+## Changes
 
-## Implementation notes
-- `app/admin/page.tsx` currently `redirect("/admin/sign-in")`. Replace: server-side auth check (follow existing admin page auth pattern — inspect `app/admin/events/new/page.tsx` or `components/admin/admin-ui.tsx` AuthGate usage), then render new client component (e.g. `components/admin/admin-event-index.tsx`) that fetches `GET /api/admin/events` and renders.
-- Reuse existing design system primitives from `components/admin/admin-ui.tsx` (Shell, Status, Button) + shadcn/ui; follow UI_DESIGN tokens: admin heading 24/32 650, controls 44px, visible labels, tabular figures for timestamps, max-width 90rem, coral primary for ACTIVE prominence, quiet memory-table direction.
-- Accessibility: keyboard reachable actions, focus-visible rings consistent with existing admin pages, status announced, semantic list/headings.
-- Responsive: desktop-friendly, usable on small screens (per UI_UX §2).
-- Copy: grounded, normal wording (existing admin pages' tone: "Start a fresh page in the archive." etc.). Keep consistent.
+### 1. New `lib/api-log.ts`
+```ts
+export function correlationIdFrom(headers: Headers): string  // x-request-id ?? x-vercel-id ?? crypto.randomUUID()
+export function logApiError(entry: {
+  event: string;            // stable snake_case event name
+  request: Request | NextRequest;
+  code?: string;            // response error code, e.g. "INTERNAL_ERROR"
+  error: unknown;           // message + stack extracted safely
+  context?: Record<string, unknown>;  // extra safe scalars (e.g. storageKey)
+}): void
+```
+- Emits ONE line: `console.error(JSON.stringify({ timestamp: ISO, level: "error", event, correlationId, method, path, code, message, stack?, ...context }))`.
+- message = `error instanceof Error ? error.message : String(error)`; stack only for `Error` instances.
+- path = `request.url` parsed to pathname only. NEVER log headers, cookies, body, tokens, media. Keep module dependency-free (server-side; no "server-only" import needed unless types require — plain `Request` typing suffices).
 
-## Files allowed
-`app/admin/page.tsx`, new `components/admin/admin-event-index.tsx`, `components/admin/admin-sign-in.tsx` (only if post-sign-in target needs updating), `components/admin/admin-create-event.tsx` (only if recovery link needs fixing), new e2e spec(s). Nothing else; no API/canonical/guest changes.
+### 2. Routes — all 13 files, every `catch` that returns 500 INTERNAL_ERROR
+- Change bare `catch {` → `catch (err) {` + `logApiError({ event: "<descriptive_snake_case>", request, code: "INTERNAL_ERROR", error: err })` immediately before the unchanged 500 response.
+- Event names: route+action specific, e.g. `session_create_failed`, `session_lookup_failed`, `photo_submit_failed`, `voice_note_submit_failed`, `event_lookup_failed`, `admin_sign_in_failed`, `admin_list_events_failed`, `admin_create_event_failed`, `admin_event_detail_failed`, `admin_close_event_failed`, `admin_access_failed`, `admin_submissions_failed`, `admin_media_access_failed`, `admin_media_download_failed`, `rate_limit_check_failed` (session route DB limiter catch), `request_body_parse_failed` (body-parse catches photos/voice/sign-in — these may return 400; still log with their actual code).
+- Response bodies, statuses, headers, check order: UNCHANGED. Guest + admin behavior contract-identical.
+- Include `lib/session-create-rate-limit.ts` fail-closed path caller (session route catch at ~line 62) — event `rate_limit_check_failed`.
 
-## e2e tests (required)
-Inspect `e2e/` for existing admin auth pattern (how specs sign in / seed events; mirror it — see smoke + qr-qa specs). Add spec covering: sign-in → lands on index; ACTIVE event visible + prominent; CLOSED event visible; Open navigates to dashboard; Access/QR navigates for ACTIVE; Create navigates + creation succeeds end-to-end if existing specs allow; ACTIVE_EVENT_EXISTS recovery link → index, NOT sign-in; unauthenticated /admin → sign-in.
+### 3. Migrate cleanup logs
+`lib/submit-photo.ts` + `lib/submit-voice-note.ts`: replace raw console.error with `logApiError({ event: "photo_cleanup_failed"|"voice_note_cleanup_failed", request, error: err, context: { storageKey } })` — keep event names. If those lib functions lack a request reference, pass request from their route callers OR keep minimal context without method/path (make `request` optional in the entry type; omit method/path when absent). Choose the smaller diff.
 
-## Validation (run, report)
-`npx tsc --noEmit`; `npx vitest run` (266 baseline, all green); `npm run lint` (0 new — baseline 1 pre-existing error e2e/print-qa.spec.ts:34 + 7 warnings); `npx playwright test <your spec>` (+ confirm existing smoke/qr-qa still pass: `npx playwright test e2e/smoke.spec.ts e2e/qr-qa.spec.ts` — adjust paths to actual files found).
+### 4. Tests
+A) `lib/api-log.test.ts` (unit, spy `console.error`):
+1. Emits single JSON line with timestamp, level "error", event, method, pathname-only path, code, message, stack for Error.
+2. correlationId precedence: x-request-id > x-vercel-id > generated UUID.
+3. Redaction: cookie header value and query string never appear in output.
+4. Non-Error thrown value → message = String(value), no stack field; no throw on `undefined`.
+B) Route test additions (extend ONE existing suite — session route test): mock limiter/DB to throw → assert response still exact 500 INTERNAL_ERROR body AND console.error spy captured one parsable JSON line containing `rate_limit_check_failed` + correlationId. Restore spies.
 
-## On finish
-Rewrite `.opencode/handoff/result.md`: status, files changed, validation, SSOT conflict check, next step. Report assumptions.
+## Out of scope (hard)
+- Migrations/DB, R3/deploy, 4xx logging (expected client outcomes), pino/winston/otel, response headers (incl. exposing correlation id to clients), middleware, canonical doc edits, commits.
+
+## Validation (run + report)
+- `npx tsc --noEmit`
+- `npx vitest run` (expect 273 + ~5 new, all PASS)
+- `npm run lint` (baseline 1 error + 7 warnings; 0 new)
+- `git diff --check`
+
+## Handoff
+Write `.opencode/handoff/result.md`: status, files changed, validation, blockers, SSOT notes, next step.

@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
 import { findAdminEvent } from "@/lib/admin-event-repo";
+import { logApiError } from "@/lib/api-log";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
@@ -13,7 +14,7 @@ export const runtime = "nodejs";
  * shape; the DB PK never leaks.
  */
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ public_id: string }> },
 ) {
   const { public_id } = await context.params;
@@ -49,7 +50,8 @@ export async function GET(
       },
       { status: 200 },
     );
-  } catch {
+  } catch (err) {
+    logApiError({ event: "admin_event_detail_failed", request, code: "INTERNAL_ERROR", error: err });
     return NextResponse.json(
       { error: { code: "INTERNAL_ERROR", message: "Internal server error." } },
       { status: 500 },

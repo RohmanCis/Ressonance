@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
 import { resolveAuthorizedMedia } from "@/lib/admin-media-repo";
+import { logApiError } from "@/lib/api-log";
 import { getServerConfig } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
@@ -15,7 +16,7 @@ export const runtime = "nodejs";
  * returns the signed URL as JSON and never proxies the media.
  */
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ media_id: string }> },
 ) {
   const { media_id } = await context.params;
@@ -51,7 +52,8 @@ export async function GET(
       case "ok":
         return NextResponse.redirect(result.url, { status: 302 });
     }
-  } catch {
+  } catch (err) {
+    logApiError({ event: "admin_media_download_failed", request, code: "INTERNAL_ERROR", error: err });
     return NextResponse.json(
       { error: { code: "INTERNAL_ERROR", message: "Internal server error." } },
       { status: 500 },

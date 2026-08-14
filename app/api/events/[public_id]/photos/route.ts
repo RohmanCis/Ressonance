@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getServerConfig } from "@/lib/config";
 import { getPgPool } from "@/lib/db";
+import { logApiError } from "@/lib/api-log";
 import { clearGuestSessionCookie, GUEST_SESSION_COOKIE } from "@/lib/guest-session";
 import {
   extractBoundary,
@@ -198,7 +199,8 @@ export async function POST(
             );
           }
           bytes = photo;
-        } catch {
+        } catch (err) {
+          logApiError({ event: "request_body_parse_failed", request, code: "INVALID_REQUEST", error: err });
           return NextResponse.json(
             { error: { code: "INVALID_REQUEST", message: "Malformed multipart request body." } },
             { status: 400 },
@@ -249,7 +251,8 @@ export async function POST(
         }
       }
     }
-  } catch {
+  } catch (err) {
+    logApiError({ event: "photo_submit_failed", request, code: "INTERNAL_ERROR", error: err });
     return NextResponse.json(
       { error: { code: "INTERNAL_ERROR", message: "Internal server error." } },
       { status: 500 },

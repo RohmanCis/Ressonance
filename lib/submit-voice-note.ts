@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 
+import { logApiError } from "@/lib/api-log";
 import type { AudioInspector } from "@/lib/audio-inspector";
 import {
   ffprobeFormatToMime,
@@ -136,13 +137,11 @@ async function tryDelete(storage: VoiceNoteStorage, key: string): Promise<void> 
   try {
     await storage.delete(key);
   } catch (err) {
-    console.error(
-      JSON.stringify({
-        event: "voice_note_cleanup_failed",
-        storageKey: key,
-        error: String(err),
-      }),
-    );
+    logApiError({
+      event: "voice_note_cleanup_failed",
+      error: err,
+      context: { storageKey: key },
+    });
   }
 }
 

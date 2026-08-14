@@ -5,6 +5,7 @@ import {
   findEventByPublicId,
   listSubmissions,
 } from "@/lib/admin-media-repo";
+import { logApiError } from "@/lib/api-log";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
@@ -64,7 +65,8 @@ export async function GET(
 
     const submissions = await listSubmissions(db, event.id, guestName);
     return NextResponse.json({ submissions }, { status: 200 });
-  } catch {
+  } catch (err) {
+    logApiError({ event: "admin_submissions_failed", request, code: "INTERNAL_ERROR", error: err });
     return NextResponse.json(
       { error: { code: "INTERNAL_ERROR", message: "Internal server error." } },
       { status: 500 },

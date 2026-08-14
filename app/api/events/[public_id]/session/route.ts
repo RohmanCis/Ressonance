@@ -7,18 +7,13 @@ import {
   GUEST_SESSION_COOKIE,
 } from "@/lib/guest-session";
 import { getSessionUsage, type UsageRepo } from "@/lib/get-session-usage";
-import {
-  FixedWindowRateLimiter,
-  loadRateLimitConfig,
-  rateLimitIdentity,
-} from "@/lib/rate-limit";
+import { loadRateLimitConfig, rateLimitIdentity } from "@/lib/rate-limit";
+import { logApiError } from "@/lib/api-log";
+import { checkSessionCreateRateLimit } from "@/lib/session-create-rate-limit";
 import { startGuestSession, type SessionRepo } from "@/lib/start-guest-session";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 export const runtime = "nodejs";
-
-// Session-creation rate limit (API Contract §3 Rate limits / ADR-008).
-const sessionRateLimiter = new FixedWindowRateLimiter(loadRateLimitConfig());
 
 /**
  * POST /api/events/{public_id}/session — Start GuestSession (API Contract 6.2).
@@ -60,8 +55,18 @@ export async function POST(
     );
   }
 
-  // Endpoint-level rate limit before any persistence work.
-  const rate = sessionRateLimiter.check(rateLimitKey(request));
+  // Endpoint-level rate limit before any persistence work (API Contract §3 /
+  // ADR-008). DB-backed fixed-window counter; fail-closed on DB error.
+  let rate;
+  try {
+    rate = await checkSessionCreateRateLimit(rateLimitKey(request), loadRateLimitConfig());
+  } catch (err) {
+    logApiError({ event: "rate_limit_check_failed", request, code: "INTERNAL_ERROR", error: err });
+    return NextResponse.json(
+      { error: { code: "INTERNAL_ERROR", message: "Internal server error." } },
+      { status: 500 },
+    );
+  }
   if (!rate.allowed) {
     return NextResponse.json(
       { error: { code: "RATE_LIMITED", message: "Too many session requests. Try again shortly." } },
@@ -72,7 +77,8 @@ export async function POST(
   let raw: string;
   try {
     raw = await request.text();
-  } catch {
+  } catch (err) {
+    logApiError({ event: "request_body_parse_failed", request, code: "INVALID_REQUEST", error: err });
     return NextResponse.json(
       { error: { code: "INVALID_REQUEST", message: "Malformed request body." } },
       { status: 400 },
@@ -85,7 +91,8 @@ export async function POST(
   } else {
     try {
       body = JSON.parse(raw);
-    } catch {
+    } catch (err) {
+      logApiError({ event: "request_body_parse_failed", request, code: "INVALID_REQUEST", error: err });
       return NextResponse.json(
         { error: { code: "INVALID_REQUEST", message: "Malformed JSON request body." } },
         { status: 400 },
@@ -165,7 +172,8 @@ export async function POST(
         return response;
       }
     }
-  } catch {
+  } catch (err) {
+    logApiError({ event: "session_create_failed", request, code: "INTERNAL_ERROR", error: err });
     return NextResponse.json(
       { error: { code: "INTERNAL_ERROR", message: "Internal server error." } },
       { status: 500 },
@@ -279,7 +287,8 @@ export async function GET(
       case "ok":
         return NextResponse.json(result.body, { status: 200 });
     }
-  } catch {
+  } catch (err) {
+    logApiError({ event: "session_lookup_failed", request, code: "INTERNAL_ERROR", error: err });
     return NextResponse.json(
       { error: { code: "INTERNAL_ERROR", message: "Internal server error." } },
       { status: 500 },

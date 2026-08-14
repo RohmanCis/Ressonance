@@ -101,8 +101,42 @@ vi.mock("@/lib/rate-limit", async (importOriginal) => {
   };
 });
 
-import { POST, GET } from "./route";
+// The route now awaits the DB-backed limiter (lib/session-create-rate-limit.ts).
+// Replicate the previous in-memory fixed-window semantics here so the 429 shape,
+// Retry-After, per-identity isolation, and global-bucket behavior stay asserted
+// without a live DB (real DB coverage lives in the integration suite).
+vi.mock("@/lib/session-create-rate-limit", () => {
+  const buckets = new Map<string, { windowStart: number; count: number }>();
+  return {
+    checkSessionCreateRateLimit: vi.fn(
+      async (
+        key: string,
+        config: { max: number; windowMs: number },
+        now: number = Date.now(),
+      ) => {
+        const current = buckets.get(key);
+        if (!current || now >= current.windowStart + config.windowMs) {
+          buckets.set(key, { windowStart: now, count: 1 });
+          return { allowed: true, retryAfterSeconds: 0 };
+        }
+        if (current.count < config.max) {
+          current.count += 1;
+          return { allowed: true, retryAfterSeconds: 0 };
+        }
+        return {
+          allowed: false,
+          retryAfterSeconds: Math.max(
+            1,
+            Math.ceil((current.windowStart + config.windowMs - now) / 1000),
+          ),
+        };
+      },
+    ),
+  };
+});
 
+import { checkSessionCreateRateLimit } from "@/lib/session-create-rate-limit";
+import { POST, GET } from "./route";
 const params = Promise.resolve({ public_id: "evt-active" });
 
 function makeRequest(overrides: {
@@ -235,6 +269,29 @@ describe("POST /api/events/{public_id}/session", () => {
     const c = await POST(makeRequest({ ip: "203.0.113.3" }), { params });
     expect([a.status, b.status, c.status]).toEqual([201, 201, 429]);
     vi.stubEnv("TRUSTED_PROXY", "1");
+  });
+
+  it("returns exact 500 and logs rate_limit_check_failed when the DB limiter throws", async () => {
+    // Fail-closed: a limiter DB error must not leak internals, must return the
+    // exact INTERNAL_ERROR body, and must emit one structured log line with a
+    // correlationId (TECHNICAL_DESIGN.md:219).
+    vi.mocked(checkSessionCreateRateLimit).mockRejectedValueOnce(new Error("rate-limit db down"));
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const res = await POST(makeRequest({ ip: "203.0.113.77" }), { params });
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({
+      error: { code: "INTERNAL_ERROR", message: "Internal server error." },
+    });
+
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    const line = JSON.parse(errorSpy.mock.calls[0][0] as string);
+    expect(line.event).toBe("rate_limit_check_failed");
+    expect(line.correlationId).toBeTruthy();
+    expect(line.path).toBe("/api/events/evt-active/session");
+    expect(line.message).toBe("rate-limit db down");
+
+    errorSpy.mockRestore();
   });
 });
 

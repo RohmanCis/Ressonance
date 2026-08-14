@@ -22,6 +22,7 @@ Source of Truth: PRD v1.3 + Domain Model + ERD (all locked)
 | session_token | Separate from PK — credential vs identity separation |
 | public_ref | Opaque non-credential GuestSession grouping identifier; separate from PK and `session_token`; exposed in admin submission listings |
 | Session expiration | `expires_at` column on `guest_sessions`; 30-minute lifetime from creation |
+| Session-create rate limit | `session_create_rate_limits` fixed-window counters (ADR-008); service-role/pg only, no FK/RLS |
 | original_filename | Dropped — no business value for browser-captured media |
 
 ---
@@ -161,6 +162,25 @@ CREATE TABLE voice_notes (
     CONSTRAINT uq_voice_notes_one_per_session
         UNIQUE (guest_session_id)
 );
+
+
+-- -----------------------------------------------------------------------------
+-- 6. session_create_rate_limits (migration 0003)
+-- -----------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS session_create_rate_limits (
+    identity_key  TEXT        NOT NULL,
+    window_start  TIMESTAMPTZ NOT NULL,
+    hit_count     INTEGER     NOT NULL,
+    PRIMARY KEY (identity_key, window_start)
+);
+
+-- Fixed-window rate-limit counters for GuestSession creation (ADR-008).
+-- Windows are aligned to the epoch; the backend increments hit_count
+-- atomically (INSERT ... ON CONFLICT DO UPDATE SET hit_count = hit_count + 1)
+-- so the limit holds across application instances. Stale windows (older than
+-- one hour) are swept by the same statement. Service-role / pg-only table:
+-- no FK, no RLS; guests never read it.
 ```
 
 ---
@@ -177,6 +197,7 @@ CREATE TABLE voice_notes (
 | `guest_sessions` | session_token unique | UNIQUE | DB |
 | `guest_sessions` | public_ref unique | UNIQUE | DB |
 | `voice_notes` | max 1 per session | UNIQUE | DB |
+| `session_create_rate_limits` | (identity_key, window_start) PK | PRIMARY KEY | DB |
 | `photos` | max 5 per session | Count check in transaction | Backend |
 | All FK | no cascade delete | ON DELETE RESTRICT | DB |
 | `photos.file_size` | positive | CHECK | DB |
@@ -198,6 +219,7 @@ CREATE TABLE voice_notes (
 | `idx_guest_sessions_event_id` | `guest_sessions` | `event_id` | INDEX | Dashboard: event → sessions |
 | `idx_photos_guest_session_id` | `photos` | `guest_session_id` | INDEX | Photo count per session |
 | `uq_voice_notes_one_per_session` | `voice_notes` | `guest_session_id` | UNIQUE | Max 1 voice note |
+| `session_create_rate_limits_pkey` | `session_create_rate_limits` | `(identity_key, window_start)` | PRIMARY KEY | Rate-limit counter upsert (ADR-008) |
 
 ---
 

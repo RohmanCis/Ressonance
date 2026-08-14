@@ -1,10 +1,11 @@
 /**
  * Minimal server-side rate limiting (ADR-008).
  *
- * Fixed-window, in-memory counter keyed by client identifier. Suitable for the
- * single-instance MVP default; swap for a shared/DB-backed limiter only when a
- * multi-instance topology is approved. Quota and window are configurable via
- * environment variables, not a product-policy invention.
+ * Fixed-window, in-memory counter keyed by client identifier. Session creation
+ * uses the authoritative DB-backed limiter in lib/session-create-rate-limit.ts;
+ * photo/voice-note submission still use this in-memory limiter. Quota and
+ * window are configurable via environment variables, not a product-policy
+ * invention.
  *
  * ponytail: in-memory state is not shared across processes. Add a shared
  * (managed or DB-backed) store when the deployment requires multiple
@@ -12,6 +13,7 @@
  * horizontally and are recycled dynamically — this limiter is per-instance
  * only (defense-in-depth, not cross-instance authoritative). Accepted MVP
  * limitation per ADR-008; do not rely on it for global quota enforcement.
+ * (Session creation already migrated to the DB-backed limiter, migration 0003.)
  */
 
 export interface RateLimitConfig {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { logApiError } from "@/lib/api-log";
 import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -35,7 +36,8 @@ export async function POST(request: NextRequest) {
   let raw: string;
   try {
     raw = await request.text();
-  } catch {
+  } catch (err) {
+    logApiError({ event: "request_body_parse_failed", request, code: "INVALID_REQUEST", error: err });
     return NextResponse.json(
       { error: { code: "INVALID_REQUEST", message: "Malformed request body." } },
       { status: 400 },
@@ -48,7 +50,8 @@ export async function POST(request: NextRequest) {
   } else {
     try {
       body = JSON.parse(raw);
-    } catch {
+    } catch (err) {
+      logApiError({ event: "request_body_parse_failed", request, code: "INVALID_REQUEST", error: err });
       return NextResponse.json(
         { error: { code: "INVALID_REQUEST", message: "Malformed JSON request body." } },
         { status: 400 },
@@ -64,19 +67,27 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: credentials.email,
-    password: credentials.password,
-  });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: credentials.email,
+      password: credentials.password,
+    });
 
-  if (error || !data.user) {
+    if (error || !data.user) {
+      return NextResponse.json(
+        { error: { code: "AUTHENTICATION_FAILED", message: "Invalid email or password." } },
+        { status: 401 },
+      );
+    }
+
+    return NextResponse.json({ admin: { email: data.user.email ?? credentials.email } }, { status: 200 });
+  } catch (err) {
+    logApiError({ event: "admin_sign_in_failed", request, code: "INTERNAL_ERROR", error: err });
     return NextResponse.json(
-      { error: { code: "AUTHENTICATION_FAILED", message: "Invalid email or password." } },
-      { status: 401 },
+      { error: { code: "INTERNAL_ERROR", message: "Internal server error." } },
+      { status: 500 },
     );
   }
-
-  return NextResponse.json({ admin: { email: data.user.email ?? credentials.email } }, { status: 200 });
 }
