@@ -53,3 +53,6 @@ playwright-report/
 
 # playwright mcp artifacts
 .playwright-mcp/
+
+# playwright print-qa artifacts (generated, not source)
+e2e/*.pdf
