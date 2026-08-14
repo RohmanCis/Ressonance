@@ -47,9 +47,9 @@ test("QR renders, encodes exact public URL, copy/print intact (desktop)", async 
   const urlInput = page.locator("#public-url");
   await expect(urlInput).toHaveValue(EXPECTED_URL);
 
-  // Copy + print buttons present.
+  // Copy + print buttons present (print variants live behind the Print menu).
   await expect(page.getByRole("button", { name: "Copy link" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Print access card" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Print", exact: true })).toBeVisible();
 
   // No private/secret/signed URL anywhere on page.
   const bodyText = await page.locator("body").innerText();
