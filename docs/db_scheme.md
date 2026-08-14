@@ -275,7 +275,7 @@ ARCHIVE→ status = 'ARCHIVED', closed_at = (tetap timestamp dari CLOSE)
 | `event_id` di `photos` / `voice_notes` | Tidak denormalisasi — akses via `guest_sessions.event_id` |
 | `original_filename` | Tidak ada business value untuk media dari kamera browser |
 | `archived_at` | `ARCHIVED` belum punya behavior aktif di MVP |
-| Media retention / media `expires_at` | Out of MVP scope |
+| Media retention / media `expires_at` | Policy resolved 2026-08-15 (owner): retain media 7 days after event CLOSED, then automatic cleanup (cron endpoint, API Contract §7.1). No new column required — cleanup derives eligibility from `events.closed_at` + `events.status`; deletes `photos`/`voice_notes` rows only |
 | Soft delete (`deleted_at`) | Tidak ada FR delete di MVP |
 
 ---

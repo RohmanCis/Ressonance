@@ -33,9 +33,10 @@ export interface VoiceNoteFileConfig {
 export function loadVoiceNoteFileConfig(
   env: Partial<Record<string, string | undefined>> = process.env,
 ): VoiceNoteFileConfig {
-  const max = Number(env.VOICE_NOTE_MAX_SIZE_BYTES ?? 25_000_000);
+  // Default fits Vercel's 4.5 MB request-body limit (owner decision 2026-08-15).
+  const max = Number(env.VOICE_NOTE_MAX_SIZE_BYTES ?? 4_000_000);
   return {
-    maxSizeBytes: Number.isFinite(max) && max > 0 ? max : 25_000_000,
+    maxSizeBytes: Number.isFinite(max) && max > 0 ? max : 4_000_000,
   };
 }
 

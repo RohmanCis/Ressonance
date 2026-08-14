@@ -242,11 +242,11 @@ Exact codes, status choices, and API shapes belong in the next API Contract. Err
 ## 15. Open decisions requiring human approval
 
 1. Select Supabase project/region and hosting platform for the same-origin Next.js deployment.
-2. Set exact rate limits.
-3. Set image/audio file-size limits and supported formats.
+2. Set exact rate limits. Topology resolved 2026-08-15 (owner): session-create DB-backed; photo/voice per-instance in-memory accepted on serverless (ADR-008). Exact values remain env-configurable defaults.
+3. Set image/audio file-size limits and supported formats. Resolved 2026-08-15 (owner): 4 MB caps (photo and voice) sized to the hosting request-body limit; formats JPEG/PNG/WebP/GIF, WebM/OGG/MP4 audio.
 4. Confirm server-side `ffprobe`/FFmpeg availability in the hosting runtime.
 5. Decide `public_id` format and `storage_key` format.
-6. Approve API contract/error-code details, monitoring, backups, and retention policy.
+6. Approve API contract/error-code details, monitoring, backups, and retention policy. Retention resolved 2026-08-15 (owner): 7 days after event CLOSED, private during retention, automatic cleanup after. Mechanism approved and implemented: Vercel Cron daily → `GET /api/cron/media-cleanup` (Node runtime, `CRON_SECRET` bearer auth; API Contract §7.1); objects deleted before metadata; bounded and idempotent.
 
 ## 16. Exact next implementation step
 

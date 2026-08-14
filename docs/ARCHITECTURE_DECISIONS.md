@@ -70,12 +70,14 @@ Date: 2026-08-11
 
 ## ADR-008 — Minimal rate limiting
 
-**Status:** Locked requirement; values/provider open  
-**Decision:** Rate-limit session creation, photo submission, and voice-note submission at the backend boundary. For a single application and PostgreSQL deployment, a DB-backed implementation is the simplest initial option; use shared external state only if topology requires it.
+**Status:** Locked requirement; topology resolved 2026-08-15 (owner); exact values remain env-configurable
+**Decision:** Rate-limit session creation, photo submission, and voice-note submission at the backend boundary. Session creation uses the DB-backed fixed-window limiter (migration 0003) — authoritative across instances. Photo and voice-note submission use per-instance in-memory fixed-window limiters.
 
 **Reason:** Protects sensitive endpoints without introducing infrastructure before need.
 
-**Open:** Exact windows, quotas, identity keys, trusted proxy behavior, and provider.
+**Owner acceptance (2026-08-15):** On Vercel serverless, the photo/voice in-memory limiters are per-instance only (defense-in-depth, not cross-instance authoritative). Accepted as an MVP limitation for this release; DB-backed limiting is NOT extended to photo/voice.
+
+**Open:** Exact windows, quotas, identity keys, trusted proxy behavior.
 
 ## ADR-009 — No standalone project context document
 

@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
  * ownership is enforced by filtering on the authenticated admin id. No DB
  * primary key or admin_id is returned.
  */
-export async function GET(request?: NextRequest) {
+export async function GET(request: NextRequest) {
   const supabase = await createClient();
   const { data: auth, error } = await supabase.auth.getUser();
   if (error || !auth.user) {

@@ -791,11 +791,11 @@ To be decided at the technical design stage, after ERD and architecture are defi
 - Exact API design.
 - Exact database schema.
 - Exact rate-limit values.
-- Exact file-size limits.
-- Supported image formats.
-- Supported audio formats.
+- ~~Exact file-size limits.~~ Resolved 2026-08-15 (owner): 4 MB per upload (photo and voice), sized to the hosting platform's request-body limit.
+- ~~Supported image formats.~~ Resolved: JPEG/PNG/WebP/GIF.
+- ~~Supported audio formats.~~ Resolved: WebM/OGG/MP4 audio.
 - Audio inspection tool/library for server-side duration validation.
-- Media retention policy.
+- ~~Media retention policy.~~ Resolved 2026-08-15 (owner): retain media 7 days after event CLOSED, private during retention, automatic cleanup after.
 - Backup strategy.
 - Monitoring and logging.
 - Exact QR-code library.

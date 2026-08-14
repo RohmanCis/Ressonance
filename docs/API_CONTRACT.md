@@ -78,7 +78,7 @@ Event lookup remains available for a CLOSED event. Start, photo submission, and 
 
 ### Rate limits
 
-Rate limiting applies to session creation, photo submission, and voice-note submission. Exact limits and windows remain open. A limited response is:
+Rate limiting applies to session creation, photo submission, and voice-note submission. Session creation uses a DB-backed fixed-window limiter (migration 0003) that is authoritative across instances. Photo and voice-note submission use per-instance in-memory fixed-window limiters — an accepted MVP limitation on serverless (owner decision 2026-08-15): they are defense-in-depth, not cross-instance authoritative. Exact limits and windows remain configurable via environment. A limited response is:
 
 - HTTP `429`
 - Error code `RATE_LIMITED`
@@ -577,21 +577,37 @@ Invalid, corrupt, unsupported, or uninspectable audio is rejected before success
 
 - Guest uploads always use `multipart/form-data` to the backend API.
 - Backend validates actual bytes, media type, file size, and audio duration before accepting metadata.
-- Exact supported image/audio formats and size limits remain open.
+- File-size limits: photo and voice-note uploads are each capped at 4 MB by default (`PHOTO_MAX_SIZE_BYTES` / `VOICE_NOTE_MAX_SIZE_BYTES`), sized to fit the hosting platform's request-body limit (owner decision 2026-08-15). Supported formats: JPEG/PNG/WebP/GIF (photo); WebM/OGG/MP4 audio (voice note).
 - Supabase Storage uses a private bucket. Guests never receive storage URLs, signed URLs, or storage keys.
 - The backend writes the object, persists metadata, and reports success only after required persistence succeeds. Failed metadata persistence triggers cleanup of the newly written object where possible.
 - Admin preview and download both require authentication and event ownership, then use short-lived signed URLs.
 - Signed URL TTL remains open. URLs are temporary capabilities and must not be persisted or exposed in submission listings.
 
+### 7.1 Internal media cleanup (operational)
+
+```text
+GET /api/cron/media-cleanup
+```
+
+Internal operational endpoint, not a guest/admin product feature. Invoked daily by the hosting platform's cron scheduler (Vercel Cron). Never called by browsers or the product UI.
+
+**Authentication:** `Authorization: Bearer ${CRON_SECRET}`. The secret is a server-only environment variable; when it is not configured the endpoint fails closed with `500 INTERNAL_ERROR` and performs no work.
+
+**Behavior:** enforces the approved retention policy — for CLOSED events with `closed_at` older than 7 days, delete private Storage objects by `storage_key` first, then delete `photos`/`voice_notes` metadata rows. Missing/already-deleted objects are treated as success (idempotent). ACTIVE events, guest sessions, and event records are never modified. One invocation is bounded to a fixed maximum number of events per run.
+
+**Success:** `200` with a cleanup summary (`eventsScanned`, `objectsDeleted`, `photosMetadataDeleted`, `voiceNotesMetadataDeleted`).
+
+**Errors:** `401 AUTHENTICATION_REQUIRED` (bad/missing secret), `500 INTERNAL_ERROR` (any failure, including partial — partial success is never reported as full success; the next scheduled run retries). Failures are logged via structured error logging without secrets.
+
 ## 8. Unresolved API decisions
 
 1. Exact rate-limit windows, quotas, and identity keys.
-2. Image/audio file-size limits and supported formats.
+2. ~~Image/audio file-size limits and supported formats.~~ Resolved 2026-08-15: 4 MB caps, JPEG/PNG/WebP/GIF + WebM/OGG/MP4 (§7).
 3. `public_id` format.
 4. `storage_key` format.
 5. Signed URL TTL.
 6. Hosting-specific same-origin base URL and local development proxy details.
-7. Monitoring, backups, and media-retention policy.
+7. Monitoring, backups, and media-retention policy. Retention resolved 2026-08-15 (owner): retain media 7 days after event CLOSED, private during retention, automatic cleanup after. Mechanism: internal cron endpoint §7.1 (owner-approved, implemented).
 8. Schema constraint/index naming cleanup before migrations.
 
 ## 9. Next step

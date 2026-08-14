@@ -139,7 +139,7 @@ describe("GET /api/admin/events", () => {
 
   it("returns 401 AUTHENTICATION_REQUIRED without a valid session", async () => {
     getUser = { ok: false };
-    const res = await GET();
+    const res = await GET(makeRequest());
     expect(res.status).toBe(401);
     const body = await res.json();
     expect(body.error.code).toBe("AUTHENTICATION_REQUIRED");
@@ -172,7 +172,7 @@ describe("GET /api/admin/events", () => {
         admin_id: "admin-2",
       },
     ]);
-    const res = await GET();
+    const res = await GET(makeRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.events).toHaveLength(2);
@@ -191,7 +191,7 @@ describe("GET /api/admin/events", () => {
   });
 
   it("returns 200 with an empty events array when the admin has no events", async () => {
-    const res = await GET();
+    const res = await GET(makeRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toEqual({ events: [] });
@@ -199,7 +199,7 @@ describe("GET /api/admin/events", () => {
 
   it("returns 500 INTERNAL_ERROR when the db query fails", async () => {
     selectError = { message: "connection reset" };
-    const res = await GET();
+    const res = await GET(makeRequest());
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(body.error.code).toBe("INTERNAL_ERROR");

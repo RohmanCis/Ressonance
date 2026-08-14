@@ -2,11 +2,18 @@ import { describe, expect, it } from "vitest";
 
 import {
   ffprobeFormatToMime,
+  loadVoiceNoteFileConfig,
   validateVoiceNoteFile,
   VOICE_DURATION_MAX,
   VOICE_DURATION_MIN,
   voiceNoteExtension,
 } from "@/lib/audio-file";
+
+describe("loadVoiceNoteFileConfig", () => {
+  it("defaults to the Vercel-compatible 4 MB cap (owner decision 2026-08-15)", () => {
+    expect(loadVoiceNoteFileConfig({}).maxSizeBytes).toBe(4_000_000);
+  });
+});
 
 const config = { maxSizeBytes: 1000 };
 
