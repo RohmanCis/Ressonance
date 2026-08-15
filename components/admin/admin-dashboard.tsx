@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { ChevronDown, ChevronRight, Download, Image as ImageIcon, Loader2, Mic, Pause, Play, X } from "lucide-react";
 import { api, AuthGate, Button, Busy, Event, Shell, Status, Submission } from "./admin-ui";
+import { describeDownloadResponse, downloadErrorCodeFromResponse, downloadErrorMessage } from "@/lib/admin-download";
 
 const errorTextMap: Record<string, string> = {
   FORBIDDEN: "You cannot access this media.",
@@ -64,19 +65,74 @@ function groupByGuest(items: Submission[]): Group[] {
 
 const focusRing = "focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring";
 
+const downloadFileName = (item: Submission) => {
+  const m = item.mime_type.toLowerCase();
+  const ext = m.includes("png") ? "png" : m.includes("jpeg") ? "jpg" : m.includes("webm") ? "webm" : m.includes("mpeg") ? "m4a" : m.includes("quicktime") ? "mov" : "bin";
+  return `${item.type === "PHOTO" ? "photo" : "voice-note"}-${item.created_at.slice(0, 10)}.${ext}`;
+};
+
+function useDownload(item: Submission) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const inFlight = useRef(false);
+  const start = useCallback(async () => {
+    if (inFlight.current) return; // duplicate activation prevention
+    inFlight.current = true;
+    setBusy(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/media/${item.id}/download`, { redirect: "follow" });
+      if (describeDownloadResponse(res.status) === "error") {
+        setError(downloadErrorMessage(await downloadErrorCodeFromResponse(res)));
+        return;
+      }
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = downloadFileName(item);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      setError(downloadErrorMessage());
+    } finally {
+      inFlight.current = false;
+      setBusy(false);
+    }
+  }, [item]);
+  return { busy, error, retry: start };
+}
+
 function DownloadButton({ item, name, className = "" }: { item: Submission; name: string; className?: string }) {
+  const { busy, error, retry } = useDownload(item);
   return (
-    <button
-      type="button"
-      aria-label={`Download ${typeLabel(item).toLowerCase()} from ${name}`}
-      onClick={() => {
-        window.location.href = `/api/admin/media/${item.id}/download`;
-      }}
-      className={`flex h-11 items-center gap-1.5 rounded-[10px] border border-border bg-card px-3 text-xs font-semibold text-muted-foreground transition duration-150 ease-out hover:text-foreground ${focusRing} ${className}`}
-    >
-      <Download className="h-4 w-4" aria-hidden="true" />
-      Download
-    </button>
+    <>
+      <button
+        type="button"
+        aria-label={`Download ${typeLabel(item).toLowerCase()} from ${name}`}
+        onClick={retry}
+        disabled={busy}
+        className={`flex h-11 items-center gap-1.5 rounded-[10px] border border-border bg-card px-3 text-xs font-semibold text-muted-foreground transition duration-150 ease-out hover:text-foreground disabled:cursor-not-allowed disabled:opacity-45 ${focusRing} ${className}`}
+      >
+        {busy ? <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Download className="h-4 w-4" aria-hidden="true" />}
+        {busy ? "Downloading…" : "Download"}
+      </button>
+      {error && (
+        <span className="flex w-full flex-wrap items-center justify-between gap-2 rounded-[10px] border border-destructive/40 bg-destructive/10 p-2">
+          <span role="alert" className="text-xs text-muted-foreground">
+            <span className="font-semibold">
+              {typeLabel(item)} from {name}:{" "}
+            </span>
+            {error}
+          </span>
+          <button type="button" onClick={retry} className={`min-h-11 rounded-md bg-secondary px-3 text-xs font-semibold text-secondary-foreground ${focusRing}`}>
+            Retry
+          </button>
+        </span>
+      )}
+    </>
   );
 }
 
@@ -375,6 +431,7 @@ function PreviewDialog({
   }
 
   const label = `${typeLabel(item)} from ${name}, item ${index + 1} of ${count}`;
+  const { busy: downloading, error: downloadError, retry: retryDownload } = useDownload(item);
 
   return (
     <div
@@ -405,13 +462,12 @@ function PreviewDialog({
           <div className="ml-auto flex items-center gap-2">
             <Button
               secondary
-              onClick={() => {
-                window.location.href = `/api/admin/media/${item.id}/download`;
-              }}
+              onClick={retryDownload}
+              disabled={downloading}
               className="inline-flex items-center gap-2"
             >
-              <Download className="h-4 w-4" aria-hidden="true" />
-              Download
+              {downloading ? <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Download className="h-4 w-4" aria-hidden="true" />}
+              {downloading ? "Downloading…" : "Download"}
             </Button>
             <button
               type="button"
@@ -425,6 +481,9 @@ function PreviewDialog({
           </div>
         </div>
         <div className="px-4 py-4 sm:px-6 sm:pb-6">
+          {downloadError && (
+            <Status error message={`${typeLabel(item)} from ${name}: ${downloadError}`} action={<Button secondary onClick={retryDownload}>Retry</Button>} />
+          )}
           {loading ? (
             <div role="status" className="flex h-64 items-center justify-center rounded-md bg-muted text-sm text-muted-foreground">
               <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />

@@ -62,8 +62,8 @@
   --color-recording: var(--recording);
   --color-recording-surface: var(--recording-surface);
   --color-scrim: var(--scrim);
-  --font-display: Fraunces, Georgia, Cambria, "Times New Roman", serif;
-  --font-sans: DM Sans, ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), Fraunces, Georgia, Cambria, "Times New Roman", serif;
+  --font-sans: var(--font-dm-sans), DM Sans, ui-sans-serif, system-ui, sans-serif;
   --shadow-1: 0 1px 2px var(--shadow-color);
   --shadow-2: 0 8px 24px var(--shadow-color);
   --shadow-3: 0 16px 40px var(--shadow-color);

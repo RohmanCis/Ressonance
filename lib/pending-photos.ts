@@ -72,6 +72,37 @@ export function canRetakePhoto(status: PendingStatus): boolean {
 }
 
 /**
+ * Whether an item can be deleted. Only unsent items — `pending` or `error` —
+ * can be removed; never while `uploading` (a sync is in flight) and never
+ * once `confirmed` (UI_UX §4.3-5).
+ */
+export function canDeletePhoto(status: PendingStatus): boolean {
+  return status === "pending" || status === "error";
+}
+
+/**
+ * Parse an HTTP `Retry-After` header value (seconds). A finite positive number
+ * is used as-is; missing/invalid/NaN/negative/zero/garbage falls back to 5.
+ */
+export function parseRetryAfterSeconds(headerValue: string | null): number {
+  const value = Number(headerValue);
+  return Number.isFinite(value) && value > 0 ? value : 5;
+}
+
+/**
+ * Pure reducer applying a sync result to the item identified by its stable
+ * `id` (never an array index). Deleting or retaking another item mid-sync
+ * cannot mislabel this upload's result: a removed id is a no-op.
+ */
+export function applySyncResult(
+  pending: PendingPhoto[],
+  itemId: string,
+  patch: Partial<Pick<PendingPhoto, "status" | "errorCode" | "errorMessage">>,
+): PendingPhoto[] {
+  return pending.map((p) => (p.id === itemId ? { ...p, ...patch } : p));
+}
+
+/**
  * Determine if the 401 error code means the session is expired/invalid.
  * Used to decide whether to abort sync and transition to expiry state.
  */

@@ -2,7 +2,7 @@
 
 Version: 1.1
 Status: Approved schema design  
-Reconciled 2026-08-15 — closes open technical decisions; schema applied via migrations 0001–0003.
+Reconciled 2026-08-15 — closes open technical decisions; schema applied via migrations 0001–0004.
 Source of Truth: PRD v1.3 + Domain Model + ERD (all locked)
 
 ---
@@ -23,7 +23,7 @@ Source of Truth: PRD v1.3 + Domain Model + ERD (all locked)
 | session_token | Separate from PK — credential vs identity separation |
 | public_ref | Opaque non-credential GuestSession grouping identifier; separate from PK and `session_token`; exposed in admin submission listings |
 | Session expiration | `expires_at` column on `guest_sessions`; 30-minute lifetime from creation |
-| Session-create rate limit | `session_create_rate_limits` fixed-window counters (ADR-008); service-role/pg only, no FK/RLS |
+| Session-create rate limit | `session_create_rate_limits` fixed-window counters (ADR-008); service-role/pg only — RLS enabled with no policies, PUBLIC/anon/authenticated grants revoked (migration 0004) |
 | original_filename | Dropped — no business value for browser-captured media |
 
 ---
@@ -181,7 +181,8 @@ CREATE TABLE IF NOT EXISTS session_create_rate_limits (
 -- atomically (INSERT ... ON CONFLICT DO UPDATE SET hit_count = hit_count + 1)
 -- so the limit holds across application instances. Stale windows (older than
 -- one hour) are swept by the same statement. Service-role / pg-only table:
--- no FK, no RLS; guests never read it.
+-- no FK; RLS enabled with no policies and PUBLIC/anon/authenticated grants
+-- revoked (migration 0004) — guests never read it.
 ```
 
 ---
@@ -290,4 +291,4 @@ ARCHIVE→ status = 'ARCHIVED', closed_at = (tetap timestamp dari CLOSE)
 
 ## Next Step
 
-Schema applied to live Supabase via migrations 0001–0003 (verified 2026-08). Further schema changes require an approved change to this document plus a new migration.
+Schema applied to live Supabase via migrations 0001–0004 (verified 2026-08). Further schema changes require an approved change to this document plus a new migration.

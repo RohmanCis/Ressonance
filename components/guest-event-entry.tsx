@@ -3,6 +3,8 @@
 import { ChangeEvent, FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useCamera } from "@/hooks/use-camera";
 import {
+  applySyncResult,
+  canDeletePhoto,
   canRetakePhoto,
   isEventClosedError,
   isPhotoLimitError,
@@ -10,6 +12,7 @@ import {
   isSessionError,
   localBudgetRemaining,
   nextPendingId,
+  parseRetryAfterSeconds,
   photoErrorMessage,
   PHOTO_LIMIT,
   type PendingPhoto,
@@ -238,30 +241,33 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
   }
 
   // --- Delete pending photo ---
-  function deletePhoto(index: number) {
+  // Refuse while the target item is uploading (sync in flight).
+  function deletePhoto(id: string) {
     setPendingPhotos((prev) => {
-      const item = prev[index];
-      if (item?.previewUrl) URL.revokeObjectURL(item.previewUrl);
-      return prev.filter((_, i) => i !== index);
+      const item = prev.find((p) => p.id === id);
+      if (!item || item.status === "uploading") return prev;
+      if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+      return prev.filter((p) => p.id !== id);
     });
     setReviewIndex(null);
   }
 
   // --- Retake pending photo (UI_UX §4.3-5): remove item, camera viewfinder
   // is already the ready state. No auto-upload, no session mutation.
-  function retakePhoto(index: number) {
+  function retakePhoto(id: string) {
     setPendingPhotos((prev) => {
-      const item = prev[index];
-      if (item?.previewUrl) URL.revokeObjectURL(item.previewUrl);
-      return prev.filter((_, i) => i !== index);
+      const item = prev.find((p) => p.id === id);
+      if (!item || item.status === "uploading") return prev;
+      if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+      return prev.filter((p) => p.id !== id);
     });
     setReviewIndex(null);
   }
 
   // --- Retry a single errored photo ---
-  function retryPhoto(index: number) {
+  function retryPhoto(id: string) {
     setPendingPhotos((prev) =>
-      prev.map((p, i) => (i === index ? { ...p, status: "pending", errorCode: undefined, errorMessage: undefined } : p)),
+      prev.map((p) => (p.id === id ? { ...p, status: "pending", errorCode: undefined, errorMessage: undefined } : p)),
     );
   }
 
@@ -271,16 +277,21 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
     syncAbortedRef.current = false;
     setSyncing(true);
 
-    const photos = pendingPhotosRef.current;
-    for (let i = 0; i < photos.length; i++) {
+    // Snapshot the pending ids up-front. Match by stable id (never array
+    // index) so deleting/retaking another item mid-sync cannot apply this
+    // upload's result to the wrong photo.
+    const ids = pendingPhotosRef.current
+      .filter((p) => p.status === "pending")
+      .map((p) => p.id);
+
+    for (let i = 0; i < ids.length; i++) {
       if (syncAbortedRef.current) break;
-      const item = pendingPhotosRef.current[i];
+      const itemId = ids[i];
+      const item = pendingPhotosRef.current.find((p) => p.id === itemId);
       if (!item || item.status !== "pending") continue;
 
       // Mark as uploading
-      setPendingPhotos((prev) =>
-        prev.map((p, idx) => (idx === i ? { ...p, status: "uploading" } : p)),
-      );
+      setPendingPhotos((prev) => applySyncResult(prev, itemId, { status: "uploading" }));
 
       try {
         const formData = new FormData();
@@ -295,9 +306,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
         };
 
         if (response.status === 201 && body.usage) {
-          setPendingPhotos((prev) =>
-            prev.map((p, idx) => (idx === i ? { ...p, status: "confirmed" } : p)),
-          );
+          setPendingPhotos((prev) => applySyncResult(prev, itemId, { status: "confirmed" }));
           setSession((prev) =>
             prev ? { ...prev, ...body.usage! } : prev,
           );
@@ -305,11 +314,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
           const code = body.error?.code;
           if (isSessionError(response.status, code)) {
             // Abort sync, transition to expiry.
-            setPendingPhotos((prev) =>
-              prev.map((p, idx) =>
-                idx >= i && p.status === "uploading" ? { ...p, status: "pending" } : p,
-              ),
-            );
+            setPendingPhotos((prev) => applySyncResult(prev, itemId, { status: "pending" }));
             setSyncing(false);
             handleSessionExpired();
             return;
@@ -317,52 +322,34 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
           if (isEventClosedError(response.status, code)) {
             // Mark current + stop, no retry for remaining.
             setPendingPhotos((prev) =>
-              prev.map((p, idx) =>
-                idx === i
-                  ? { ...p, status: "error", errorCode: code, errorMessage: photoErrorMessage(code) }
-                  : p,
-              ),
+              applySyncResult(prev, itemId, { status: "error", errorCode: code, errorMessage: photoErrorMessage(code) }),
             );
             break;
           }
           if (isPhotoLimitError(response.status, code)) {
             // Mark current as error, stop sync.
             setPendingPhotos((prev) =>
-              prev.map((p, idx) =>
-                idx === i
-                  ? { ...p, status: "error", errorCode: code, errorMessage: photoErrorMessage(code) }
-                  : p,
-              ),
+              applySyncResult(prev, itemId, { status: "error", errorCode: code, errorMessage: photoErrorMessage(code) }),
             );
             break;
           }
           if (isRateLimited(response.status, code)) {
-            // Pause, honor Retry-After, then resume.
-            const retryAfter = parseInt(response.headers.get("Retry-After") ?? "5", 10);
-            setPendingPhotos((prev) =>
-              prev.map((p, idx) => (idx === i ? { ...p, status: "pending" } : p)),
-            );
+            // Pause, honor Retry-After, then resume the same item.
+            const retryAfter = parseRetryAfterSeconds(response.headers.get("Retry-After"));
+            setPendingPhotos((prev) => applySyncResult(prev, itemId, { status: "pending" }));
             await new Promise((r) => setTimeout(r, retryAfter * 1000));
-            i--; // retry same index
+            i--; // retry same id
             continue;
           }
           // Generic error — mark item, continue to next.
           setPendingPhotos((prev) =>
-            prev.map((p, idx) =>
-              idx === i
-                ? { ...p, status: "error", errorCode: code, errorMessage: photoErrorMessage(code) }
-                : p,
-            ),
+            applySyncResult(prev, itemId, { status: "error", errorCode: code, errorMessage: photoErrorMessage(code) }),
           );
         }
       } catch {
         // Network error — mark item, continue.
         setPendingPhotos((prev) =>
-          prev.map((p, idx) =>
-            idx === i
-              ? { ...p, status: "error", errorMessage: photoErrorMessage() }
-              : p,
-          ),
+          applySyncResult(prev, itemId, { status: "error", errorMessage: photoErrorMessage() }),
         );
       }
     }
@@ -503,8 +490,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
                     photos={pendingPhotos}
                     onReview={(i) => setReviewIndex(i)}
                     onRetry={retryPhoto}
-                  />
-                )}
+                  />                )}
 
                 {/* Sync button */}
                 {hasPending && (
@@ -571,10 +557,10 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
           <ReviewOverlay
             photo={pendingPhotos[reviewIndex]}
             canRetake={canRetakePhoto(pendingPhotos[reviewIndex].status)}
-            canDelete={pendingPhotos[reviewIndex].status !== "confirmed"}
+            canDelete={canDeletePhoto(pendingPhotos[reviewIndex].status)}
             onClose={() => setReviewIndex(null)}
-            onRetake={() => retakePhoto(reviewIndex)}
-            onDelete={() => deletePhoto(reviewIndex)}
+            onRetake={() => retakePhoto(pendingPhotos[reviewIndex].id)}
+            onDelete={() => deletePhoto(pendingPhotos[reviewIndex].id)}
           />
         )}
       </Shell>
@@ -651,7 +637,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="min-h-screen bg-background px-5 py-8 text-foreground sm:px-8">
+    <main className="min-h-screen bg-background px-5 pt-8 pb-[calc(2rem_+_env(safe-area-inset-bottom))] text-foreground sm:px-8">
       <div className="mx-auto w-full max-w-xl">{children}</div>
     </main>
   );
@@ -780,7 +766,7 @@ function PendingStrip({
 }: {
   photos: PendingPhoto[];
   onReview: (index: number) => void;
-  onRetry: (index: number) => void;
+  onRetry: (id: string) => void;
 }) {
   return (
     <div className="flex gap-2 overflow-x-auto pb-2" role="list" aria-label="Captured photos">
@@ -798,7 +784,7 @@ function PendingStrip({
           {photo.status === "error" && (
             <button
               type="button"
-              onClick={() => onRetry(index)}
+              onClick={() => onRetry(photo.id)}
               className="absolute -right-1 -top-1 h-5 w-5 rounded-full bg-destructive text-xs font-bold text-destructive-foreground focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring"
               aria-label="Retry upload"
             >

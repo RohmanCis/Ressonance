@@ -11,6 +11,9 @@ import {
   isPhotoLimitError,
   isRateLimited,
   canRetakePhoto,
+  canDeletePhoto,
+  parseRetryAfterSeconds,
+  applySyncResult,
   photoErrorMessage,
   type PendingPhoto,
 } from "@/lib/pending-photos";
@@ -60,6 +63,75 @@ describe("pending-photos retake logic", () => {
     // Replacement capture consumes it again → no net change.
     const afterRecapture = localBudgetRemaining(0, [makePhoto("pending"), makePhoto("pending")]);
     expect(afterRecapture).toBe(start);
+  });
+});
+
+describe("pending-photos delete logic", () => {
+  it("canDeletePhoto is true only for pending and error", () => {
+    const statuses: PendingPhoto["status"][] = ["pending", "uploading", "confirmed", "error", "expired"];
+    const expected = { pending: true, uploading: false, confirmed: false, error: true, expired: false };
+    for (const status of statuses) {
+      expect(canDeletePhoto(status)).toBe(expected[status]);
+    }
+  });
+});
+
+describe("pending-photos retry-after parsing", () => {
+  it("uses finite positive numbers as-is", () => {
+    expect(parseRetryAfterSeconds("15")).toBe(15);
+    expect(parseRetryAfterSeconds("1.5")).toBe(1.5);
+    expect(parseRetryAfterSeconds("99999")).toBe(99999);
+  });
+
+  it("falls back to 5 for missing, invalid, NaN, negative, zero, and garbage", () => {
+    expect(parseRetryAfterSeconds(null)).toBe(5);
+    expect(parseRetryAfterSeconds("")).toBe(5);
+    expect(parseRetryAfterSeconds("abc")).toBe(5);
+    expect(parseRetryAfterSeconds("NaN")).toBe(5);
+    expect(parseRetryAfterSeconds("-3")).toBe(5);
+    expect(parseRetryAfterSeconds("0")).toBe(5);
+    expect(parseRetryAfterSeconds("12abc")).toBe(5);
+    expect(parseRetryAfterSeconds("Infinity")).toBe(5);
+    expect(parseRetryAfterSeconds("  ")).toBe(5);
+  });
+});
+
+describe("pending-photos sync identity safety", () => {
+  it("applySyncResult updates only the item with the matching id", () => {
+    const a = makePhoto("pending"); a.id = "A";
+    const b = makePhoto("pending"); b.id = "B";
+    const after = applySyncResult([a, b], "A", { status: "confirmed" });
+    expect(after.find((p) => p.id === "A")?.status).toBe("confirmed");
+    expect(after.find((p) => p.id === "B")?.status).toBe("pending");
+    expect(after).toHaveLength(2);
+  });
+
+  it("deleting another item mid-sync does not mislabel the in-flight result", () => {
+    const a = makePhoto("uploading"); a.id = "A";
+    const b = makePhoto("pending"); b.id = "B";
+    // B is deleted (retaken) while A is uploading.
+    const remaining = [a];
+    const after = applySyncResult(remaining, "A", { status: "confirmed" });
+    expect(after).toHaveLength(1);
+    expect(after[0]).toMatchObject({ id: "A", status: "confirmed" });
+  });
+
+  it("applying a result for a removed id is a no-op — no wrong photo mislabeled", () => {
+    const a = makePhoto("uploading"); a.id = "A";
+    const b = makePhoto("pending"); b.id = "B";
+    // A is deleted mid-flight; its upload result arrives late.
+    const remaining = [b];
+    const after = applySyncResult(remaining, "A", { status: "confirmed" });
+    expect(after).toEqual([b]);
+  });
+
+  it("rate-limit reset to pending targets only the retried id", () => {
+    const a = makePhoto("uploading"); a.id = "A";
+    const b = makePhoto("pending"); b.id = "B";
+    const after = applySyncResult([a, b], "A", { status: "pending" });
+    expect(after.find((p) => p.id === "A")?.status).toBe("pending");
+    expect(after.find((p) => p.id === "B")?.status).toBe("pending");
+    expect(after).toHaveLength(2);
   });
 });
 
