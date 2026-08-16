@@ -56,3 +56,6 @@ playwright-report/
 
 # playwright print-qa artifacts (generated, not source)
 e2e/*.pdf
+
+# opencode local workspace (agent session handoffs, tooling, node_modules)
+.opencode/
