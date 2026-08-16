@@ -2,6 +2,8 @@
 
 import { ChangeEvent, FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useCamera } from "@/hooks/use-camera";
+import { FrameSelector } from "@/components/frame-selector";
+import { loadFrameImage, DEFAULT_FRAME_ID, type Frame } from "@/lib/frames";
 import {
   applySyncResult,
   canDeletePhoto,
@@ -31,6 +33,7 @@ type ViewState =
   | "rate-limited"
   | "offline"
   | "unexpected"
+  | "frame-select"
   | "post-session-loading"
   | "post-session";
 type VoiceState = "idle" | "recording" | "review" | "submitting" | "success" | "error" | "review-error" | "unsupported";
@@ -73,6 +76,10 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
   const voiceSecondsRef = useRef(0);
 
   const camera = useCamera();
+
+  // Frame selection (guest chooses before the camera opens)
+  const [selectedFrame, setSelectedFrame] = useState<Frame | null>(null);
+  const frameImgRef = useRef<HTMLImageElement | null>(null);
 
   // --- Event load ---
   useEffect(() => {
@@ -129,21 +136,9 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
       if (response.status === 201 && body.session) {
         setSession(body.session);
         sessionStartRef.current = Date.now();
-        setState("post-session-loading");
-        setMessage("Confirming your session usage…");
-        await confirmUsage();
-        // Handle carry-over after new session is established.
-        if (carryOverPrompt && expiredPending.length > 0) {
-          const carried = expiredPending.map((p) => ({
-            ...p,
-            status: "pending" as const,
-            errorCode: undefined,
-            errorMessage: undefined,
-          }));
-          setPendingPhotos(carried);
-          setExpiredPending([]);
-        }
-        setCarryOverPrompt(false);
+        // Redirect to frame selection; confirmUsage() is called after frame is chosen
+        setState("frame-select");
+        setMessage("");
         return;
       }
       const code = body.error?.code;
@@ -186,6 +181,27 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
     }
   }
 
+  // --- Frame selection: load overlay, confirm usage, then carry-over ---
+  const handleFrameSelect = useCallback(async (frame: Frame) => {
+    setSelectedFrame(frame);
+    frameImgRef.current = frame.src ? await loadFrameImage(frame) : null;
+    setState("post-session-loading");
+    setMessage("Confirming your session usage…");
+    await confirmUsage();
+    // Handle carry-over after new session is established.
+    if (carryOverPrompt && expiredPending.length > 0) {
+      const carried = expiredPending.map((p) => ({
+        ...p,
+        status: "pending" as const,
+        errorCode: undefined,
+        errorMessage: undefined,
+      }));
+      setPendingPhotos(carried);
+      setExpiredPending([]);
+    }
+    setCarryOverPrompt(false);
+  }, [publicId, carryOverPrompt, expiredPending]);
+
   // --- Session expiry handler ---
   function handleSessionExpired() {
     // Preserve pending photos as "not saved" (UI_UX §4.2, §7).
@@ -213,7 +229,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
   async function handleCapture() {
     if (!session || event?.status === "CLOSED") return;
     if (localBudgetRemaining(session.photos_submitted, pendingPhotos) <= 0) return;
-    const blob = await camera.capture();
+    const blob = await camera.capture(frameImgRef.current);
     if (!blob) return;
     const photo: PendingPhoto = {
       id: nextPendingId(),
@@ -425,6 +441,16 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
   if (state === "not-found") return <Shell><Status title="Event unavailable" message="This event cannot be found." /></Shell>;
   if (!event) return <Shell><Status title="Event unavailable" message={message} retry={loadAgain} /></Shell>;
 
+  // --- Render: frame selection (between Start and camera) ---
+  if (state === "frame-select") {
+    return (
+      <Shell>
+        <Header title={event.title} />
+        <FrameSelector onSelect={handleFrameSelect} />
+      </Shell>
+    );
+  }
+
   // --- Render: post-session (camera-first capture screen) ---
   if ((state === "post-session-loading" || state === "post-session") && session) {
     return (
@@ -465,6 +491,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
                   closed={closed}
                   budgetRemaining={budgetRemaining}
                   onCapture={handleCapture}
+                  frameOverlaySrc={selectedFrame?.src}
                 />
 
                 {/* Remaining counter */}
@@ -692,11 +719,13 @@ function CameraViewfinder({
   closed,
   budgetRemaining,
   onCapture,
+  frameOverlaySrc,
 }: {
   camera: ReturnType<typeof useCamera>;
   closed: boolean;
   budgetRemaining: number;
   onCapture: () => void;
+  frameOverlaySrc?: string;
 }) {
   const { stream, permission, cameraCount, switchCamera } = camera;
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -738,6 +767,14 @@ function CameraViewfinder({
         className="aspect-[3/4] w-full object-cover"
         aria-label="Camera preview"
       />
+      {frameOverlaySrc && (
+        <img
+          src={frameOverlaySrc}
+          alt=""
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+          aria-hidden="true"
+        />
+      )}
       {cameraCount >= 2 && (
         <button
           type="button"

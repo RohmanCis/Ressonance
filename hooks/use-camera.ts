@@ -20,7 +20,7 @@ export interface UseCameraResult {
   start: () => Promise<void>;
   stop: () => void;
   switchCamera: () => Promise<void>;
-  capture: () => Promise<Blob | null>;
+  capture: (frameImg?: HTMLImageElement | null) => Promise<Blob | null>;
 }
 
 export function useCamera(): UseCameraResult {
@@ -105,7 +105,7 @@ export function useCamera(): UseCameraResult {
     };
   }, []);
 
-  const capture = useCallback(async (): Promise<Blob | null> => {
+  const capture = useCallback(async (frameImg?: HTMLImageElement | null): Promise<Blob | null> => {
     const s = streamRef.current;
     if (!s) return null;
     const track = s.getVideoTracks()[0];
@@ -123,14 +123,23 @@ export function useCamera(): UseCameraResult {
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
 
+    // Step 1: camera frame — mirror only the photo for the front camera.
     if (facingModeRef.current === "user") {
       ctx.translate(canvas.width, 0);
       ctx.scale(-1, 1);
     }
     ctx.drawImage(video, 0, 0);
 
+    // Step 2: reset transform so the frame overlay is never mirrored.
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+    // Step 3: composite the selected frame over the full photo.
+    if (frameImg) {
+      ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
+    }
+
     return new Promise<Blob | null>((resolve) => {
-      canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.9);
+      canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.92);
     });
   }, []);
 
