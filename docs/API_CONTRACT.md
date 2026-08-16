@@ -141,7 +141,7 @@ The counts are informational. Backend checks remain authoritative.
 }
 ```
 
-`type` is one of `PHOTO`, `VOICE_NOTE`, or `GUEST_MESSAGE`. For `GUEST_MESSAGE` submissions the shape additionally carries `message_text` (the stored text) instead of media fields.
+`type` is one of `PHOTO`, `VOICE_NOTE`, or `GUEST_MESSAGE`. For `GUEST_MESSAGE` submissions the shape additionally carries `message_text` (the stored text) instead of media fields. For `type: "GUEST_MESSAGE"`, `mime_type` is always `"text/plain"` and `file_size` is always `0` — intentional no-op placeholders (text messages carry no media file), owner-ratified for MVP.
 
 `guest_session_ref` is an opaque, non-credential identifier for the GuestSession that owns the submission. It is generated at session creation, is separate from the database primary key and `session_token`, and is stable across all submissions from one GuestSession. It enables grouping submissions by contributor session in the admin timeline. Submission listings never contain `storage_key`, the database primary key, `session_token`, or a public storage URL. Access is requested through the media endpoint below.
 

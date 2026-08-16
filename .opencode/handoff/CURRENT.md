@@ -13,7 +13,7 @@
 
 ## Open items for owner
 1. Migration 0005 is NOT yet applied to the production Supabase project — must be applied before deploy.
-2. `mime_type: "text/plain"` / `file_size: 0` for GUEST_MESSAGE submissions is an implementation convention (documented in API_CONTRACT §5.7), not an owner-ratified decision.
+2. ~~`mime_type: "text/plain"` / `file_size: 0` for GUEST_MESSAGE submissions is an implementation convention (documented in API_CONTRACT §5.7), not an owner-ratified decision.~~ **RESOLVED** — owner-ratified for MVP as intentional no-op placeholders (text messages carry no media file); documented in `docs/API_CONTRACT.md` §4.
 3. Message rows are not covered by the 7-day media cleanup (they have no storage object); retention for text is currently indefinite.
 
 ## Pre-existing open items (unchanged)
@@ -21,3 +21,11 @@
 
 ## R3 prerequisites (unchanged)
 Owner go-ahead; Vercel env vars (NEXT_PUBLIC_*, DATABASE_URL pooler + sslmode=require, SUPABASE_STORAGE_BUCKET, CRON_SECRET, TRUSTED_PROXY=1); deployed smoke incl. ffprobe + cron 401/200.
+
+## Known Gaps
+
+> Re-added after `906fee2` feat(guest): standalone guest message submission (pesan & kesan).
+
+1. Migration 0005 not applied to production Supabase yet — required before next deploy.
+2. `guest_messages` not covered by 7-day media cleanup cron — retention indefinite.
+3. ~~`GUEST_MESSAGE` Submission shape uses `mime_type:"text/plain"` / `file_size:0` — not owner-ratified.~~ **RESOLVED** — owner-ratified for MVP as intentional no-op placeholders; note added to `docs/API_CONTRACT.md` §4 (Submission shape).
