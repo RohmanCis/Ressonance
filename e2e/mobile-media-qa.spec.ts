@@ -23,16 +23,29 @@ function mockStatefulSession(page: Page, opts?: { photos?: number; voice?: boole
   let voiceSubmitted = opts?.voice ?? false;
   const eventStatus = opts?.eventStatus ?? "ACTIVE";
 
+  // Usage shape must match API Contract §4/§6.3 (2026-08-17 amendment):
+  // six fields including guest_message_submitted/available. The app
+  // validates all six on GET; omitting any leaves the UI stale.
+  const usage = () => ({
+    guest_name: "QA Tester",
+    photos_submitted: photosSubmitted,
+    photos_remaining: 5 - photosSubmitted,
+    voice_note_submitted: voiceSubmitted,
+    voice_note_available: !voiceSubmitted,
+    guest_message_submitted: false,
+    guest_message_available: true,
+  });
+
   page.route(`**/api/events/${EVENT_ID}/session`, async (route) => {
     if (route.request().method() === "POST") {
       await route.fulfill({
         status: 201, contentType: "application/json",
-        body: JSON.stringify({ session: { guest_name: "QA Tester", photos_submitted: photosSubmitted, photos_remaining: 5 - photosSubmitted, voice_note_submitted: voiceSubmitted, voice_note_available: !voiceSubmitted } }),
+        body: JSON.stringify({ session: usage() }),
       });
     } else {
       await route.fulfill({
         status: 200, contentType: "application/json",
-        body: JSON.stringify({ guest_name: "QA Tester", photos_submitted: photosSubmitted, photos_remaining: 5 - photosSubmitted, voice_note_submitted: voiceSubmitted, voice_note_available: !voiceSubmitted, event: { title: "QA Media Event", status: eventStatus } }),
+        body: JSON.stringify({ ...usage(), event: { title: "QA Media Event", status: eventStatus } }),
       });
     }
   });
@@ -41,6 +54,21 @@ function mockStatefulSession(page: Page, opts?: { photos?: number; voice?: boole
     addVoice: () => { voiceSubmitted = true; },
     getPhotos: () => photosSubmitted,
     getVoice: () => voiceSubmitted,
+  };
+}
+
+// Contracted usage shape for upload-route mocks (API Contract §4/§6.4–§6.6):
+// six fields including guest_message_*. The app's confirmUsage() validates
+// all six; serving a partial shape here previously masked real state sync.
+function uploadUsage(session: ReturnType<typeof mockStatefulSession>) {
+  return {
+    guest_name: "QA Tester",
+    photos_submitted: session.getPhotos(),
+    photos_remaining: 5 - session.getPhotos(),
+    voice_note_submitted: session.getVoice(),
+    voice_note_available: !session.getVoice(),
+    guest_message_submitted: false,
+    guest_message_available: true,
   };
 }
 
@@ -61,6 +89,10 @@ async function startSession(page: Page) {
   await expect(page.getByRole("heading", { name: "QA Media Event" })).toBeVisible();
   await page.getByLabel(/Your name/).fill("QA Tester");
   await page.getByRole("button", { name: "Start" }).click();
+  // Frame-selection step (UI_UX §4.2) sits between Start and the capture
+  // screen. Default path through the suite: continue without a frame.
+  await expect(page.getByRole("heading", { name: "Choose a frame" })).toBeVisible({ timeout: 5000 });
+  await page.getByRole("button", { name: "Continue without frame" }).click();
   // Post-Start shows capture screen with remaining counter.
   await expect(page.getByRole("heading", { name: "Take photos" })).toBeVisible({ timeout: 5000 });
 }
@@ -89,7 +121,7 @@ test.describe("Mobile-media QA", () => {
       session.addPhoto();
       await route.fulfill({
         status: 201, contentType: "application/json",
-        body: JSON.stringify({ submission: { id: "p1", type: "PHOTO" }, usage: { guest_name: "QA Tester", photos_submitted: session.getPhotos(), photos_remaining: 5 - session.getPhotos(), voice_note_submitted: session.getVoice(), voice_note_available: !session.getVoice() } }),
+        body: JSON.stringify({ submission: { id: "p1", type: "PHOTO" }, usage: uploadUsage(session) }),
       });
     });
 
@@ -148,7 +180,7 @@ test.describe("Mobile-media QA", () => {
       session.addVoice();
       await route.fulfill({
         status: 201, contentType: "application/json",
-        body: JSON.stringify({ submission: { id: "v1", type: "VOICE_NOTE" }, usage: { guest_name: "QA Tester", photos_submitted: session.getPhotos(), photos_remaining: 5 - session.getPhotos(), voice_note_submitted: session.getVoice(), voice_note_available: !session.getVoice() } }),
+        body: JSON.stringify({ submission: { id: "v1", type: "VOICE_NOTE" }, usage: uploadUsage(session) }),
       });
     });
 
@@ -181,6 +213,60 @@ test.describe("Mobile-media QA", () => {
     await expect(page.getByText("Voice-note limit reached for this guest session.")).toBeVisible();
   });
 
+  // 4a. VOICE REGRESSION: a 201 POST must flip the usage UI via the session
+  // re-fetch. This catches GET /session responses that omit contracted usage
+  // fields (e.g. guest_message_*): confirmUsage() then rejects the body and
+  // silently keeps stale state, leaving "Voice note: Available" on screen.
+  test("voice regression: POST 201 flips usage UI to Already added (GET shape)", async ({ page, context }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await context.grantPermissions(["microphone"]);
+    const session = mockStatefulSession(page);
+    let voicePosts = 0;
+    let sessionGets = 0;
+    page.unroute(`**/api/events/${EVENT_ID}/voice-notes`);
+    page.route(`**/api/events/${EVENT_ID}/voice-notes`, async (route) => {
+      voicePosts++;
+      session.addVoice();
+      await route.fulfill({
+        status: 201, contentType: "application/json",
+        body: JSON.stringify({ submission: { id: "v1", type: "VOICE_NOTE" }, usage: uploadUsage(session) }),
+      });
+    });
+    page.unroute(`**/api/events/${EVENT_ID}/session`);
+    page.route(`**/api/events/${EVENT_ID}/session`, async (route) => {
+      if (route.request().method() === "POST") {
+        await route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ session: { guest_name: "QA Tester", photos_submitted: 0, photos_remaining: 5, voice_note_submitted: false, voice_note_available: true, guest_message_submitted: false, guest_message_available: true } }) });
+      } else {
+        sessionGets++;
+        await route.fulfill({
+          status: 200, contentType: "application/json",
+          // Full contracted usage shape (API Contract §4/§6.3, 2026-08-17).
+          body: JSON.stringify({
+            guest_name: "QA Tester",
+            photos_submitted: session.getPhotos(),
+            photos_remaining: 5 - session.getPhotos(),
+            voice_note_submitted: session.getVoice(),
+            voice_note_available: !session.getVoice(),
+            guest_message_submitted: false,
+            guest_message_available: true,
+            event: { title: "QA Media Event", status: "ACTIVE" },
+          }),
+        });
+      }
+    });
+
+    await startSession(page);
+    await expect(page.getByText("Voice note:")).toContainText("Available");
+
+    await recordAndStop(page, 800);
+    await page.getByRole("button", { name: "Submit voice note" }).click();
+
+    // The UI must flip only because the GET response carries the full shape.
+    await expect(page.getByText("Voice note:")).toContainText("Already added", { timeout: 5000 });
+    expect(voicePosts).toBe(1);
+    expect(sessionGets).toBeGreaterThan(0);
+  });
+
   // 5. VOICE: auto-stop at 30s
   test("voice: auto-stop at 30 seconds", async ({ page, context }) => {
     test.setTimeout(60000);
@@ -192,7 +278,7 @@ test.describe("Mobile-media QA", () => {
       session.addVoice();
       await route.fulfill({
         status: 201, contentType: "application/json",
-        body: JSON.stringify({ submission: { id: "v1", type: "VOICE_NOTE" }, usage: { guest_name: "QA Tester", photos_submitted: session.getPhotos(), photos_remaining: 5 - session.getPhotos(), voice_note_submitted: session.getVoice(), voice_note_available: !session.getVoice() } }),
+        body: JSON.stringify({ submission: { id: "v1", type: "VOICE_NOTE" }, usage: uploadUsage(session) }),
       });
     });
 
@@ -215,7 +301,7 @@ test.describe("Mobile-media QA", () => {
       session.addVoice();
       await route.fulfill({
         status: 201, contentType: "application/json",
-        body: JSON.stringify({ submission: { id: "v1", type: "VOICE_NOTE" }, usage: { guest_name: "QA Tester", photos_submitted: session.getPhotos(), photos_remaining: 5 - session.getPhotos(), voice_note_submitted: session.getVoice(), voice_note_available: !session.getVoice() } }),
+        body: JSON.stringify({ submission: { id: "v1", type: "VOICE_NOTE" }, usage: uploadUsage(session) }),
       });
     });
 
@@ -295,7 +381,7 @@ test.describe("Mobile-media QA", () => {
       session.addPhoto();
       await route.fulfill({
         status: 201, contentType: "application/json",
-        body: JSON.stringify({ submission: { id: "p1", type: "PHOTO" }, usage: { guest_name: "QA Tester", photos_submitted: session.getPhotos(), photos_remaining: 5 - session.getPhotos(), voice_note_submitted: session.getVoice(), voice_note_available: !session.getVoice() } }),
+        body: JSON.stringify({ submission: { id: "p1", type: "PHOTO" }, usage: uploadUsage(session) }),
       });
     });
     page.unroute(`**/api/events/${EVENT_ID}/voice-notes`);
@@ -303,7 +389,7 @@ test.describe("Mobile-media QA", () => {
       session.addVoice();
       await route.fulfill({
         status: 201, contentType: "application/json",
-        body: JSON.stringify({ submission: { id: "v1", type: "VOICE_NOTE" }, usage: { guest_name: "QA Tester", photos_submitted: session.getPhotos(), photos_remaining: 5 - session.getPhotos(), voice_note_submitted: session.getVoice(), voice_note_available: !session.getVoice() } }),
+        body: JSON.stringify({ submission: { id: "v1", type: "VOICE_NOTE" }, usage: uploadUsage(session) }),
       });
     });
 
@@ -332,7 +418,7 @@ test.describe("Mobile-media QA", () => {
     await page.setViewportSize({ width: 375, height: 812 });
     await context.grantPermissions(["microphone"]);
     mockStatefulSession(page);
-    mockVoiceUpload(page, 201, { submission: { id: "v1", type: "VOICE_NOTE" }, usage: { guest_name: "QA Tester", photos_submitted: 0, photos_remaining: 5, voice_note_submitted: true, voice_note_available: false } });
+    mockVoiceUpload(page, 201, { submission: { id: "v1", type: "VOICE_NOTE" }, usage: { guest_name: "QA Tester", photos_submitted: 0, photos_remaining: 5, voice_note_submitted: true, voice_note_available: false, guest_message_submitted: false, guest_message_available: true } });
 
     await startSession(page);
 
@@ -367,7 +453,7 @@ test.describe("Mobile-media QA", () => {
       session.addPhoto();
       await route.fulfill({
         status: 201, contentType: "application/json",
-        body: JSON.stringify({ submission: { id: `p${uploadCount}`, type: "PHOTO" }, usage: { guest_name: "QA Tester", photos_submitted: session.getPhotos(), photos_remaining: 5 - session.getPhotos(), voice_note_submitted: session.getVoice(), voice_note_available: !session.getVoice() } }),
+        body: JSON.stringify({ submission: { id: `p${uploadCount}`, type: "PHOTO" }, usage: uploadUsage(session) }),
       });
     });
 
@@ -392,7 +478,7 @@ test.describe("Mobile-media QA", () => {
   test("photo: delete pending photo frees budget", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     mockStatefulSession(page);
-    mockPhotoUpload(page, 201, { submission: { id: "p1", type: "PHOTO" }, usage: { guest_name: "QA Tester", photos_submitted: 1, photos_remaining: 4, voice_note_submitted: false, voice_note_available: true } });
+    mockPhotoUpload(page, 201, { submission: { id: "p1", type: "PHOTO" }, usage: { guest_name: "QA Tester", photos_submitted: 1, photos_remaining: 4, voice_note_submitted: false, voice_note_available: true, guest_message_submitted: false, guest_message_available: true } });
 
     await startSession(page);
 
@@ -406,8 +492,9 @@ test.describe("Mobile-media QA", () => {
     await expect(page.getByRole("dialog", { name: "Photo review" })).toBeVisible({ timeout: 3000 });
     await page.getByRole("button", { name: "Delete" }).click();
 
-    // Pending strip should be empty — no Send button.
-    await expect(page.getByRole("button", { name: /Send/ })).toHaveCount(0);
+    // Pending strip should be empty — no Send photos button. (Scoped to the
+    // photo region: the guest-message "Send message" button is unrelated.)
+    await expect(page.getByRole("button", { name: /Send \d+ photo/ })).toHaveCount(0);
   });
 
   // 13. PHOTO RETAKE: retake removes unsent photo, restores budget, no upload
@@ -420,7 +507,7 @@ test.describe("Mobile-media QA", () => {
       photoPosts++;
       await route.fulfill({
         status: 201, contentType: "application/json",
-        body: JSON.stringify({ submission: { id: "p1", type: "PHOTO" }, usage: { guest_name: "QA Tester", photos_submitted: 1, photos_remaining: 4, voice_note_submitted: false, voice_note_available: true } }),
+        body: JSON.stringify({ submission: { id: "p1", type: "PHOTO" }, usage: { guest_name: "QA Tester", photos_submitted: 1, photos_remaining: 4, voice_note_submitted: false, voice_note_available: true, guest_message_submitted: false, guest_message_available: true } }),
       });
     });
 
@@ -439,10 +526,10 @@ test.describe("Mobile-media QA", () => {
     await expect(dialog).toBeVisible({ timeout: 3000 });
     await dialog.getByRole("button", { name: "Retake" }).click();
 
-    // Dialog closed, strip empty, no Send, budget restored to full.
+    // Dialog closed, strip empty, no Send photos button, budget restored.
     await expect(dialog).toHaveCount(0);
     await expect(page.getByRole("button", { name: /Photo 1/ })).toHaveCount(0);
-    await expect(page.getByRole("button", { name: /Send/ })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /Send \d+ photo/ })).toHaveCount(0);
     await expect(page.getByText("5 photos remaining")).toBeVisible();
 
     // No upload happened.
@@ -458,7 +545,7 @@ test.describe("Mobile-media QA", () => {
       session.addPhoto();
       await route.fulfill({
         status: 201, contentType: "application/json",
-        body: JSON.stringify({ submission: { id: "p1", type: "PHOTO" }, usage: { guest_name: "QA Tester", photos_submitted: session.getPhotos(), photos_remaining: 5 - session.getPhotos(), voice_note_submitted: session.getVoice(), voice_note_available: !session.getVoice() } }),
+        body: JSON.stringify({ submission: { id: "p1", type: "PHOTO" }, usage: uploadUsage(session) }),
       });
     });
 
