@@ -4,9 +4,11 @@
 **Authority:** Level 6 UI/UX contract under `AGENTS.md` §2. It defines MVP screen behavior and presentation constraints. PRD, schema, architecture, technical design, and API contract remain higher authorities.  
 **Scope:** MVP guest and admin experiences only.
 
+**Amended 2026-08-17 (documentation reconciliation):** the guest message feature (API Contract §6.6, schema `guest_messages` migration 0005) is now reflected here. §1 scope, §4.2 content, §5.2 dashboard content, and §6 error table add the guest-message states already implemented and contracted. Behavior authority remains with the higher documents; this amendment documents, it does not redefine, them.
+
 ## 1. Scope and non-goals
 
-The guest experience supports event access, optional naming, up to five photos per guest session, and one voice note of 5–30 seconds. The admin experience supports sign-in, event creation and closure, event access/QR, chronological media review, guest-name search, photo preview, voice playback, and individual download.
+The guest experience supports event access, optional naming, up to five photos per guest session, one voice note of 5–30 seconds, and one optional guest text message (1–280 characters, "pesan & kesan", API Contract §6.6). The admin experience supports sign-in, event creation and closure, event access/QR, chronological media review, guest-name search, photo preview, voice playback, individual download, and read-only display of guest messages.
 
 Excluded: AI or moderation, transcription, guest accounts, social login, guest profiles, live gallery, reactions, sharing, analytics, reports, advanced filters, bulk download, bulk media management, multiple QR variants, and other PRD §24 deferrals. No new feature, endpoint, identity, or client-side authority is defined here.
 
@@ -63,11 +65,11 @@ No additional guest or admin screen, route, endpoint, or workflow is defined.
 
 **Purpose:** Make camera capture the primary guest experience after Start, while offering voice-note submission as a separate secondary action.
 
-**Content:** Event title; guest name or `Anonymous Guest`; camera viewfinder with shutter; a remaining-photo indicator that reflects a local capture budget; a pending photo strip of captured-but-unsent and server-confirmed items; a Send action to synchronize pending photos; a voice-note action that is separate from the photo capture queue; status and recovery messages.
+**Content:** Event title; guest name or `Anonymous Guest`; camera viewfinder with shutter; a remaining-photo indicator that reflects a local capture budget; a pending photo strip of captured-but-unsent and server-confirmed items; a Send action to synchronize pending photos; a voice-note action that is separate from the photo capture queue; a guest-message action that is separate from both (amendment 2026-08-17); status and recovery messages.
 
 **Capture budget indicator:** The remaining-photo indicator is a UX hint computed as `5 − (server-confirmed accepted count) − (local pending capture count)`. It may show zero before the server confirms anything. It is never authoritative for the 5-photo limit; backend limit enforcement remains authoritative (§4.3, §7).
 
-**Actions:** Capture photos into a local pending buffer; synchronize pending photos via Send; enter the voice-note flow; review, delete, or retake pending captures before synchronization. Continue until limits or event status prevent it.
+**Actions:** Capture photos into a local pending buffer; synchronize pending photos via Send; enter the voice-note flow; enter the guest-message flow; review, delete, or retake pending captures before synchronization. Continue until limits or event status prevent it.
 
 **States:**
 
@@ -122,6 +124,19 @@ Client previews, the local capture budget, and pending counters are UX hints. Th
 
 Do not present the browser timer as proof of accepted duration. Do not persist or silently resend an unsent recording after a failed request.
 
+### 4.5 Guest-message flow
+
+**Purpose:** Compose, review, and submit one optional text message ("pesan & kesan", API Contract §6.6). The message is a standalone submission: never required, never attached to the voice note, and independent of photo and voice-note limits.
+
+**States and transitions:**
+
+1. Idle: explain the 1–280 character limit; the submit action is disabled while the trimmed text is empty.
+2. Editing: show a live character counter; typing is capped at the maximum length.
+3. Submitting: disable duplicate submission; announce progress.
+4. Success: confirm persistence, update usage, and remove/disable the message action because the one-message limit is consumed. Typed-but-unsent draft text is not resurrected in a new session.
+5. Error: show the cause with a correction path — empty or over-length text, limit already reached, closed event, rate limit, or persistence failure. Editing the text after an error returns the field to the editing state. Do not claim persistence before the server confirms it.
+6. Session expired/invalid during submission: follow §4.2 expiry behavior; the message is not submitted using the expired session.
+
 ## 5. Admin experience
 
 ### 5.1 Sign-in
@@ -136,7 +151,7 @@ Do not present the browser timer as proof of accepted duration. Do not persist o
 
 **Purpose:** Manage the event and inspect submissions.
 
-**Content:** Event title and status; close action while ACTIVE; access/QR action; guest-name search; newest-first submission timeline. Submissions may be clustered by contributor session (`guest_session_ref`) as a presentation grouping; group and item order remain newest-first. Each submission shows media type, guest label, timestamp, and applicable preview/playback control.
+**Content:** Event title and status; close action while ACTIVE; access/QR action; guest-name search; newest-first submission timeline. Submissions may be clustered by contributor session (`guest_session_ref`) as a presentation grouping; group and item order remain newest-first. Each submission shows media type, guest label, timestamp, and applicable preview/playback control. Guest messages (`GUEST_MESSAGE`, amendment 2026-08-17) appear in the same timeline as read-only text with no preview, playback, or download control — they carry no media object.
 
 **States:**
 
@@ -196,6 +211,7 @@ Message intent is defined below; final wording is not locked. Recovery must not 
 | `EVENT_CLOSED` | Guest | This event remains viewable but accepts no new submissions. | Disable submission actions; no upload retry. |
 | `PHOTO_LIMIT_REACHED` | Guest | The session has reached five accepted photos. | Disable photo submission as a hint; continue with voice only if available. |
 | `VOICE_NOTE_LIMIT_REACHED` | Guest | The session already has an accepted voice note. | Disable voice submission; continue with photos if available. |
+| `GUEST_MESSAGE_LIMIT_REACHED` | Guest | The session already has an accepted guest message. | Disable message submission; continue with photos/voice if available. |
 | `ACTIVE_EVENT_EXISTS` | Admin | Another ACTIVE event already exists for this admin. | Open or manage the existing event; do not repeat creation unchanged. |
 | `EVENT_ALREADY_CLOSED` | Admin | The event is already closed. | Refresh status; treat as closed without repeating the action. |
 | `INVALID_EVENT_STATE` | Admin | The event cannot be changed in its current state. | Refresh and follow the displayed current state. |

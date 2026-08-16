@@ -21,7 +21,7 @@ Date: 2026-08-11
 
 **Reason:** Existing schema is PostgreSQL-specific and already expresses the critical invariants.
 
-**Required follow-up:** Resolve duplicate constraint/index names in `docs/db_scheme.md` through an approved source-document change before migrations. This design does not modify that document. Follow-up complete (2026-08): migrations 0001–0003 applied; no duplicate names.
+**Required follow-up:** Resolve duplicate constraint/index names in `docs/db_scheme.md` through an approved source-document change before migrations. This design does not modify that document. Follow-up complete (2026-08): migrations 0001–0005 applied; no duplicate names.
 
 ## ADR-003 — Backend-mediated media upload
 

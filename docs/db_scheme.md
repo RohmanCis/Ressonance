@@ -2,7 +2,7 @@
 
 Version: 1.2
 Status: Approved schema design  
-Reconciled 2026-08-15 — closes open technical decisions; schema applied via migrations 0001–0004.
+Reconciled 2026-08-15 — closes open technical decisions; schema applied via migrations 0001–0005.
 Amended 2026-08-17: guest message feature (Opsi B) — adds `guest_messages` via migration 0005.
 Source of Truth: PRD v1.3 + Domain Model + ERD (all locked)
 
@@ -319,4 +319,4 @@ ARCHIVE→ status = 'ARCHIVED', closed_at = (tetap timestamp dari CLOSE)
 
 ## Next Step
 
-Schema applied to live Supabase via migrations 0001–0004 (verified 2026-08); migration 0005 (`guest_messages`, Opsi B) is pending application. Further schema changes require an approved change to this document plus a new migration.
+Schema applied to live Supabase via migrations 0001–0005 (verified: migration history records `0001`–`0005`; `guest_messages` present with the `uq_guest_messages_one_per_session` UNIQUE constraint, 1–280 char CHECK, RLS enabled, and no PUBLIC/anon/authenticated grants). Migration 0002 sets `search_path = public, extensions` so the pgcrypto `gen_random_bytes` backfill resolves on Supabase, where pgcrypto installs in the `extensions` schema. All migrations are idempotent and safe to re-run. Further schema changes require an approved change to this document plus a new migration.

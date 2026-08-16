@@ -684,7 +684,7 @@ Internal operational endpoint, not a guest/admin product feature. Invoked daily 
 5. ~~Signed URL TTL.~~ Resolved 2026-08-15: 900 seconds (15 minutes), as implemented.
 6. ~~Hosting-specific same-origin base URL and local development proxy details.~~ Resolved 2026-08-15: Vercel same-origin deployment; base URL via `NEXT_PUBLIC_APP_URL`.
 7. Monitoring, backups, and media-retention policy. Retention resolved 2026-08-15 (owner): retain media 7 days after event CLOSED, private during retention, automatic cleanup after. Mechanism: internal cron endpoint §7.1 (owner-approved, implemented). Monitoring and backups resolved 2026-08-15 (owner): structured API logs + Vercel logs, no Sentry/OTel/custom alerting; Supabase managed backups, no custom backup/restore system for MVP.
-8. ~~Schema constraint/index naming cleanup before migrations.~~ Resolved 2026-08: migrations 0001–0003 applied live; no duplicate names.
+8. ~~Schema constraint/index naming cleanup before migrations.~~ Resolved 2026-08: migrations 0001–0005 applied live; no duplicate names.
 
 ## 9. Next step
 

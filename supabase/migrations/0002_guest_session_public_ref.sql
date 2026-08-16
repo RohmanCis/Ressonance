@@ -6,6 +6,12 @@
 -- so the dashboard can group media by GuestSession without leaking the DB PK
 -- or the session credential. Mirrors the events.public_id / events.id split.
 
+-- Supabase installs pgcrypto in the `extensions` schema, so the unqualified
+-- gen_random_bytes(integer) call fails with SQLSTATE 42883 when this migration
+-- is replayed through the CLI/pooler (search_path does not include extensions).
+-- Listing public first keeps plain-Postgres layouts (pgcrypto in public) working.
+SET search_path = public, extensions;
+
 ALTER TABLE guest_sessions
     ADD COLUMN IF NOT EXISTS public_ref TEXT;
 
@@ -19,3 +25,7 @@ ALTER TABLE guest_sessions
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_guest_sessions_public_ref
     ON guest_sessions (public_ref);
+
+-- Restore the session default so later migrations on the same connection
+-- are unaffected by this file's search_path override.
+RESET search_path;
