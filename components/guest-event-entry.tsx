@@ -203,9 +203,17 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
   }, [publicId, carryOverPrompt, expiredPending]);
 
   // --- Session expiry handler ---
+  // INVARIANT: read pending photos from pendingPhotosRef, never from the
+  // render closure. This handler fires from async contexts that outlive the
+  // render which created them (Send-401 mid-sync, voice XHR onload, usage
+  // re-confirm); a render-captured `pendingPhotos` would miss captures and
+  // confirmations that happened since and carry over already-saved photos
+  // (same stale-closure class as the D2 voice-duration fix).
   function handleSessionExpired() {
     // Preserve pending photos as "not saved" (UI_UX §4.2, §7).
-    const unsaved = pendingPhotos.filter((p) => p.status !== "confirmed");
+    // "pending" and "uploading" both count as unsaved, so the in-flight
+    // revert in syncPhotos() needs no await here.
+    const unsaved = pendingPhotosRef.current.filter((p) => p.status !== "confirmed");
     if (unsaved.length > 0) {
       setExpiredPending(unsaved.map((p) => ({ ...p, status: "expired" as const })));
     }
