@@ -1,45 +1,37 @@
-# Result — Guest message feature (Pesan & Kesan), Opsi B
+# Result — Pre-QA audit, migration 0002 fix + push (0002–0005), UX_FLOW.md, doc reconciliation
 
 ## Status
-DONE. No blocking owner decision required; three advisories recorded below.
+DONE. Blocker B1 found and resolved; Phase 2 (UX_FLOW.md) generated; canonical docs reconciled with the live DB and codebase. Working tree clean at `39cec45`.
 
 ## Files changed
 ### New
-- `supabase/migrations/0005_guest_messages.sql` — `guest_messages` table (UUID PK, `guest_session_id` FK RESTRICT, `message_text` TEXT NOT NULL CHECK `char_length 1–280`, `created_at`), `uq_guest_messages_one_per_session` UNIQUE, `idx_guest_messages_guest_session_id`, plus the 0001-pattern RLS/REVOKE boundary. Idempotent (`IF NOT EXISTS`).
-- `lib/guest-message-tx-repo.ts` — transaction repo on direct pg: BEGIN → event-row lock (revalidate ACTIVE) → UX pre-check → insert (maps 23505/`uq_guest_messages_one_per_session` → `GuestMessageUniqueViolationError`) → photo count + voice-note existence → COMMIT. Rollback on begin failure; no per-session lock (UNIQUE is the guard, TD §9).
-- `lib/submit-guest-message.ts` — orchestration + `validateGuestMessageText` (present/string/1–280 after trim). Reuses `resolveVoiceNoteAuth` for auth (not duplicated). No storage, no compensation.
-- `app/api/events/[public_id]/guest-messages/route.ts` — POST; content-type → auth → rate limit (FixedWindowRateLimiter, env `GUEST_MESSAGE_RATE_LIMIT_MAX`/`_WINDOW_SECONDS`) → 4 KB bounded body read → validate → transaction. Full error mapping (400/401×3/404/409/422×2/429/500).
-- `lib/guest-message-tx-repo.test.ts`, `lib/submit-guest-message.test.ts`, `app/api/events/[public_id]/guest-messages/route.test.ts` — new suites.
+- `UX_FLOW.md` — owner-facing manual QA guide: guest flow (event entry states, Start, frame selection with both no-frame paths, camera + overlay, pending strip/review/retake/delete, batch send, voice note, guest message, session panel/expiry/carry-over, closed-mid-session), admin flow (sign-in, event index, create, dashboard timeline, access/QR + print variants), edge-case checklist.
 
 ### Amended
-- `app/api/events/[public_id]/session/route.ts` — usage repo + `countGuestMessages`.
-- `lib/get-session-usage.ts` — usage body + `guest_message_submitted/available`.
-- `lib/start-guest-session.ts` — fresh-session body carries both new fields (false/true).
-- `lib/pending-photos.ts` — `UsageState` extended (SessionData derives from it).
-- `lib/admin-media-repo.ts` — `listSubmissions` unions `guest_messages`; `MediaType` + `message_text?`.
-- `components/guest-event-entry.tsx` — message state, `handleMessageChange`, `submitMessage`, local `GuestMessageAction` (textarea rows=3 maxLength=280, counter, disabled rules, error surface), post-session section, usage-panel row.
-- `components/admin/admin-ui.tsx` — `Submission` type + `GUEST_MESSAGE`/`message_text`.
-- `components/admin/admin-dashboard.tsx` — `MessageTile` (read-only blockquote), type label, breakdown, group render.
-- `docs/db_scheme.md` (v1.2) + `docs/API_CONTRACT.md` (§6.6 new; §2, §4, §5.7, §6.1, §6.2 amended; amendment marker added).
-- Tests updated: session route, start-guest-session, get-session-usage, admin submissions, `test/admin-media-db.ts`.
+- `supabase/migrations/0002_guest_session_public_ref.sql` — `SET search_path = public, extensions;` before the `gen_random_bytes` backfill + `RESET search_path;` after (fixes SQLSTATE 42883 on Supabase, where pgcrypto installs in `extensions`; keeps plain-Postgres layouts working). Comment explains the failure mode.
+- `docs/UI_UX.md` — 2026-08-17 reconciliation amendment: scope (§1), post-Start content/actions (§4.2), new §4.5 guest-message flow, dashboard GUEST_MESSAGE display (§5.2), `GUEST_MESSAGE_LIMIT_REACHED` error row (§6).
+- `docs/db_scheme.md` — applied-state section rewritten: migrations 0001–0005 verified, `guest_messages` constraints/RLS confirmed, 0002 search_path note; header updated.
+- `docs/PRD.md`, `docs/API_CONTRACT.md`, `docs/ARCHITECTURE_DECISIONS.md` — "migrations 0001–0003 applied" → 0001–0005.
+- `AGENTS.md` §10 — implemented list gains frame selection + guest message; live-DB paragraph records verified 0001–0005 state.
+
+### Removed
+- `supabase/.temp/` (untracked CLI scratch left by `db push`).
 
 ## Validation
-- `npx tsc --noEmit` — PASS (exit 0).
-- `npx vitest run` — 38 files, **362/362 PASS** (was 315; +47 new tests).
-- eslint on touched files — 0 errors, 9 warnings all pre-existing (img-element / exhaustive-deps / unused import).
-- Migration verified against live local Postgres: applied twice (idempotent), columns/constraints/indexes/RLS confirmed; UNIQUE one-per-session, CHECK on "" and 281 chars, FK RESTRICT all enforced.
+- Pre-push read-only probe: migration history, pgcrypto schema/function resolution, per-migration applied-state — pinpointed 0002 as the sole offender.
+- `npx supabase db push --dry-run` then real push: 0002–0005 applied cleanly.
+- Post-push read-only verification: history `0001`–`0005`; `guest_messages` columns (all NOT NULL), PK/FK-RESTRICT/CHECK 1–280/UNIQUE one-per-session, 3 indexes, RLS enabled, zero PUBLIC/anon/authenticated grants; `guest_sessions` index set unchanged (no duplicates); `public_ref` 0 NULL/0 duplicates; app query shapes (`countGuestMessages`, admin `listSubmissions` join) execute.
+- Doc verification: grep for `pending application|0001–0003|0001–0004` across docs + AGENTS.md → zero hits; every DB-state claim matches probed reality.
+- No TS/JS code paths touched (docs + one SQL migration file), so vitest/typecheck not re-run; the edited SQL was validated by successful live application.
 
 ## Blockers
-None.
+None remaining. B1 (live DB missing `guest_messages`; guest flow dead-end + admin timeline 500) resolved by the push above.
 
 ## SSOT conflict
-None blocking. Two additive conventions required by the task and now documented: session usage shape gains two fields (API_CONTRACT §4/§6.1); GUEST_MESSAGE submissions carry `message_text` with `mime_type: "text/plain"`, `file_size: 0`, `duration_seconds: null` (§5.7).
+None. UI_UX.md amendment documents already-contracted behavior (API Contract §6.6 amendment, higher authority) rather than redefining it; db_scheme/API/PRD/ADR edits only replace stale state claims with verified live state.
 
 ## Architecture drift
-None. No new dependency, no ORM, no new auth surface, voice-note flow untouched.
+None. No new dependency, endpoint, schema field, or provider. Migration 0002 edit is a namespacing fix inside an existing migration, consistent with `db_scheme.md` §"Design Decisions".
 
-## Advisories / next step
-1. **Migration 0005 must be applied to production Supabase before deploy.**
-2. `mime_type`/`file_size` convention for GUEST_MESSAGE is documented but not owner-ratified.
-3. `guest_messages` rows are not covered by the 7-day media cleanup (no storage object); text retention is currently indefinite — owner may want a policy decision.
-Next: owner review + apply migration + optional browser QA, then commit.
+## Next step
+Owner manual QA on localhost using `UX_FLOW.md`; decide text-message retention policy (guest_messages vs 7-day media cleanup); R3 production deploy when ready.
