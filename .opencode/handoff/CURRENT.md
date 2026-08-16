@@ -1,7 +1,7 @@
 # Current Execution State
 
-- Phase: IDLE. Frame-selection task complete and validated; awaiting owner review.
-- Status: DONE (see result.md). No commit/push performed.
+- Phase: IDLE. Session closed 2026-08-16 — guest photo frame selection implemented, validated, committed, and pushed.
+- Status: HEAD `b1625be` on origin/main. No uncommitted work from this session (only pre-existing unrelated untracked `.opencode/oh-my-opencode-slim*`).
 
 ## Session summary (guest photo frame selection)
 - NEW `lib/frames.ts`: frame registry + graceful `loadFrameImage`.
