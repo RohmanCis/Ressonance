@@ -6,6 +6,8 @@ Source: PRD v1.3, `docs/db_scheme.md`, `docs/TECHNICAL_DESIGN.md`, and `docs/ARC
 
 Amended 2026-08-15: documentation reconciliation — adds §5.9 as implemented; closes resolved decisions. No behavior change.
 
+Amended 2026-08-17: guest message feature (Opsi B).
+
 This contract defines behavior only. Framework, database, and storage implementation details remain outside the API surface.
 
 ## 1. Conventions
@@ -41,7 +43,7 @@ Common status mapping:
 | 401 | Missing or invalid authentication/session | `AUTHENTICATION_REQUIRED`, `SESSION_INVALID`, `SESSION_EXPIRED` |
 | 403 | Authenticated but not permitted | `FORBIDDEN` |
 | 404 | Resource does not exist or is not visible | `NOT_FOUND` |
-| 409 | Current state conflicts with the operation | `ACTIVE_EVENT_EXISTS`, `VOICE_NOTE_LIMIT_REACHED` |
+| 409 | Current state conflicts with the operation | `ACTIVE_EVENT_EXISTS`, `VOICE_NOTE_LIMIT_REACHED`, `GUEST_MESSAGE_LIMIT_REACHED` |
 | 422 | Well-formed request fails validation/business rules | `INVALID_INPUT`, `EVENT_CLOSED`, `AUDIO_DURATION_INVALID` |
 | 429 | Rate limit exceeded | `RATE_LIMITED` |
 | 5xx | Persistence or unexpected server failure | `MEDIA_PERSISTENCE_FAILED`, `INTERNAL_ERROR` |
@@ -80,7 +82,7 @@ Event lookup remains available for a CLOSED event. Start, photo submission, and 
 
 ### Rate limits
 
-Rate limiting applies to session creation, photo submission, and voice-note submission. Session creation uses a DB-backed fixed-window limiter (migration 0003) that is authoritative across instances. Photo and voice-note submission use per-instance in-memory fixed-window limiters — an accepted MVP limitation on serverless (owner decision 2026-08-15): they are defense-in-depth, not cross-instance authoritative. Exact limits and windows remain configurable via environment. A limited response is:
+Rate limiting applies to session creation, photo submission, voice-note submission, and guest-message submission. Session creation uses a DB-backed fixed-window limiter (migration 0003) that is authoritative across instances. Photo, voice-note, and guest-message submission use per-instance in-memory fixed-window limiters — an accepted MVP limitation on serverless (owner decision 2026-08-15): they are defense-in-depth, not cross-instance authoritative. Exact limits and windows remain configurable via environment. A limited response is:
 
 - HTTP `429`
 - Error code `RATE_LIMITED`
@@ -116,7 +118,9 @@ Admin event responses may additionally include the QR/public URL. No database pr
   "photos_submitted": 2,
   "photos_remaining": 3,
   "voice_note_submitted": false,
-  "voice_note_available": true
+  "voice_note_available": true,
+  "guest_message_submitted": false,
+  "guest_message_available": true
 }
 ```
 
@@ -136,6 +140,8 @@ The counts are informational. Backend checks remain authoritative.
   "duration_seconds": null
 }
 ```
+
+`type` is one of `PHOTO`, `VOICE_NOTE`, or `GUEST_MESSAGE`. For `GUEST_MESSAGE` submissions the shape additionally carries `message_text` (the stored text) instead of media fields.
 
 `guest_session_ref` is an opaque, non-credential identifier for the GuestSession that owns the submission. It is generated at session creation, is separate from the database primary key and `session_token`, and is stable across all submissions from one GuestSession. It enables grouping submissions by contributor session in the admin timeline. Submission listings never contain `storage_key`, the database primary key, `session_token`, or a public storage URL. Access is requested through the media endpoint below.
 
@@ -325,7 +331,7 @@ GET /api/admin/events/{public_id}/submissions
 }
 ```
 
-Results are chronological by submission time, newest first. The admin timeline may cluster submissions by `guest_session_ref` (contributor session) as a presentation grouping; the response order remains newest-first. No client sort, pagination, bulk operation, or advanced filter is defined for MVP.
+Results are chronological by submission time, newest first. The admin timeline may cluster submissions by `guest_session_ref` (contributor session) as a presentation grouping; the response order remains newest-first. `GUEST_MESSAGE` items appear in the same list with `type: "GUEST_MESSAGE"` and a `message_text` field; they have no media object, so `mime_type` is `text/plain`, `file_size` is `0`, and `duration_seconds` is `null`. No client sort, pagination, bulk operation, or advanced filter is defined for MVP.
 
 **Authorization:** The authenticated admin must own the event.
 
@@ -450,7 +456,9 @@ POST /api/events/{public_id}/session
     "photos_submitted": 0,
     "photos_remaining": 5,
     "voice_note_submitted": false,
-    "voice_note_available": true
+    "voice_note_available": true,
+    "guest_message_submitted": false,
+    "guest_message_available": true
   }
 }
 ```
@@ -467,9 +475,9 @@ GET /api/events/{public_id}/session
 
 **Authentication:** valid guest-session cookie required.
 
-**Success:** `200` with the Guest usage shape.
+**Success:** `200` with the Guest usage shape (§4).
 
-The server verifies that the cookie's GuestSession belongs to `{public_id}`. Counts are informational and never replace backend limit enforcement.
+The server verifies that the cookie's GuestSession belongs to `{public_id}`. Counts are informational and never replace backend limit enforcement. As of the 2026-08-17 amendment the usage shape also carries `guest_message_submitted` and `guest_message_available`.
 
 **Errors:** `401 SESSION_REQUIRED`, `401 SESSION_INVALID`, `401 SESSION_EXPIRED`, `404 NOT_FOUND`, `422 EVENT_CLOSED` is not returned for read-only usage state; CLOSED event state is included when the event remains viewable.
 
@@ -588,6 +596,58 @@ Invalid, corrupt, unsupported, or uninspectable audio is rejected before success
 ```
 
 **Errors:** `400 INVALID_REQUEST`, `401 SESSION_REQUIRED|SESSION_INVALID|SESSION_EXPIRED`, `404 NOT_FOUND`, `409 VOICE_NOTE_LIMIT_REACHED`, `422 EVENT_CLOSED`, `422 UNSUPPORTED_MEDIA`, `422 FILE_TOO_LARGE`, `422 AUDIO_DURATION_INVALID`, `422 AUDIO_UNINSPECTABLE`, `429 RATE_LIMITED`, `502 MEDIA_PERSISTENCE_FAILED`.
+
+### 6.6 Submit guest message
+
+```text
+POST /api/events/{public_id}/guest-messages
+```
+
+**Authentication:** valid guest-session cookie required. The session must belong to `{public_id}`.
+
+**Request:** `application/json` with one required field:
+
+```json
+{
+  "message_text": "string"
+}
+```
+
+`message_text` is required, must be a string, and must be 1–280 characters after trim. The message is a standalone submission — it is not attached to the voice note, is never required, and may be submitted with or without photos or a voice note.
+
+**Server validation:**
+
+- Content-Type is `application/json`.
+- Event exists and is `ACTIVE`.
+- GuestSession belongs to the event.
+- Rate limit passes.
+- The body is read with a bounded cap (4 KB); `message_text` is present, a string, and 1–280 characters after trim.
+- GuestSession has no existing guest message; the database unique constraint remains the final concurrency guard.
+
+**Success:** `201`
+
+```json
+{
+  "submission": {
+    "id": "message-id",
+    "type": "GUEST_MESSAGE",
+    "created_at": "2026-08-11T12:17:00Z",
+    "message_text": "trimmed text"
+  },
+  "usage": {
+    "photos_submitted": 0,
+    "photos_remaining": 5,
+    "voice_note_submitted": false,
+    "voice_note_available": true,
+    "guest_message_submitted": true,
+    "guest_message_available": false
+  }
+}
+```
+
+No file upload, multipart body, or storage object is involved. The response contains no storage URL or storage key.
+
+**Errors:** `400 INVALID_REQUEST`, `401 SESSION_REQUIRED|SESSION_INVALID|SESSION_EXPIRED`, `404 NOT_FOUND`, `409 GUEST_MESSAGE_LIMIT_REACHED`, `422 EVENT_CLOSED`, `422 INVALID_INPUT` (with `fields.message_text`), `429 RATE_LIMITED`, `500 INTERNAL_ERROR`.
 
 ## 7. Media and storage contract
 

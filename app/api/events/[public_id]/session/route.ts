@@ -247,6 +247,14 @@ export async function GET(
       if (error) throw error;
       return (count ?? 0) as number;
     },
+    async countGuestMessages(sessionId) {
+      const { count, error } = await db
+        .from("guest_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("guest_session_id", sessionId);
+      if (error) throw error;
+      return (count ?? 0) as number;
+    },
   };
 
   const cookieValue = request.cookies.get(GUEST_SESSION_COOKIE)?.value;

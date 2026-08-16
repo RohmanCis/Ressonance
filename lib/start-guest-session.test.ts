@@ -49,6 +49,8 @@ describe("startGuestSession", () => {
       photos_remaining: 5,
       voice_note_submitted: false,
       voice_note_available: true,
+      guest_message_submitted: false,
+      guest_message_available: true,
     });
     expect(result.token.length).toBeGreaterThanOrEqual(16);
   });

@@ -27,6 +27,8 @@ export interface UsageState {
   photos_remaining: number;
   voice_note_submitted: boolean;
   voice_note_available: boolean;
+  guest_message_submitted: boolean;
+  guest_message_available: boolean;
 }
 
 /**

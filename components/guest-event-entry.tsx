@@ -37,11 +37,13 @@ type ViewState =
   | "post-session-loading"
   | "post-session";
 type VoiceState = "idle" | "recording" | "review" | "submitting" | "success" | "error" | "review-error" | "unsupported";
+type MessageState = "idle" | "editing" | "submitting" | "success" | "error";
 
 const errorText = "The session could not start. Your name was kept. Try again.";
 const recoverable: ViewState[] = ["invalid", "rate-limited", "offline", "unexpected"];
 const SESSION_MAX_SECONDS = 1800;
 const PRE_EXPIRY_WARN_SECONDS = 300;
+const MESSAGE_MAX_LENGTH = 280;
 
 export function GuestEventEntry({ publicId }: { publicId: string }) {
   const [event, setEvent] = useState<EventData | null>(null);
@@ -74,6 +76,11 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
   const voiceChunks = useRef<Blob[]>([]);
   const voiceTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const voiceSecondsRef = useRef(0);
+
+  // Guest message state (standalone text submission, Opsi B)
+  const [messageText, setMessageText] = useState("");
+  const [messageState, setMessageState] = useState<MessageState>("idle");
+  const [messageError, setMessageError] = useState("");
 
   const camera = useCamera();
 
@@ -165,13 +172,13 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
   async function confirmUsage() {
     try {
       const response = await fetch(`/api/events/${encodeURIComponent(publicId)}/session`);
-      const body = (await response.json().catch(() => ({}))) as { error?: { code?: string }; guest_name?: string | null; photos_submitted?: number; photos_remaining?: number; voice_note_submitted?: boolean; voice_note_available?: boolean; event?: { status?: EventData["status"] } };
+      const body = (await response.json().catch(() => ({}))) as { error?: { code?: string }; guest_name?: string | null; photos_submitted?: number; photos_remaining?: number; voice_note_submitted?: boolean; voice_note_available?: boolean; guest_message_submitted?: boolean; guest_message_available?: boolean; event?: { status?: EventData["status"] } };
       if (response.status === 401 && ["SESSION_INVALID", "SESSION_EXPIRED", "SESSION_REQUIRED"].includes(body.error?.code ?? "")) {
         handleSessionExpired();
         return;
       }
-      if (!response.ok || typeof body.photos_submitted !== "number" || typeof body.photos_remaining !== "number" || typeof body.voice_note_submitted !== "boolean" || typeof body.voice_note_available !== "boolean") throw new Error("usage");
-      setSession({ guest_name: body.guest_name ?? null, photos_submitted: body.photos_submitted, photos_remaining: body.photos_remaining, voice_note_submitted: body.voice_note_submitted, voice_note_available: body.voice_note_available });
+      if (!response.ok || typeof body.photos_submitted !== "number" || typeof body.photos_remaining !== "number" || typeof body.voice_note_submitted !== "boolean" || typeof body.voice_note_available !== "boolean" || typeof body.guest_message_submitted !== "boolean" || typeof body.guest_message_available !== "boolean") throw new Error("usage");
+      setSession({ guest_name: body.guest_name ?? null, photos_submitted: body.photos_submitted, photos_remaining: body.photos_remaining, voice_note_submitted: body.voice_note_submitted, voice_note_available: body.voice_note_available, guest_message_submitted: body.guest_message_submitted, guest_message_available: body.guest_message_available });
       if (body.event?.status === "CLOSED") setEvent((current) => current ? { ...current, status: "CLOSED" } : current);
       setState("post-session");
       setMessage(body.event?.status === "CLOSED" ? "This event is closed. New submissions are not accepted." : "Session ready.");
@@ -416,6 +423,59 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
     request.onerror = () => { setVoiceState("review-error"); setVoiceMessage("The voice note could not be confirmed as saved. Check your connection, then try again."); }; request.send(form);
   }
 
+  // --- Guest message submission (standalone text, Opsi B) ---
+  /** Typing after an error returns the field to the editing state. */
+  function handleMessageChange(value: string) {
+    setMessageText(value);
+    if (messageState === "error") {
+      setMessageState("editing");
+      setMessageError("");
+    } else if (messageState === "idle" && value.length > 0) {
+      setMessageState("editing");
+    }
+  }
+
+  async function submitMessage() {
+    if (!session || event?.status === "CLOSED" || !session.guest_message_available) return;
+    const trimmed = messageText.trim();
+    if (!trimmed || trimmed.length > MESSAGE_MAX_LENGTH) {
+      setMessageState("error");
+      setMessageError(trimmed.length === 0 ? "Message cannot be empty." : "Message must be 280 characters or fewer.");
+      return;
+    }
+    setMessageState("submitting");
+    setMessageError("");
+    try {
+      const response = await fetch(`/api/events/${encodeURIComponent(publicId)}/guest-messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message_text: trimmed }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (response.status === 201) {
+        setMessageState("success");
+        await confirmUsage();
+        return;
+      }
+      const code = body?.error?.code as string | undefined;
+      if (response.status === 401 && ["SESSION_INVALID", "SESSION_EXPIRED", "SESSION_REQUIRED"].includes(code ?? "")) {
+        handleSessionExpired();
+        return;
+      }
+      setMessageState("error");
+      setMessageError(
+        code === "GUEST_MESSAGE_LIMIT_REACHED" ? "Message already submitted for this session." :
+        code === "EVENT_CLOSED" ? "This event is closed." :
+        code === "INVALID_INPUT" ? (body?.error?.fields?.message_text ?? "Check your message and try again.") :
+        code === "RATE_LIMITED" ? "Too many requests. Wait, then try again." :
+        "Message could not be saved. Check your connection, then try again."
+      );
+    } catch {
+      setMessageState("error");
+      setMessageError("Message could not be saved. Check your connection, then try again.");
+    }
+  }
+
   // --- Auto-start camera when entering post-session ---
   useEffect(() => {
     if (state === "post-session" && camera.permission === "idle") {
@@ -569,6 +629,19 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
                 />
               </section>
 
+              {/* Guest message (standalone text, Opsi B) */}
+              <section aria-label="Leave a message" className="space-y-3">
+                <GuestMessageAction
+                  closed={closed}
+                  limit={!session.guest_message_available}
+                  state={messageState}
+                  value={messageText}
+                  error={messageError}
+                  onChange={handleMessageChange}
+                  onSubmit={submitMessage}
+                />
+              </section>
+
               {/* Usage panel */}
               <section aria-labelledby="usage-heading" className="rounded-[var(--radius)] border bg-card p-5 shadow-[var(--shadow-1)]">
                 <h2 id="usage-heading" className="font-display text-xl font-semibold">Your session</h2>
@@ -578,6 +651,9 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
                   </p>
                   <p className="rounded-md bg-muted px-3 py-3">
                     Voice note: <strong>{session.voice_note_available ? "Available" : "Already added"}</strong>
+                  </p>
+                  <p className="rounded-md bg-muted px-3 py-3">
+                    Message: <strong>{session.guest_message_available ? "Available" : "Sent"}</strong>
                   </p>
                 </div>
               </section>
@@ -988,6 +1064,62 @@ function VoiceAction({ closed, limit, state, voiceUrl, seconds, message, onRecor
           {state === "submitting" && <p role="status" className="text-sm text-muted-foreground">{message}</p>}
           {state === "success" && <p role="status" className="text-sm text-success">{message}</p>}
           {state === "review-error" && <p role="alert" className="text-sm text-muted-foreground">{message}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function GuestMessageAction({ closed, limit, state, value, error, onChange, onSubmit }: {
+  closed: boolean;
+  limit: boolean;
+  state: MessageState;
+  value: string;
+  error: string;
+  onChange: (value: string) => void;
+  onSubmit: () => void;
+}) {
+  const submitted = limit || state === "success";
+  const disabled = closed || limit || state === "submitting" || value.trim().length === 0;
+  const counterId = "message-counter";
+  if (submitted) {
+    return (
+      <div className="rounded-[var(--radius)] border bg-card p-4 shadow-[var(--shadow-1)]">
+        <h3 className="font-semibold">Leave a message</h3>
+        <p role="status" className="mt-3 text-sm text-success">Message sent.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-[var(--radius)] border bg-card p-4 shadow-[var(--shadow-1)]">
+      <h3 className="font-semibold">Leave a message</h3>
+      {closed ? (
+        <p className="mt-3 text-sm text-muted-foreground">New submissions are not accepted while this event is closed.</p>
+      ) : (
+        <div className="mt-3 space-y-3">
+          <label htmlFor="guest-message" className="block text-sm font-medium">
+            Pesan &amp; kesan <span className="font-normal text-muted-foreground">(optional)</span>
+          </label>
+          <textarea
+            id="guest-message"
+            name="message_text"
+            rows={3}
+            maxLength={MESSAGE_MAX_LENGTH}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            disabled={state === "submitting"}
+            aria-describedby={counterId}
+            className="w-full rounded-md border bg-background px-3 py-2 outline-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-45"
+            placeholder="Write a short message for the host"
+          />
+          <p id={counterId} className="text-sm text-muted-foreground tabular-nums" aria-live="polite">
+            {value.length}/{MESSAGE_MAX_LENGTH}
+          </p>
+          <button type="button" disabled={disabled} onClick={onSubmit} className="min-h-12 w-full rounded-md bg-primary px-4 font-semibold text-primary-foreground focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-45">
+            {state === "submitting" ? "Sending…" : "Send message"}
+          </button>
+          {state === "submitting" && <p role="status" className="text-sm text-muted-foreground">Sending your message…</p>}
+          {state === "error" && error && <p role="alert" className="text-sm text-destructive">{error}</p>}
         </div>
       )}
     </div>

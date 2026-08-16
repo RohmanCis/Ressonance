@@ -1,22 +1,23 @@
 # Current Execution State
 
-- Phase: IDLE. Session closed 2026-08-16 — guest photo frame selection implemented, validated, committed, and pushed.
-- Status: HEAD `b1625be` on origin/main. No uncommitted work from this session (only pre-existing unrelated untracked `.opencode/oh-my-opencode-slim*`).
+- Phase: Guest message feature (Opsi B) — implemented and validated, uncommitted.
+- Status: Working tree holds the Opsi B change set (6 new files, 15 amended). HEAD `cd1e38a`.
 
-## Session summary (guest photo frame selection)
-- NEW `lib/frames.ts`: frame registry + graceful `loadFrameImage`.
-- NEW `components/frame-selector.tsx`: pre-camera frame picker (radiogroup a11y, roving tabindex, skip link, no "No Frame" in grid).
-- `hooks/use-camera.ts`: `capture(frameImg?)` — transform reset before overlay draw; JPEG 0.92.
-- `components/guest-event-entry.tsx`: `frame-select` ViewState; Start 201 → frame selection; `handleFrameSelect` (confirmUsage → carry-over); `frameOverlaySrc` on CameraViewfinder.
-- Validation: tsc PASS; vitest 315/315; lint +4 warnings (all spec-verbatim code) / 0 new errors; live Chromium QA against real Supabase — composite verified in-browser (MSE 19.6 vs 240.1 mirror discriminator) and in persisted storage (framed 41 KB vs frameless 7.5 KB, pixel-verified); skip, carry-over, camera-denied fallback, keyboard a11y all verified.
+## Session summary (guest message / pesan & kesan, Opsi B)
+- NEW `supabase/migrations/0005_guest_messages.sql`: `guest_messages` table, 1–280 CHECK, one-per-session UNIQUE, FK RESTRICT, index, RLS+REVOKE. Verified live (idempotent re-run, all constraints enforced).
+- NEW `lib/guest-message-tx-repo.ts` + `lib/submit-guest-message.ts` (voice-note pattern; reuses `resolveVoiceNoteAuth`; UNIQUE is the race-safe guard; no storage).
+- NEW `app/api/events/[public_id]/guest-messages/route.ts` (auth-before-body, rate limit, 4 KB bounded JSON read, 409/422/429/401 mappings).
+- Amended: session GET usage + `start-guest-session` body + `UsageState` (+`guest_message_submitted/available`); `admin-media-repo.listSubmissions` (+`GUEST_MESSAGE` w/ `message_text`); guest UI (`GuestMessageAction`, `submitMessage`, usage row); admin UI (`MessageTile`, type label, breakdown).
+- Docs amended: `docs/db_scheme.md` (v1.2, table/constraints/indexes/summaries/absence note) and `docs/API_CONTRACT.md` (§6.6, §2, §4, §5.7, §6.1–6.2).
+- Validation: `npx tsc --noEmit` PASS (exit 0); `npx vitest run` 362/362 (38 files) PASS — includes new route/unit tests for guest-messages; eslint 0 errors, 9 pre-existing warnings; migration verified against live local Postgres.
 
 ## Open items for owner
-1. `public/frames/wedding-simple.png` missing — registry entry ships, degrades gracefully (no frame).
-2. PRE-EXISTING (verified on original code, untouched): Send-401 path's `handleSessionExpired` stale-closure swallows the carry-over prompt; voice-note 401 path shows it. Recommend follow-up fix via `pendingPhotosRef`.
-3. Frames are ~99.8% opaque full-bleed; on non-3/4 sensors the frame dominates the composite. Asset question, not code.
+1. Migration 0005 is NOT yet applied to the production Supabase project — must be applied before deploy.
+2. `mime_type: "text/plain"` / `file_size: 0` for GUEST_MESSAGE submissions is an implementation convention (documented in API_CONTRACT §5.7), not an owner-ratified decision.
+3. Message rows are not covered by the 7-day media cleanup (they have no storage object); retention for text is currently indefinite.
+
+## Pre-existing open items (unchanged)
+`public/frames/wedding-simple.png` handled gracefully; Send-401 stale-closure note from prior session; frames ~99.8% opaque asset question; R3 prerequisites; deferred owner decisions C1–C5.
 
 ## R3 prerequisites (unchanged)
 Owner go-ahead; Vercel env vars (NEXT_PUBLIC_*, DATABASE_URL pooler + sslmode=require, SUPABASE_STORAGE_BUCKET, CRON_SECRET, TRUSTED_PROXY=1); deployed smoke incl. ffprobe + cron 401/200.
-
-## Deferred owner decisions (unchanged)
-C1 exact-match guest-name search; C2 create-success URL/QR state; C3 access/QR error states; C4 admin sign-in throttling; C5 cron throughput/maxDuration.

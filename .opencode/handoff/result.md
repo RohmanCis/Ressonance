@@ -1,42 +1,45 @@
-# Result — Guest photo frame selection (frontend-only)
+# Result — Guest message feature (Pesan & Kesan), Opsi B
 
 ## Status
-DONE. No owner decision required.
+DONE. No blocking owner decision required; three advisories recorded below.
 
 ## Files changed
-- `lib/frames.ts` (new): Frame registry exactly per spec — `Frame` interface, `FRAMES` (none/wedding-floral/wedding-simple/party, all 3/4), `DEFAULT_FRAME_ID="none"`, `loadFrameImage()` resolving `null` on error (photo uploads without frame).
-- `components/frame-selector.tsx` (new): pre-camera selection screen. `onSelect(frame)` prop; 2-col grid of FRAMES excluding "none"; 3/4 aspect cards with PNG preview over `bg-muted`; selected = `border-primary` + ring + ✓ badge; CTA `Use [label]` / `Continue without frame`; `Skip — no frame` secondary link only when a real frame is selected; `role="radiogroup"`/`role="radio"`+`aria-checked`; roving tabindex + arrow-key navigation; `bg-primary` CTA, `font-display` heading (UI_DESIGN §5/§8/§13).
-- `hooks/use-camera.ts`: `capture(frameImg?: HTMLImageElement | null)` — draws video (front-camera mirroring preserved), then `ctx.setTransform(1,0,0,1,0,0)` **before** `drawImage(frameImg, 0, 0, canvas.width, canvas.height)` (overlay never mirrored), JPEG quality 0.9 → 0.92. Interface + all other logic unchanged.
-- `components/guest-event-entry.tsx`: imports (4a); ViewState `| "frame-select"` (4b); `selectedFrame` state + `frameImgRef` (4c); Start 201 handler now `setState("frame-select")` + return (4d); `handleFrameSelect` useCallback — loads frame image, `post-session-loading` → `confirmUsage()` → carry-over merge → clear `carryOverPrompt` (4e); `camera.capture(frameImgRef.current)` (4f); frame-select render block after `!event` guard (4g); `CameraViewfinder frameOverlaySrc` prop + non-mirrored overlay `<img>` after `</video>` (4h).
+### New
+- `supabase/migrations/0005_guest_messages.sql` — `guest_messages` table (UUID PK, `guest_session_id` FK RESTRICT, `message_text` TEXT NOT NULL CHECK `char_length 1–280`, `created_at`), `uq_guest_messages_one_per_session` UNIQUE, `idx_guest_messages_guest_session_id`, plus the 0001-pattern RLS/REVOKE boundary. Idempotent (`IF NOT EXISTS`).
+- `lib/guest-message-tx-repo.ts` — transaction repo on direct pg: BEGIN → event-row lock (revalidate ACTIVE) → UX pre-check → insert (maps 23505/`uq_guest_messages_one_per_session` → `GuestMessageUniqueViolationError`) → photo count + voice-note existence → COMMIT. Rollback on begin failure; no per-session lock (UNIQUE is the guard, TD §9).
+- `lib/submit-guest-message.ts` — orchestration + `validateGuestMessageText` (present/string/1–280 after trim). Reuses `resolveVoiceNoteAuth` for auth (not duplicated). No storage, no compensation.
+- `app/api/events/[public_id]/guest-messages/route.ts` — POST; content-type → auth → rate limit (FixedWindowRateLimiter, env `GUEST_MESSAGE_RATE_LIMIT_MAX`/`_WINDOW_SECONDS`) → 4 KB bounded body read → validate → transaction. Full error mapping (400/401×3/404/409/422×2/429/500).
+- `lib/guest-message-tx-repo.test.ts`, `lib/submit-guest-message.test.ts`, `app/api/events/[public_id]/guest-messages/route.test.ts` — new suites.
+
+### Amended
+- `app/api/events/[public_id]/session/route.ts` — usage repo + `countGuestMessages`.
+- `lib/get-session-usage.ts` — usage body + `guest_message_submitted/available`.
+- `lib/start-guest-session.ts` — fresh-session body carries both new fields (false/true).
+- `lib/pending-photos.ts` — `UsageState` extended (SessionData derives from it).
+- `lib/admin-media-repo.ts` — `listSubmissions` unions `guest_messages`; `MediaType` + `message_text?`.
+- `components/guest-event-entry.tsx` — message state, `handleMessageChange`, `submitMessage`, local `GuestMessageAction` (textarea rows=3 maxLength=280, counter, disabled rules, error surface), post-session section, usage-panel row.
+- `components/admin/admin-ui.tsx` — `Submission` type + `GUEST_MESSAGE`/`message_text`.
+- `components/admin/admin-dashboard.tsx` — `MessageTile` (read-only blockquote), type label, breakdown, group render.
+- `docs/db_scheme.md` (v1.2) + `docs/API_CONTRACT.md` (§6.6 new; §2, §4, §5.7, §6.1, §6.2 amended; amendment marker added).
+- Tests updated: session route, start-guest-session, get-session-usage, admin submissions, `test/admin-media-db.ts`.
 
 ## Validation
 - `npx tsc --noEmit` — PASS (exit 0).
-- `npx vitest run` — 35 files, 315/315 PASS (no new tests; spec said none required).
-- Lint: 4 new warnings, all from spec-verbatim code (3× `no-img-element` on the spec-mandated `<img>` elements; 1× unused `DEFAULT_FRAME_ID` import required verbatim by spec 4a; 1× `exhaustive-deps` on the spec's own dep array). Pre-existing error (e2e/print-qa.spec.ts:34) unchanged. No errors introduced.
-- Live runtime QA (dev server + real Supabase + Chromium):
-  - Start → "Choose a frame" grid (3 options, no "No Frame"); select → `aria-checked=true`, ✓ badge, CTA "Use Party", skip link appears.
-  - Fake camera + Party frame: viewfinder overlay visible; capture composite verified by pixel analysis (frame paper-white replaces camera blue) and MSE vs reference composite: photo-mirrored+frame-unmirrored = **19.6**, all-mirrored = **240.1** → overlay NOT mirrored on front camera.
-  - Skip path: skip link → plain capture (raw camera blue, no frame).
-  - End-to-end persistence: composite uploaded via Send → downloaded from Supabase storage → 41 KB framed JPEG (vs 7.5 KB frameless), pixel-verified paper-white corners.
-  - Carry-over: session expired (401) → "Unsaved photos…" prompt → "Start and add unsaved photos" → frame selection → after Use frame, carried photo restored ("Send 1 photo", 4 remaining).
-  - Camera denied: file-picker fallback renders, uploads work (no composite — allowed by spec).
-  - Keyboard: ArrowLeft/Right/Down move + check options inside the radiogroup.
+- `npx vitest run` — 38 files, **362/362 PASS** (was 315; +47 new tests).
+- eslint on touched files — 0 errors, 9 warnings all pre-existing (img-element / exhaustive-deps / unused import).
+- Migration verified against live local Postgres: applied twice (idempotent), columns/constraints/indexes/RLS confirmed; UNIQUE one-per-session, CHECK on "" and 281 chars, FK RESTRICT all enforced.
 
 ## Blockers
 None.
 
 ## SSOT conflict
-None. Purely presentational client feature; no endpoint, schema, contract, or voice-flow change.
+None blocking. Two additive conventions required by the task and now documented: session usage shape gains two fields (API_CONTRACT §4/§6.1); GUEST_MESSAGE submissions carry `message_text` with `mime_type: "text/plain"`, `file_size: 0`, `duration_seconds: null` (§5.7).
 
 ## Architecture drift
-None. No new dependency, endpoint, or authority. Frame selection is a UI step only; backend limits/ownership remain authoritative.
+None. No new dependency, no ORM, no new auth surface, voice-note flow untouched.
 
-## Known limitations / risks
-1. **`public/frames/wedding-simple.png` is MISSING** (only party.png + wedding-floral.png exist in the untracked `public/`). The "Wedding Classic" card renders empty-neutral and `loadFrameImage` resolves null → photos upload without frame. Asset must be added before this frame is usable.
-2. **Pre-existing bug (not introduced, verified on stashed original)**: on a photo-sync 401, `handleSessionExpired` reads a stale `pendingPhotos` closure (empty) so the carry-over prompt does NOT appear from the Send path; the voice-note 401 path (fresh render) does show it. Carry-over still works end-to-end once reached (verified). Left untouched — out of scope; recommend a follow-up using `pendingPhotosRef` inside `handleSessionExpired`.
-3. Frames are ~99.8% opaque full-bleed 1200×1800 PNGs stretched to the sensor aspect (object-fit: cover semantics): on non-3/4 sensors the frame art is effectively what guests see/capture (camera visible only through frame's transparent regions). If partial-alpha overlays are intended, assets need adjusting.
-4. `aspectRatio` field is declared but unused by rendering (spec provided it; grid hard-codes 3/4 per requirement).
-5. 4 MB upload cap: framed composite grew ~5.5× in QA (7.5 KB → 41 KB) — still far under the cap, but very high-resolution sensors + opaque frames could approach it. Backend cap remains authoritative.
-
-## Next step
-Owner: supply `wedding-simple.png`; decide on follow-up fix for the pre-existing Send-401 carry-over closure bug.
+## Advisories / next step
+1. **Migration 0005 must be applied to production Supabase before deploy.**
+2. `mime_type`/`file_size` convention for GUEST_MESSAGE is documented but not owner-ratified.
+3. `guest_messages` rows are not covered by the 7-day media cleanup (no storage object); text retention is currently indefinite — owner may want a policy decision.
+Next: owner review + apply migration + optional browser QA, then commit.

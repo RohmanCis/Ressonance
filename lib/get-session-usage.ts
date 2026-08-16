@@ -26,6 +26,7 @@ export interface UsageRepo {
   findSessionByTokenHash(hash: string): Promise<GuestSession | null>;
   countPhotos(sessionId: string): Promise<number>;
   countVoiceNotes(sessionId: string): Promise<number>;
+  countGuestMessages(sessionId: string): Promise<number>;
 }
 
 export interface UsageBody {
@@ -35,6 +36,8 @@ export interface UsageBody {
   photos_remaining: number;
   voice_note_submitted: boolean;
   voice_note_available: boolean;
+  guest_message_submitted: boolean;
+  guest_message_available: boolean;
 }
 
 export type GetUsageResult =
@@ -71,9 +74,10 @@ export async function getSessionUsage(
     case "session_expired":
       return { kind: "session_expired" };
     case "ok": {
-      const [photoCount, voiceCount] = await Promise.all([
+      const [photoCount, voiceCount, messageCount] = await Promise.all([
         repo.countPhotos(resolved.session.id),
         repo.countVoiceNotes(resolved.session.id),
+        repo.countGuestMessages(resolved.session.id),
       ]);
       return {
         kind: "ok",
@@ -88,6 +92,8 @@ export async function getSessionUsage(
           photos_remaining: Math.max(0, PHOTO_LIMIT - photoCount),
           voice_note_submitted: voiceCount > 0,
           voice_note_available: voiceCount === 0,
+          guest_message_submitted: messageCount > 0,
+          guest_message_available: messageCount === 0,
         },
       };
     }

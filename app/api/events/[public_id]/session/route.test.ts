@@ -20,6 +20,7 @@ let createdSessions: Record<string, unknown>[] = [];
 let sessions: { id: string; event_id: string; session_token: string; guest_name: string | null; expires_at: string }[] = [];
 let photosBySession: Record<string, number> = {};
 let voiceNotesBySession: Record<string, number> = {};
+let guestMessagesBySession: Record<string, number> = {};
 
 function makeDb() {
   return {
@@ -68,7 +69,7 @@ function makeDb() {
           },
         };
       }
-      if (table === "photos" || table === "voice_notes") {
+      if (table === "photos" || table === "voice_notes" || table === "guest_messages") {
         return {
           select(_col: string, _opts?: { count?: string; head?: boolean }) {
             void _opts;
@@ -77,7 +78,9 @@ function makeDb() {
                 const count =
                   table === "photos"
                     ? photosBySession[sessionId] ?? 0
-                    : voiceNotesBySession[sessionId] ?? 0;
+                    : table === "voice_notes"
+                      ? voiceNotesBySession[sessionId] ?? 0
+                      : guestMessagesBySession[sessionId] ?? 0;
                 return { count, error: null };
               },
             };
@@ -167,6 +170,7 @@ beforeEach(() => {
   sessions = [];
   photosBySession = {};
   voiceNotesBySession = {};
+  guestMessagesBySession = {};
 });
 
 describe("POST /api/events/{public_id}/session", () => {
@@ -182,6 +186,8 @@ describe("POST /api/events/{public_id}/session", () => {
         photos_remaining: 5,
         voice_note_submitted: false,
         voice_note_available: true,
+        guest_message_submitted: false,
+        guest_message_available: true,
       },
     });
     const setCookie = res.headers.get("set-cookie");
@@ -310,6 +316,7 @@ function seedSession(opts: {
   eventId: string;
   photos?: number;
   voiceNotes?: number;
+  guestMessages?: number;
   guestName?: string | null;
 }) {
   const token = generateSessionToken();
@@ -322,6 +329,7 @@ function seedSession(opts: {
   });
   photosBySession[sessions[0].id] = opts.photos ?? 0;
   voiceNotesBySession[sessions[0].id] = opts.voiceNotes ?? 0;
+  guestMessagesBySession[sessions[0].id] = opts.guestMessages ?? 0;
   return token;
 }
 
@@ -338,7 +346,17 @@ describe("GET /api/events/{public_id}/session", () => {
       photos_remaining: 3,
       voice_note_submitted: false,
       voice_note_available: true,
+      guest_message_submitted: false,
+      guest_message_available: true,
     });
+  });
+
+  it("reflects the guest-message state", async () => {
+    const token = seedSession({ eventId: "event-1", guestMessages: 1 });
+    const res = await GET(makeGetRequest(token), { params });
+    const body = await res.json();
+    expect(body.guest_message_submitted).toBe(true);
+    expect(body.guest_message_available).toBe(false);
   });
 
   it("reflects the voice-note and name state", async () => {

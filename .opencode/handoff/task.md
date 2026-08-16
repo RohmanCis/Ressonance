@@ -1,15 +1,15 @@
-# Task: Guest photo frame selection (frontend-only)
+# Task: Guest message feature (Pesan & Kesan) — Opsi B
 
-Boundaries: read AGENTS.md first. Do NOT touch app/api/**, supabase/**, docs/**, lib/ files other than new lib/frames.ts, admin components, voice-note flow, third-party deps. No commit/push.
+Boundaries: read AGENTS.md + canonical docs first. Standalone guest text message, independent of the voice note; not attached to voice_notes; never required. One message per guest session. Do NOT modify the voice note route, submit-voice-note.ts, or AGENTS.md. No new dependencies. No commit/push. Docs amendments (db_scheme.md, API_CONTRACT.md) are mandatory.
 
-## Changes
-1. `lib/frames.ts` (NEW): Frame interface {id,label,src,aspectRatio}, FRAMES registry (none, wedding-floral, wedding-simple, party), DEFAULT_FRAME_ID="none", loadFrameImage() resolving null on error (graceful: photo uploads without frame).
-2. `components/frame-selector.tsx` (NEW): props {onSelect(frame)}. 2-col grid of FRAMES excluding "none"; 3/4 aspect card previewing PNG over neutral bg; selected = border-primary ring + checkmark badge; primary CTA "Use [label]" / "Continue without frame"; secondary skip link "Skip — no frame" only when a real frame is selected; "No Frame" never in grid; role=radiogroup / role=radio + aria-checked; bg-primary CTA, font-display heading (UI_DESIGN tokens).
-3. `hooks/use-camera.ts`: capture(frameImg?: HTMLImageElement | null) — draw video (keep front-camera mirroring), then ctx.setTransform(1,0,0,1,0,0) BEFORE drawing frame over full canvas, then toBlob JPEG 0.92. All other logic identical.
-4. `components/guest-event-entry.tsx`: imports (4a); ViewState +"frame-select" between "unexpected" and "post-session-loading" (4b); selectedFrame state + frameImgRef (4c); Start 201 handler → setState("frame-select") and RETURN (carry-over moves out of start()) (4d); handleFrameSelect callback loading frame image then post-session-loading → confirmUsage → carry-over merge → clear carryOverPrompt (4e); camera.capture(frameImgRef.current) (4f); frame-select render block after !event guard, before post-session render (4g); CameraViewfinder frameOverlaySrc prop + non-mirrored overlay <img> after </video> (4h).
+## Layers
+1. **DB** — `supabase/migrations/0005_guest_messages.sql`: guest_messages(id, guest_session_id FK RESTRICT, message_text TEXT CHECK char_length 1–280, created_at); UNIQUE(guest_session_id) `uq_guest_messages_one_per_session`; index `idx_guest_messages_guest_session_id`. Amend `docs/db_scheme.md` (DDL, constraint/index summaries, remove implicit absence).
+2. **API** — NEW `app/api/events/[public_id]/guest-messages/route.ts` (auth-before-body order: content-type → event/session auth → rate limit → bounded 4 KB JSON read → validate message_text → insert); NEW `lib/submit-guest-message.ts`; NEW `lib/guest-message-tx-repo.ts`; reuse `resolveVoiceNoteAuth` — do not duplicate auth. Amend session GET usage + `docs/API_CONTRACT.md` §6.6, §2, §4, §6.1; mark amendment "Amended 2026-08-17: guest message feature (Opsi B)."
+3. **Guest UI** — `components/guest-event-entry.tsx`: messageText/messageState/messageError state; SessionData + guest_message fields; confirmUsage() reads them; submitMessage(); local GuestMessageAction component; usage-panel row "Message: Available/Sent".
+4. **Admin (read-only)** — `app/api/admin/events/[public_id]/submissions` includes GUEST_MESSAGE items (id, type, created_at, public_ref, guest_name, message_text); local MessageTile in `components/admin/admin-dashboard.tsx`.
 
 ## Acceptance
-Start → Frame Selection → camera w/ overlay; capture composites frame (visible in PendingStrip); skip → plain photo; "No Frame" absent from grid; overlay NOT mirrored on front camera; permission-denied fallback intact; voice flow untouched; carry-over still works; tsc --noEmit no new errors; vitest all existing pass.
+201 on valid submit; 409 GUEST_MESSAGE_LIMIT_REACHED on second; 422 INVALID_INPUT w/ field detail on empty/>280; 401 SESSION_EXPIRED triggers handleSessionExpired(); session GET returns the two new fields; UI shows "Message sent." read-only after submit; voice flow unaffected; admin list includes GUEST_MESSAGE; tsc exit 0; vitest all pass with new route/unit tests.
 
 ## Validation
 npx tsc --noEmit; npx vitest run.

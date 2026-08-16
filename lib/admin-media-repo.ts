@@ -12,7 +12,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * or token is ever returned.
  */
 
-export type MediaType = "PHOTO" | "VOICE_NOTE";
+export type MediaType = "PHOTO" | "VOICE_NOTE" | "GUEST_MESSAGE";
 
 export interface SubmissionListing {
   id: string;
@@ -23,6 +23,8 @@ export interface SubmissionListing {
   mime_type: string;
   file_size: number;
   duration_seconds: number | null;
+  /** Present only for GUEST_MESSAGE submissions (Opsi B). */
+  message_text?: string;
 }
 
 export interface MediaRecord {
@@ -127,9 +129,9 @@ export async function getSessionEventId(
 }
 
 /**
- * List all photo/voice submissions for an event, newest first, as a unified
- * metadata array. Optional guest_name filters to sessions with that name.
- * Never returns storage_key or a public/signed URL.
+ * List all photo/voice/guest-message submissions for an event, newest first,
+ * as a unified metadata array. Optional guest_name filters to sessions with
+ * that name. Never returns storage_key or a public/signed URL.
  */
 export async function listSubmissions(
   db: Db,
@@ -157,10 +159,15 @@ export async function listSubmissions(
     .from("voice_notes")
     .select("id, guest_session_id, created_at, mime_type, file_size, duration_seconds")
     .in("guest_session_id", sessionIds);
+  const messageQuery = db
+    .from("guest_messages")
+    .select("id, guest_session_id, created_at, message_text")
+    .in("guest_session_id", sessionIds);
 
-  const [photoRes, voiceRes] = await Promise.all([photoQuery, voiceQuery]);
+  const [photoRes, voiceRes, messageRes] = await Promise.all([photoQuery, voiceQuery, messageQuery]);
   if (photoRes.error) throw photoRes.error;
   if (voiceRes.error) throw voiceRes.error;
+  if (messageRes.error) throw messageRes.error;
 
   const nameBySession = new Map(
     (sessions as { id: string; guest_name: string | null; public_ref: string }[]).map((s) => [
@@ -194,6 +201,20 @@ export async function listSubmissions(
       mime_type: v.mime_type,
       file_size: v.file_size,
       duration_seconds: v.duration_seconds,
+    });
+  }
+  for (const m of messageRes.data ?? []) {
+    const session = nameBySession.get(m.guest_session_id);
+    listings.push({
+      id: m.id,
+      type: "GUEST_MESSAGE",
+      guest_name: session?.guest_name ?? null,
+      guest_session_ref: session?.public_ref ?? "",
+      created_at: m.created_at,
+      mime_type: "text/plain",
+      file_size: 0,
+      duration_seconds: null,
+      message_text: m.message_text,
     });
   }
 

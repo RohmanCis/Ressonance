@@ -1,8 +1,9 @@
 # Database Schema — QR Guest Photo & Voicebook
 
-Version: 1.1
+Version: 1.2
 Status: Approved schema design  
 Reconciled 2026-08-15 — closes open technical decisions; schema applied via migrations 0001–0004.
+Amended 2026-08-17: guest message feature (Opsi B) — adds `guest_messages` via migration 0005.
 Source of Truth: PRD v1.3 + Domain Model + ERD (all locked)
 
 ---
@@ -25,6 +26,7 @@ Source of Truth: PRD v1.3 + Domain Model + ERD (all locked)
 | Session expiration | `expires_at` column on `guest_sessions`; 30-minute lifetime from creation |
 | Session-create rate limit | `session_create_rate_limits` fixed-window counters (ADR-008); service-role/pg only — RLS enabled with no policies, PUBLIC/anon/authenticated grants revoked (migration 0004) |
 | original_filename | Dropped — no business value for browser-captured media |
+| guest_messages | Standalone guest text message ("pesan & kesan"), one per GuestSession, 1–280 chars, independent of the voice note (migration 0005) |
 
 ---
 
@@ -166,7 +168,27 @@ CREATE TABLE voice_notes (
 
 
 -- -----------------------------------------------------------------------------
--- 6. session_create_rate_limits (migration 0003)
+-- 6. guest_messages (migration 0005)
+-- -----------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS guest_messages (
+    id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    guest_session_id  UUID        NOT NULL REFERENCES guest_sessions(id) ON DELETE RESTRICT,
+    message_text      TEXT        NOT NULL
+                                  CHECK (char_length(message_text) BETWEEN 1 AND 280),
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    -- Enforce max 1 guest message per session at the DB level
+    CONSTRAINT uq_guest_messages_one_per_session
+        UNIQUE (guest_session_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_guest_messages_guest_session_id
+    ON guest_messages (guest_session_id);
+
+
+-- -----------------------------------------------------------------------------
+-- 7. session_create_rate_limits (migration 0003)
 -- -----------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS session_create_rate_limits (
@@ -199,12 +221,14 @@ CREATE TABLE IF NOT EXISTS session_create_rate_limits (
 | `guest_sessions` | session_token unique | UNIQUE | DB |
 | `guest_sessions` | public_ref unique | UNIQUE | DB |
 | `voice_notes` | max 1 per session | UNIQUE | DB |
+| `guest_messages` | max 1 per session | UNIQUE | DB |
 | `session_create_rate_limits` | (identity_key, window_start) PK | PRIMARY KEY | DB |
 | `photos` | max 5 per session | Count check in transaction | Backend |
 | All FK | no cascade delete | ON DELETE RESTRICT | DB |
 | `photos.file_size` | positive | CHECK | DB |
 | `voice_notes.file_size` | positive | CHECK | DB |
 | `voice_notes.duration_seconds` | 5–30 | CHECK | DB |
+| `guest_messages.message_text` | 1–280 characters | CHECK | DB |
 
 ---
 
@@ -221,6 +245,8 @@ CREATE TABLE IF NOT EXISTS session_create_rate_limits (
 | `idx_guest_sessions_event_id` | `guest_sessions` | `event_id` | INDEX | Dashboard: event → sessions |
 | `idx_photos_guest_session_id` | `photos` | `guest_session_id` | INDEX | Photo count per session |
 | `uq_voice_notes_one_per_session` | `voice_notes` | `guest_session_id` | UNIQUE | Max 1 voice note |
+| `uq_guest_messages_one_per_session` | `guest_messages` | `guest_session_id` | UNIQUE | Max 1 guest message |
+| `idx_guest_messages_guest_session_id` | `guest_messages` | `guest_session_id` | INDEX | Message existence per session |
 | `session_create_rate_limits_pkey` | `session_create_rate_limits` | `(identity_key, window_start)` | PRIMARY KEY | Rate-limit counter upsert (ADR-008) |
 
 ---
@@ -272,9 +298,11 @@ ARCHIVE→ status = 'ARCHIVED', closed_at = (tetap timestamp dari CLOSE)
 
 ## What Is Not in This Schema
 
+> Amended 2026-08-17: guest text messages are now part of this schema (`guest_messages`, migration 0005) — the earlier implicit absence is removed. They are a standalone submission type, not a column on `voice_notes`.
+
 | Item | Reason |
 |---|---|
-| `event_id` di `photos` / `voice_notes` | Tidak denormalisasi — akses via `guest_sessions.event_id` |
+| `event_id` di `photos` / `voice_notes` / `guest_messages` | Tidak denormalisasi — akses via `guest_sessions.event_id` |
 | `original_filename` | Tidak ada business value untuk media dari kamera browser |
 | `archived_at` | `ARCHIVED` belum punya behavior aktif di MVP |
 | Media retention / media `expires_at` | Policy resolved 2026-08-15 (owner): retain media 7 days after event CLOSED, then automatic cleanup (cron endpoint, API Contract §7.1). No new column required — cleanup derives eligibility from `events.closed_at` + `events.status`; deletes `photos`/`voice_notes` rows only |
@@ -291,4 +319,4 @@ ARCHIVE→ status = 'ARCHIVED', closed_at = (tetap timestamp dari CLOSE)
 
 ## Next Step
 
-Schema applied to live Supabase via migrations 0001–0004 (verified 2026-08). Further schema changes require an approved change to this document plus a new migration.
+Schema applied to live Supabase via migrations 0001–0004 (verified 2026-08); migration 0005 (`guest_messages`, Opsi B) is pending application. Further schema changes require an approved change to this document plus a new migration.
