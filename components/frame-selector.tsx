@@ -6,9 +6,11 @@ import { DEFAULT_FRAME_ID, FRAMES, type Frame } from "@/lib/frames";
 /**
  * FrameSelector — pre-camera step: guest picks a photo frame.
  *
- * UI_UX §4 (guest flow) + UI_DESIGN tokens: bg-primary CTA, border-primary
+ * UI_UX §4.2 (guest flow) + UI_DESIGN tokens: bg-primary CTA, border-primary
  * selection, font-display heading, 48px guest primary, 4px grid unit.
  * "No Frame" is never a grid option; it is reachable only via the skip link.
+ * Preview cards use the enforced 9:16 frame ratio; the preview image uses
+ * object-contain so placeholder/final art is never distorted (UI_DESIGN §11).
  */
 
 const OPTIONS: Frame[] = FRAMES.filter((frame) => frame.id !== DEFAULT_FRAME_ID);
@@ -69,7 +71,7 @@ export function FrameSelector({ onSelect }: { onSelect: (frame: Frame) => void }
               className="text-left focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
               <span
-                className={`relative block aspect-[3/4] overflow-hidden rounded-md border-2 bg-muted ${
+                className={`relative block aspect-[9/16] overflow-hidden rounded-md border-2 bg-muted ${
                   isSelected ? "border-primary ring-2 ring-primary ring-offset-2" : "border-border"
                 }`}
               >
@@ -77,7 +79,7 @@ export function FrameSelector({ onSelect }: { onSelect: (frame: Frame) => void }
                   src={frame.src}
                   alt=""
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+                  className="pointer-events-none absolute inset-0 h-full w-full object-contain"
                 />
                 {isSelected && (
                   <span

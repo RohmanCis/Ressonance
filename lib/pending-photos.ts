@@ -1,16 +1,16 @@
 /**
  * Pending-photos pure logic (T030 Phase 2).
  *
- * UI_UX §4.3: multi-capture + batch sync. These functions are framework-free
+ * UI_UX §4.4: multi-capture + batch sync. These functions are framework-free
  * so the quota and sync semantics can be unit-tested without React.
  *
  * Key invariant: the server-confirmed accepted count is authoritative. The
- * local capture budget is a UX hint only (§4.3, §7).
+ * local capture budget is a UX hint only (§4.4, §7).
  */
 
 export const PHOTO_LIMIT = 5;
 
-/** Per-item status in the pending buffer (UI_UX §4.3). */
+/** Per-item status in the pending buffer (UI_UX §4.4). */
 export type PendingStatus = "pending" | "uploading" | "confirmed" | "error" | "expired";
 
 export interface PendingPhoto {
@@ -33,7 +33,7 @@ export interface UsageState {
 
 /**
  * Local capture budget = 5 − (server-confirmed accepted) − (local pending+uploading).
- * Never negative. Never authoritative (§4.3 Capture budget).
+ * Never negative. Never authoritative (§4.4 Capture budget).
  */
 export function localBudgetRemaining(
   serverAccepted: number,
@@ -67,7 +67,7 @@ export function isSyncing(pending: PendingPhoto[]): boolean {
 
 /**
  * Whether an item can be retaken (replaced by a new capture).
- * Only unsent items — `pending` or `error` — can be retaken (UI_UX §4.3-5).
+ * Only unsent items — `pending` or `error` — can be retaken (UI_UX §4.4–§4.6).
  */
 export function canRetakePhoto(status: PendingStatus): boolean {
   return status === "pending" || status === "error";
@@ -76,7 +76,7 @@ export function canRetakePhoto(status: PendingStatus): boolean {
 /**
  * Whether an item can be deleted. Only unsent items — `pending` or `error` —
  * can be removed; never while `uploading` (a sync is in flight) and never
- * once `confirmed` (UI_UX §4.3-5).
+ * once `confirmed` (UI_UX §4.4–§4.6).
  */
 export function canDeletePhoto(status: PendingStatus): boolean {
   return status === "pending" || status === "error";

@@ -1,13 +1,20 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { FRAME_OUTPUT } from "@/lib/frames";
+import { computeCoverCrop } from "@/lib/frame-compositing";
 
 /**
  * useCamera — getUserMedia lifecycle, capture-to-blob, camera switch, cleanup.
  *
- * UI_UX §4.3.1-§4.3.3, UI_DESIGN §11: camera-first viewfinder surface.
+ * UI_UX §4.3-§4.4, UI_DESIGN §11: camera-first viewfinder surface.
  * Stops all tracks on unmount/cancel to prevent battery drain + dangling LED.
  * Falls back gracefully: denied/unsupported → permission state for file-picker.
+ *
+ * Capture geometry (UI_UX §4.4): every photo is composited at the fixed
+ * 1080×1920 (9:16) output via deterministic center cover-crop, matching the
+ * live viewfinder so capture is WYSIWYG. The photo (never the frame overlay)
+ * is mirrored for the front camera.
  */
 
 export type CameraPermission = "idle" | "requesting" | "granted" | "denied" | "unsupported";
@@ -117,9 +124,14 @@ export function useCamera(): UseCameraResult {
     video.playsInline = true;
     await video.play();
 
+    // Deterministic center cover-crop into the fixed 9:16 output. A video
+    // that reports zero dimensions (not ready) fails soft: no capture.
+    const crop = computeCoverCrop(video.videoWidth, video.videoHeight);
+    if (!crop) return null;
+
     const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = FRAME_OUTPUT.width;
+    canvas.height = FRAME_OUTPUT.height;
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
 
@@ -128,12 +140,13 @@ export function useCamera(): UseCameraResult {
       ctx.translate(canvas.width, 0);
       ctx.scale(-1, 1);
     }
-    ctx.drawImage(video, 0, 0);
+    ctx.drawImage(video, crop.sx, crop.sy, crop.sw, crop.sh, crop.dx, crop.dy, crop.dw, crop.dh);
 
     // Step 2: reset transform so the frame overlay is never mirrored.
     ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-    // Step 3: composite the selected frame over the full photo.
+    // Step 3: composite the selected frame over the full photo. The frame is
+    // already 9:16, so it lands 1:1 — never stretched, never mirrored.
     if (frameImg) {
       ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
     }

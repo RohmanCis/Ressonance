@@ -3,7 +3,7 @@
 import { ChangeEvent, FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useCamera } from "@/hooks/use-camera";
 import { FrameSelector } from "@/components/frame-selector";
-import { loadFrameImage, DEFAULT_FRAME_ID, type Frame } from "@/lib/frames";
+import { loadFrameImage, type Frame } from "@/lib/frames";
 import {
   applySyncResult,
   canDeletePhoto,
@@ -217,7 +217,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
   // confirmations that happened since and carry over already-saved photos
   // (same stale-closure class as the D2 voice-duration fix).
   function handleSessionExpired() {
-    // Preserve pending photos as "not saved" (UI_UX §4.2, §7).
+    // Preserve pending photos as "not saved" (UI_UX §4.3, §7).
     // "pending" and "uploading" both count as unsaved, so the in-flight
     // revert in syncPhotos() needs no await here.
     const unsaved = pendingPhotosRef.current.filter((p) => p.status !== "confirmed");
@@ -283,7 +283,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
     setReviewIndex(null);
   }
 
-  // --- Retake pending photo (UI_UX §4.3-5): remove item, camera viewfinder
+  // --- Retake pending photo (UI_UX §4.4-§4.6): remove item, camera viewfinder
   // is already the ready state. No auto-upload, no session mutation.
   function retakePhoto(id: string) {
     setPendingPhotos((prev) => {
@@ -822,7 +822,7 @@ function CameraViewfinder({
 
   if (permission === "idle" || permission === "requesting") {
     return (
-      <div className="flex aspect-[3/4] items-center justify-center rounded-[var(--radius)] bg-muted">
+      <div className="flex aspect-[9/16] items-center justify-center rounded-[var(--radius)] bg-muted">
         <p className="text-sm text-muted-foreground">Starting camera…</p>
       </div>
     );
@@ -848,14 +848,14 @@ function CameraViewfinder({
         autoPlay
         playsInline
         muted
-        className="aspect-[3/4] w-full object-cover"
+        className="aspect-[9/16] w-full object-cover"
         aria-label="Camera preview"
       />
       {frameOverlaySrc && (
         <img
           src={frameOverlaySrc}
           alt=""
-          className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+          className="pointer-events-none absolute inset-0 h-full w-full object-contain"
           aria-hidden="true"
         />
       )}

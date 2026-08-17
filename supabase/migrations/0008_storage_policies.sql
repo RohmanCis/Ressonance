@@ -1,0 +1,21 @@
+-- Migration 0008: storage RLS policies for guest-media bucket
+--
+-- This migration contains no executable SQL.
+--
+-- Reason: hosted Supabase runs migrations as role `postgres`, which does
+-- not hold ownership of storage.objects (owned by supabase_storage_admin).
+-- ALTER TABLE and CREATE POLICY on storage.objects therefore fail with
+-- SQLSTATE 42501 when run via db push.
+--
+-- What was done instead (applied manually via Supabase Dashboard):
+-- Storage → Files → guest-media → Policies → New policy
+--   Policy name prefix : service_role_guest_media_access
+--   Policies created   : kac33_0 (SELECT), kac33_1 (INSERT), kac33_2 (DELETE)
+--   Target role        : service_role
+--   Bucket             : guest-media
+--   Date applied       : 2026-08-17
+--
+-- To verify:
+-- SELECT policyname, cmd, roles
+-- FROM pg_policies
+-- WHERE schemaname = 'storage' AND tablename = 'objects';

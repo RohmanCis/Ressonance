@@ -1,24 +1,22 @@
 # Current Execution State
 
-- Phase: Idle. No active task. All sessions reconciled.
-- Status: Working tree clean at `39cec45` (docs sync + UX_FLOW.md). Live DB migration history `0001`–`0005` applied and verified.
+- Phase: Audit complete, awaiting owner triage. No active task. Not implementing fixes (audit-only per instruction).
+- Status: HEAD `27968aa` == origin/main; working tree = pre-existing uncommitted frames change-set (16 files, untouched) + handoff files. `npx vitest run` 375/375 PASS during audit.
 
-## Session summary (2026-08-17 — audit, migration repair, UX flow, doc sync)
-- **Pre-QA audit** of guest + admin flows vs canonical docs: found 1 blocking issue (B1: `guest_messages` table missing from the live DB — session usage read, guest-message submit, and the admin timeline all 500) plus 3 non-blocking findings (N1 UI_UX doc drift, N2 admin status label, N3 frame-select closure fragility).
-- **B1 resolved:** confirmed `supabase db push` failed on `gen_random_bytes` (SQLSTATE 42883 — pgcrypto lives in the `extensions` schema on Supabase; only migration 0002 was affected). Fixed `0002_guest_session_public_ref.sql` with `SET search_path = public, extensions;` … `RESET search_path;` (0003/0004 have no extension functions; 0005's `gen_random_uuid()` resolves via `pg_catalog`). Pushed via `SUPABASE_DB_URL`: 0002–0005 applied (0002–0004 idempotent replays over pre-existing artifacts — this also repaired the history drift where only `0001` had been recorded).
-- **Verified post-push (read-only probes):** history `0001`–`0005`; `guest_messages` columns/constraints/indexes/RLS/grants all correct; no duplicated indexes; `public_ref` 0 NULL/0 duplicates; the app's exact query shapes (`countGuestMessages`, admin `listSubmissions` join) execute cleanly.
-- **UX_FLOW.md created** (project root): owner-facing manual QA guide — guest flow A1–A8 (event open, Start, frame selection incl. both no-frame paths, camera/permissions, send, voice note, guest message, session panel/expiry/carry-over, closed-mid-session), admin flow B1–B5 (sign-in, index, create, dashboard, access/QR), plus a 12-row edge-case checklist.
-- **Docs synced to reality:** `UI_UX.md` amended (2026-08-17 reconciliation note; §1 scope, §4.2 content/actions, new §4.5 guest-message flow, §5.2 read-only GUEST_MESSAGE tiles, §6 `GUEST_MESSAGE_LIMIT_REACHED` row). Stale state removed: `db_scheme.md` ("pending application" → applied; header 0001–0005), `PRD.md`/`API_CONTRACT.md`/`ARCHITECTURE_DECISIONS.md` (0001–0003 → 0001–0005), `AGENTS.md` §10 (frame selection + guest message + verified live-DB state). Removed CLI scratch `supabase/.temp/`.
-- **Committed by owner as `39cec45`** ("docs: sync all canonical docs to migration 0005, add UX_FLOW.md and guest message UI/UX spec") — 8 files, +182/−11.
+## Session summary (this session — comprehensive QA audit)
+Six read-only lanes dispatched and completed: A structure/architecture (exp-1), B API layer (exp-2), C DB/security (ora-1), D frontend quality (exp-3), E perf/reliability (ora-2), F test coverage (qa-1). All mandatory docs read by every lane; no repo files modified.
+
+**Totals: 2 CRITICAL / 7 HIGH / 20 MEDIUM / 35 LOW (~57 unique).** Full per-area tables, top-3 pre-deploy blockers, systemic patterns in `result.md`.
+
+Top 3 before deploy:
+1. C1 — Storage bucket privacy + storage.objects policies exist only out-of-band; add assert-migration; requires live Dashboard verification.
+2. C2 — service_role DML grants rely on undocumented platform defaults (no migration grants DELETE photos/voice_notes, UPDATE events); requires live DB verification incl. 0006 applied.
+3. B-M2 — without `TRUSTED_PROXY=1` all guests share one 10 req/min bucket → mass 429 at live event; verify Vercel env.
+
+HIGH runners-up: camera/mic stream leaks on session expiry & unmount (guest-event-entry.tsx:219-241, 488-495, voice recorder), no error.tsx/global-error.tsx/not-found.tsx, admin per-tile signed-URL waterfall (~5 DB hops × N tiles), cron sequential loop timeout risk, orphaned storage objects never swept.
+
+Positives: auth-before-body universal, consistent error envelope, deny-all RLS + REVOKE everywhere, parameterized SQL only, ADR-004 cookie/token hygiene, transactional compensation, 375/375 tests incl. real-Postgres concurrency.
 
 ## Open items for owner
-1. ~~Migration 0005 not applied to production Supabase~~ **RESOLVED 2026-08-17** — applied and verified on the APAC project that `.env.local` `DATABASE_URL` points to.
-2. `guest_messages` rows are not covered by the 7-day media cleanup (no storage object); text retention is currently indefinite — owner policy decision outstanding.
-3. `app/page.tsx` still shows "Foundation scaffold. No features implemented yet." — stale landing copy, out of last session's scope.
-4. N2 (admin status label shows only Active/Closed; harmless while ARCHIVED is deferred) and N3 (frame-select closure fragility, non-blocking) remain as noted polish items.
-
-## Pre-existing open items (unchanged)
-Send-401 stale-closure note from prior session; frames ~99.8% opaque asset question; R3 prerequisites; deferred owner decisions C1–C5.
-
-## R3 prerequisites (unchanged)
-Owner go-ahead; Vercel env vars (NEXT_PUBLIC_*, DATABASE_URL pooler + sslmode=require, SUPABASE_STORAGE_BUCKET, CRON_SECRET, TRUSTED_PROXY=1); deployed smoke incl. ffprobe + cron 401/200.
+1. **Triage audit findings** (result.md) — top-3 first; then HIGH fixes. Fixes need explicit tasking; nothing implemented.
+2. Pre-existing: frames change-set commit decision; final frame artwork; guest-message retention policy; C1–C5 decisions; N2/N3; R3 prerequisites; live 0006 + grants + bucket + TRUSTED_PROXY verifications (now formalized as audit CRITICALs); stale landing copy; db_scheme.md 0006 doc-lag.

@@ -30,11 +30,12 @@ The name is optional. Helper text under it: "Your name applies to submissions in
 ### A3. Choose a frame
 After a successful Start you always land here, before the camera opens.
 
-- Three frame cards (Wedding Floral, Wedding Classic, Party). Tap to select (✓ badge appears); arrow keys also move the selection.
+- Three frame cards (Wedding Floral, Wedding Classic, Party). Every card is a **9:16 preview** showing the frame artwork undistorted. Tap to select (✓ badge appears); arrow keys also move the selection.
 - The main button reads **Use [frame name]** once something is selected, or **Continue without frame** when nothing is selected.
 - **"No Frame" is never a card in the grid.** It is reachable two ways: the **Skip — no frame** link (appears only once a frame is selected) or the **Continue without frame** button (when nothing is selected). Both lead to the same place.
 - Any choice → brief "Confirming your session usage…" → capture screen (A4).
 - The chosen frame is printed onto your photos as you take them; skipping means plain photos. Refreshing the page at this point loses the choice and returns you to the Start screen.
+- The current artwork is placeholder art: the contract is the 9:16 (1080×1920) shape with a transparent photo area, so designs can be swapped later without code changes.
 
 ### A4. Take photos
 The camera is the main element. Above it: event title and "Guest: [name or Anonymous Guest]".
@@ -46,9 +47,11 @@ The camera is the main element. Above it: event title and "Guest: [name or Anony
 - On phones with two cameras a **↻ switch camera** button appears; photos taken with the front camera are mirrored.
 
 **Taking photos**
+- The viewfinder is **9:16** — what you see is what the photo will be. Every camera photo is saved as a **1080×1920** picture: the camera image is center-cropped to fit, so the result is the same size and shape on every device. When a frame is active it is drawn on top of the photo exactly as previewed — never mirrored (front-camera photos themselves are mirrored, matching the preview), never stretched.
 - Big round shutter at the bottom. Each tap adds a photo to the pending strip — nothing is uploaded yet.
 - "**N photos remaining**" counter = 5 minus saved minus unsent. At 0 the shutter and file picker disable (hint only; the server is the real referee).
 - Tap any thumbnail → review overlay: full preview, its status (**Not sent yet / Sending… / Saved / Not saved / Not saved — session expired**), and **Back / Retake / Delete**. Retake and Delete exist only for unsent photos; **saved photos cannot be deleted**.
+- Photos from the **Choose a photo** file picker are sent as-is — intentionally without a frame and not resized to 9:16.
 
 **Sending**
 - **Send N photo(s)** appears when there is at least one unsent photo; disabled while sending.

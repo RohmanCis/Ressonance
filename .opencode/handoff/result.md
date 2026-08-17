@@ -1,37 +1,79 @@
-# Result — Pre-QA audit, migration 0002 fix + push (0002–0005), UX_FLOW.md, doc reconciliation
+# Result — comprehensive codebase QA audit (read-only)
 
 ## Status
-DONE. Blocker B1 found and resolved; Phase 2 (UX_FLOW.md) generated; canonical docs reconciled with the live DB and codebase. Working tree clean at `39cec45`.
+DONE. Six lanes completed (A structure, B API layer, C DB/security, D frontend quality, E perf/reliability, F test coverage). All agents read mandatory docs; read-only respected (no repo files modified; handoff files only). Raw findings: **2 CRITICAL / 7 HIGH / 20 MEDIUM / 35 LOW** (≈57 unique after cross-lane dedupe). No fixes implemented per instruction.
 
-## Files changed
-### New
-- `UX_FLOW.md` — owner-facing manual QA guide: guest flow (event entry states, Start, frame selection with both no-frame paths, camera + overlay, pending strip/review/retake/delete, batch send, voice note, guest message, session panel/expiry/carry-over, closed-mid-session), admin flow (sign-in, event index, create, dashboard timeline, access/QR + print variants), edge-case checklist.
+## Consolidated findings by area
 
-### Amended
-- `supabase/migrations/0002_guest_session_public_ref.sql` — `SET search_path = public, extensions;` before the `gen_random_bytes` backfill + `RESET search_path;` after (fixes SQLSTATE 42883 on Supabase, where pgcrypto installs in `extensions`; keeps plain-Postgres layouts working). Comment explains the failure mode.
-- `docs/UI_UX.md` — 2026-08-17 reconciliation amendment: scope (§1), post-Start content/actions (§4.2), new §4.5 guest-message flow, dashboard GUEST_MESSAGE display (§5.2), `GUEST_MESSAGE_LIMIT_REACHED` error row (§6).
-- `docs/db_scheme.md` — applied-state section rewritten: migrations 0001–0005 verified, `guest_messages` constraints/RLS confirmed, 0002 search_path note; header updated.
-- `docs/PRD.md`, `docs/API_CONTRACT.md`, `docs/ARCHITECTURE_DECISIONS.md` — "migrations 0001–0003 applied" → 0001–0005.
-- `AGENTS.md` §10 — implemented list gains frame selection + guest message; live-DB paragraph records verified 0001–0005 state.
+### A — Structure & Architecture (explorer) — 0C/0H/3M/10L
+| Sev | Location | Issue |
+|---|---|---|
+| M | types/supabase.ts:1-7 (+9 routes) | Placeholder `Record<string, never>` + stale TODO → `as unknown as SupabaseClient` casts discard type safety repo-wide |
+| M | lib/config.ts:1-8 | Docstring claims server boundary; missing `import "server-only"` |
+| M | .env.example vs guest-messages/route.ts:27-28 | `GUEST_MESSAGE_RATE_LIMIT_*` used but undocumented |
+| L | lib/supabase/client.ts; lib/utils.ts; components.json:16; app/page.tsx:8; lib/pending-photos.ts:11+lib/submit-photo.ts:26; lib/supabase/server.ts:29-31; app/admin/page.tsx:11-13; public/; docs/db_scheme.md:320 | Dead browser client; `cn` self-only; ui alias→nonexistent dir; stale scaffold landing copy; PHOTO_LIMIT duplicated; stale middleware comment; admin gate style inconsistent; no favicon; doc records 0001–0005 while 0006 exists |
 
-### Removed
-- `supabase/.temp/` (untracked CLI scratch left by `db push`).
+### B — API Layer (explorer) — 0C/0H/2M/7L
+| Sev | Location | Issue |
+|---|---|---|
+| M | photos/route.ts:73-77, voice-notes:77-81, guest-messages:66-67 | `getServerConfig()`+`pool.connect()` before try → DB outage returns HTML 500, violating JSON envelope |
+| M | lib/rate-limit.ts:86 | Without `TRUSTED_PROXY=1` all guests share ONE global bucket (default 10 req/min event-wide) → mass 429 at live event. **Requires deployment env verification** |
+| L | sign-in:38, session:79, admin/events:57; admin/events:23-28; cron:37; cron:65-77; admin/me:16-23; close:42-48; events GET:23+session:113 | Unbounded JSON body reads (3); unbounded event title; CRON_SECRET `!==` non-timing-safe; cron 500 body extra field; getUser conflates outage w/ 401; ARCHIVED→EVENT_ALREADY_CLOSED (conformant); service-role client outside try |
+
+### C — DB & Security (oracle) — 2C/1H/4-5M/4L
+| Sev | Location | Issue |
+|---|---|---|
+| CRITICAL | supabase/migrations (none touch storage) | Private bucket + storage.objects policies exist ONLY out-of-band (Dashboard). No in-repo guard; recreated-public bucket silently collapses media privacy. **Requires live DB/Dashboard verification** |
+| CRITICAL | 0006:23 + media-cleanup.ts:159-167 | service_role DML for admins/events/guest_sessions/photos/voice_notes comes from NO migration — asserted via comment ("platform default-privilege wiring"). Retention-cron DELETE + event CLOSE UPDATE can fail at runtime. **Requires live DB verification** (incl. 0006 applied) |
+| HIGH | media-cleanup.ts (+submit-photo.ts:124-144 tryDelete) | Orphaned storage objects (compensation-delete failure) never swept — TD §6 acknowledged, unimplemented |
+| M | 0001/0004/0005 grants; 0006:23 | Grant-gap family (dup of CRITICAL F2 root); guest_messages lacks UPDATE/DELETE for future retention |
+| M | admin-media-repo.ts:222; media-cleanup.ts:126-133; session-create-rate-limit.ts:30-43 | Index notes: cross-table JS sort; events(closed_at WHERE CLOSED) unindexed cron scan; rate-limit window sweep non-leading PK column — all acceptable MVP |
+| L | lib/supabase/server.ts:12-35; admin/events:57; admin-event-repo.ts:92-95; admin-media-repo.ts:145 | No middleware session refresh (stale admin UI until 401); request.json unbounded (dup B); constraint match by message substring not code 23505; guest_name search exact/case-sensitive |
+
+### D — Frontend Quality (explorer) — 0C/3H/4M/9L
+| Sev | Location | Issue |
+|---|---|---|
+| H | guest-event-entry.tsx:488-495 | Unmount cleanup stale closure (`[]` deps, mount-time empty state) — revokes ZERO object URLs; comment is false. Fix: read `pendingPhotosRef` + refs |
+| H | guest-event-entry.tsx:75-77,392-396,407 | Voice recorder no unmount cleanup — mic stream + interval live after navigating away mid-recording |
+| H | app/ (root + all segments) | No error.tsx / global-error.tsx / not-found.tsx anywhere — render error crashes to default Next error page |
+| M | guest-event-entry.tsx:219-241 | handleSessionExpired doesn't `camera.stop()` (dup w/ E) |
+| M | :706; whole file; :943-1009 | Discard doesn't revoke expiredPending URLs; god component 1127 lines/~20 useState/3 state machines; ReviewOverlay no focus trap/Escape/aria-modal |
+| L | :244-256+use-camera:125; :405; :420; use-camera:72-73; :854-861; admin-access:62-63; tsconfig.json; admin-ui:44 | capture() rejection unhandled; onstop overwrites voiceUrl unrevoked; voice ignores Retry-After; setCameraCount unguarded; overlay img no onError; silent admin catch; no noUncheckedIndexedAccess; 700-char line |
+
+### E — Perf & Reliability (oracle) — 3H/4M/3L
+| Sev | Location | Issue |
+|---|---|---|
+| H | admin-dashboard.tsx:144-158,427-436 | Per-tile eager signed-URL fetch: N photos = N HTTP calls × 5-hop sequential server chain (~100 DB hops for 20 photos); no cache; acknowledged `ponytail:` comment |
+| H | media-cleanup.ts:86-118 | Cron sequential per-event loop ≈60 sequential round-trips → Vercel timeout risk (Hobby 10s) |
+| H | guest-event-entry.tsx:219-241 | Camera stream leak on session expiry/close (LED stays on until unmount) — same root as D-M |
+| M | cron route:37 (dup B/C); admin-media-repo.ts:79-114,236-255; guest-event-entry.tsx:306-389; app/e/[public_id]/page.tsx | CRON_SECRET non-timing-safe; resolveAuthorizedMedia 4–5 sequential round-trips; no AbortController (sync loop continues post-unmount); guest page is one full client bundle, zero server render |
+| L | use-camera.ts:71-76; guest-event-entry.tsx:480-485, 411-424 | enumerateDevices unguarded; no symmetric camera-stop effect; voice stop/submit narrow race |
+
+### F — Test Coverage (qa) — 0C/0H/2M/2L
+Run: `npx vitest run` → **375/375 PASS** (41 files, 30.6s). No coverage reporter configured. All §9 critical paths covered; concurrency tested against real Postgres.
+| Sev | Location | Issue |
+|---|---|---|
+| M | e2e (general) | No offline/network-interruption e2e test |
+| M | e2e/mobile-media-qa.spec.ts | Hand-written mock literals, no shared fixture/Zod — drift-prone (2026-08-17 six-field drift caught manually) |
+| L | vitest.config.ts; e2e/*.spec.ts | No coverage provider; e2e route-intercepted (not live) by default |
+
+## Top 3 must-fix before production deploy
+1. **C1 Storage privacy out-of-band** — verify live bucket `public=false` + storage.objects policies; add idempotent assert-migration so privacy can't silently regress.
+2. **C2 service_role grants** — verify live grants (`information_schema.role_table_grants`), confirm 0006 applied; add explicit GRANT migration covering DELETE (photos/voice_notes) and UPDATE (events) or retention/close can fail in production.
+3. **B-M2 rate-limit global bucket** — confirm `TRUSTED_PROXY=1` on Vercel (or per-identity limiting breaks: single 10 req/min bucket for ALL guests → mass 429 during a live event). One env-var verification/fix.
+
+Runner-ups: camera+mic stream leaks (D/E), missing error boundaries (D), admin signed-URL waterfall (E), cron timeout (E).
+
+## Systemic patterns
+1. Resource lifecycle stops only at unmount — internal transitions (session expiry, event closed) don't stop camera/mic (D+E converge on guest-event-entry).
+2. Infrastructure truth lives outside the repo — bucket privacy, service_role grants, Vercel env (TRUSTED_PROXY): three "requires live verification" clusters, all production-critical.
+3. Sequential per-item round-trips where batching/parallelism would scale (admin signed URLs × 5-hop chain; cron per-event loop).
+4. Positive: auth-before-body, error envelope, deny-all RLS + REVOKE, parameterized SQL, cookie/token hygiene (ADR-004), transactional compensation, and test depth are consistently excellent — zero authorization or injection findings.
+5. Type-safety erosion from types/supabase.ts placeholder (12 `as unknown as` casts).
+6. Minor recurring: unbounded reads/lengths on low-risk admin endpoints; one non-timing-safe secret compare.
 
 ## Validation
-- Pre-push read-only probe: migration history, pgcrypto schema/function resolution, per-migration applied-state — pinpointed 0002 as the sole offender.
-- `npx supabase db push --dry-run` then real push: 0002–0005 applied cleanly.
-- Post-push read-only verification: history `0001`–`0005`; `guest_messages` columns (all NOT NULL), PK/FK-RESTRICT/CHECK 1–280/UNIQUE one-per-session, 3 indexes, RLS enabled, zero PUBLIC/anon/authenticated grants; `guest_sessions` index set unchanged (no duplicates); `public_ref` 0 NULL/0 duplicates; app query shapes (`countGuestMessages`, admin `listSubmissions` join) execute.
-- Doc verification: grep for `pending application|0001–0003|0001–0004` across docs + AGENTS.md → zero hits; every DB-state claim matches probed reality.
-- No TS/JS code paths touched (docs + one SQL migration file), so vitest/typecheck not re-run; the edited SQL was validated by successful live application.
-
-## Blockers
-None remaining. B1 (live DB missing `guest_messages`; guest flow dead-end + admin timeline 500) resolved by the push above.
-
-## SSOT conflict
-None. UI_UX.md amendment documents already-contracted behavior (API Contract §6.6 amendment, higher authority) rather than redefining it; db_scheme/API/PRD/ADR edits only replace stale state claims with verified live state.
-
-## Architecture drift
-None. No new dependency, endpoint, schema field, or provider. Migration 0002 edit is a namespacing fix inside an existing migration, consistent with `db_scheme.md` §"Design Decisions".
+Audit-only; `npx vitest run` executed by qa lane (375/375 PASS). No repo files modified. Working tree = HEAD 27968aa + pre-existing uncommitted frames change-set (untouched) + handoff files (this audit).
 
 ## Next step
-Owner manual QA on localhost using `UX_FLOW.md`; decide text-message retention policy (guest_messages vs 7-day media cleanup); R3 production deploy when ready.
+Owner triage: prioritize Top-3 (two CRITICAL verifications are deployment-blocking), then HIGH fixes (streams, boundaries, waterfalls, cron). No implementation started — fixes require explicit tasking.

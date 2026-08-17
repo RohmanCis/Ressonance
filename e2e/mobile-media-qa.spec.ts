@@ -107,6 +107,110 @@ async function recordAndStop(page: Page, durationMs = 1500) {
 
 // --- Tests ---
 
+test.describe("Frame selection (9:16 standard, UI_UX §4.2)", () => {
+  test.beforeEach(async ({ page }) => {
+    mockEventApi(page);
+  });
+
+  test("frame cards render at the 9:16 ratio with selectable previews", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    mockStatefulSession(page);
+    await page.goto(`/e/${EVENT_ID}`, { waitUntil: "networkidle" });
+    await page.getByRole("button", { name: "Start" }).click();
+
+    await expect(page.getByRole("heading", { name: "Choose a frame" })).toBeVisible({ timeout: 5000 });
+    const group = page.getByRole("radiogroup");
+    await expect(group).toBeVisible();
+
+    // Every real frame card shows its preview image (9:16 container,
+    // object-contain so the art is never distorted).
+    const cards = group.getByRole("radio");
+    await expect(cards).toHaveCount(3);
+    for (let i = 0; i < 3; i++) {
+      const box = await cards.nth(i).locator("span.aspect-\\[9\\/16\\]").boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.width / box!.height).toBeCloseTo(9 / 16, 2);
+      await expect(cards.nth(i).locator("img[aria-hidden='true']")).toBeVisible();
+    }
+
+    // Selecting a frame flips aria-checked and the confirm button label.
+    await cards.nth(0).click();
+    await expect(cards.nth(0)).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByRole("button", { name: "Use Wedding Floral" })).toBeVisible();
+
+    // The chosen frame is printed onto captures: the viewfinder shows the
+    // overlay and the confirm leads to the capture screen.
+    await page.getByRole("button", { name: "Use Wedding Floral" }).click();
+    await expect(page.getByRole("heading", { name: "Take photos" })).toBeVisible({ timeout: 5000 });
+    const video = page.locator("video[aria-label='Camera preview']");
+    await expect(video).toBeVisible({ timeout: 5000 });
+    const vbox = await video.boundingBox();
+    expect(vbox!.width / vbox!.height).toBeCloseTo(9 / 16, 2);
+    await expect(page.locator("img[src='/frames/wedding-floral.png']")).toBeVisible();
+  });
+
+  test("keyboard navigation moves the selection with arrow keys", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    mockStatefulSession(page);
+    await page.goto(`/e/${EVENT_ID}`, { waitUntil: "networkidle" });
+    await page.getByRole("button", { name: "Start" }).click();
+    await expect(page.getByRole("heading", { name: "Choose a frame" })).toBeVisible({ timeout: 5000 });
+
+    const cards = page.getByRole("radiogroup").getByRole("radio");
+    // Roving tabindex: first card is in tab order, others are not.
+    await expect(cards.nth(0)).toHaveAttribute("tabindex", "0");
+    await expect(cards.nth(1)).toHaveAttribute("tabindex", "-1");
+
+    // Arrow keys move selection + focus.
+    await cards.nth(0).focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(cards.nth(1)).toBeFocused();
+    await expect(cards.nth(1)).toHaveAttribute("aria-checked", "true");
+    await page.keyboard.press("ArrowDown");
+    await expect(cards.nth(2)).toBeFocused();
+    await page.keyboard.press("ArrowLeft");
+    await expect(cards.nth(1)).toBeFocused();
+    // Wrap-around.
+    await cards.nth(0).focus();
+    await page.keyboard.press("ArrowUp");
+    await expect(cards.nth(2)).toBeFocused();
+  });
+
+  test("capture with a frame produces a 1080×1920 JPEG", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    mockStatefulSession(page);
+    await page.goto(`/e/${EVENT_ID}`, { waitUntil: "networkidle" });
+    await page.getByRole("button", { name: "Start" }).click();
+    await expect(page.getByRole("heading", { name: "Choose a frame" })).toBeVisible({ timeout: 5000 });
+
+    // Select a real frame and enter the capture screen.
+    await page.getByRole("radio").nth(0).click();
+    await page.getByRole("button", { name: "Use Wedding Floral" }).click();
+    await expect(page.getByRole("heading", { name: "Take photos" })).toBeVisible({ timeout: 5000 });
+
+    // The fake media device provides a 1280×720 landscape feed: the capture
+    // must still composite to the fixed 1080×1920 output.
+    const shutter = page.getByRole("button", { name: "Take photo" });
+    await expect(shutter).toBeVisible({ timeout: 5000 });
+    await shutter.click();
+    await expect(page.getByRole("button", { name: /Photo 1/ })).toBeVisible({ timeout: 5000 });
+
+    // Read the pending capture from the in-page blob and decode its JPEG
+    // dimensions — must be exactly the 1080×1920 standard.
+    const dims = await page.evaluate(() =>
+      new Promise<{ w: number; h: number; type: string }>((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight, type: "ok" });
+        img.onerror = () => resolve({ w: 0, h: 0, type: "error" });
+        img.src = (document.querySelector("button[aria-label^='Photo 1'] img") as HTMLImageElement).src;
+      }),
+    );
+    expect(dims.type).toBe("ok");
+    expect(dims.w).toBe(1080);
+    expect(dims.h).toBe(1920);
+  });
+});
+
 test.describe("Mobile-media QA", () => {
   test.beforeEach(async ({ page }) => {
     mockEventApi(page);

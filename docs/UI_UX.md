@@ -4,11 +4,13 @@
 **Authority:** Level 6 UI/UX contract under `AGENTS.md` §2. It defines MVP screen behavior and presentation constraints. PRD, schema, architecture, technical design, and API contract remain higher authorities.  
 **Scope:** MVP guest and admin experiences only.
 
-**Amended 2026-08-17 (documentation reconciliation):** the guest message feature (API Contract §6.6, schema `guest_messages` migration 0005) is now reflected here. §1 scope, §4.2 content, §5.2 dashboard content, and §6 error table add the guest-message states already implemented and contracted. Behavior authority remains with the higher documents; this amendment documents, it does not redefine, them.
+**Amended 2026-08-17 (documentation reconciliation):** the guest message feature (API Contract §6.6, schema `guest_messages` migration 0005) is now reflected here. §1 scope, the post-Start capture screen content (§4.3 after the later §4.2 insertion), §5.2 dashboard content, and §6 error table add the guest-message states already implemented and contracted. Behavior authority remains with the higher documents; this amendment documents, it does not redefine, them.
+
+**Amended 2026-08-17 (frame pipeline normalization, owner decision):** the frame-selection step between Start and the capture screen is now contracted here as §4.2, and the photo flow is normalized to a single 9:16 technical standard: every camera capture is composited at a fixed 1080×1920 via deterministic center cover-crop, with the selected frame overlay drawn unmirrored on top. Frame assets are 1080×1920 PNGs with a true alpha channel and a transparent central photo area; current artwork is placeholder and replaceable without code changes. File-picker uploads remain intentionally unframed. No endpoint, schema, session, or upload-flow change is involved — this remains a client-side presentation concern.
 
 ## 1. Scope and non-goals
 
-The guest experience supports event access, optional naming, up to five photos per guest session, one voice note of 5–30 seconds, and one optional guest text message (1–280 characters, "pesan & kesan", API Contract §6.6). The admin experience supports sign-in, event creation and closure, event access/QR, chronological media review, guest-name search, photo preview, voice playback, individual download, and read-only display of guest messages.
+The guest experience supports event access, optional naming, an optional frame selection before capture, up to five photos per guest session, one voice note of 5–30 seconds, and one optional guest text message (1–280 characters, "pesan & kesan", API Contract §6.6). The admin experience supports sign-in, event creation and closure, event access/QR, chronological media review, guest-name search, photo preview, voice playback, individual download, and read-only display of guest messages.
 
 Excluded: AI or moderation, transcription, guest accounts, social login, guest profiles, live gallery, reactions, sharing, analytics, reports, advanced filters, bulk download, bulk media management, multiple QR variants, and other PRD §24 deferrals. No new feature, endpoint, identity, or client-side authority is defined here.
 
@@ -28,7 +30,7 @@ Excluded: AI or moderation, transcription, guest accounts, social login, guest p
 
 ### Guest
 
-- `/e/{public_id}`: event entry, optional name, explicit Start, post-session photo and voice submission flow, usage, and event status.
+- `/e/{public_id}`: event entry, optional name, explicit Start, optional frame selection, post-session photo and voice submission flow, usage, and event status.
 
 ### Admin
 
@@ -61,30 +63,50 @@ No additional guest or admin screen, route, endpoint, or workflow is defined.
 - Network failure/offline: explain that Start did not complete; keep entered name; allow a deliberate retry when connected.
 - Unexpected failure: explain that the session could not start; allow safe retry.
 
-### 4.2 Post-Start capture screen
+### 4.2 Frame selection
+
+**Purpose:** After a successful Start, let the guest optionally choose one decorative frame that is composited onto camera captures at shutter time. Selection is a client-side UX concern only: it never alters submissions, limits, or endpoints.
+
+**Content:** Heading; short explanation that the frame is applied to photos as they are taken; a single-select grid of frame options showing each frame at the enforced 9:16 ratio; a primary confirm action; a secondary skip affordance.
+
+**Behavior:**
+- Options come from a client-side frame registry. The "No Frame" option is never presented as a grid card; it is reachable only through the skip affordance (skip link or confirm-without-selection). Selecting a different frame replaces the previous choice; exactly one frame — or none — is active at a time.
+- Every option card, the live viewfinder, and the composited output share one 9:16 geometry (§4.4). Preview cards show the actual frame proportions and never distort the artwork.
+- Choosing a frame (or skipping) proceeds to usage confirmation and the capture screen. The choice persists in memory for the session; a page reload discards it and returns to the Start screen.
+- Keyboard users reach and operate the grid as a radio group: arrow keys move the selection, focus follows selection, roving tabindex keeps a single tab stop, and every option has a visible label. Selection state is conveyed non-visually (`aria-checked`).
+- A frame asset that fails to load never blocks capture: photos are taken without the frame.
+
+**States:**
+- Initial: no option selected; confirm reads as continue-without-frame.
+- Frame selected: option checked; confirm reads as use-selected-frame; skip link appears.
+- Frame image unavailable: the card remains operable; capture proceeds unframed if selected.
+
+### 4.3 Post-Start capture screen
 
 **Purpose:** Make camera capture the primary guest experience after Start, while offering voice-note submission as a separate secondary action.
 
-**Content:** Event title; guest name or `Anonymous Guest`; camera viewfinder with shutter; a remaining-photo indicator that reflects a local capture budget; a pending photo strip of captured-but-unsent and server-confirmed items; a Send action to synchronize pending photos; a voice-note action that is separate from the photo capture queue; a guest-message action that is separate from both (amendment 2026-08-17); status and recovery messages.
+**Content:** Event title; guest name or `Anonymous Guest`; camera viewfinder with shutter; the active frame overlay (when a frame was chosen in §4.2) rendered unmirrored above the live preview; a remaining-photo indicator that reflects a local capture budget; a pending photo strip of captured-but-unsent and server-confirmed items; a Send action to synchronize pending photos; a voice-note action that is separate from the photo capture queue; a guest-message action that is separate from both (amendment 2026-08-17); status and recovery messages.
 
-**Capture budget indicator:** The remaining-photo indicator is a UX hint computed as `5 − (server-confirmed accepted count) − (local pending capture count)`. It may show zero before the server confirms anything. It is never authoritative for the 5-photo limit; backend limit enforcement remains authoritative (§4.3, §7).
+**Capture budget indicator:** The remaining-photo indicator is a UX hint computed as `5 − (server-confirmed accepted count) − (local pending capture count)`. It may show zero before the server confirms anything. It is never authoritative for the 5-photo limit; backend limit enforcement remains authoritative (§4.4, §7).
 
 **Actions:** Capture photos into a local pending buffer; synchronize pending photos via Send; enter the voice-note flow; enter the guest-message flow; review, delete, or retake pending captures before synchronization. Continue until limits or event status prevent it.
 
 **States:**
 
 - Loading: retrieve or confirm session usage; announce status.
-- Ready (camera available): show viewfinder, shutter, remaining indicator, pending strip, Send, and voice-note action.
-- Ready (camera unsupported or denied): show file-selection fallback; pending strip, remaining indicator, Send, and voice-note action remain available.
+- Ready (camera available): show viewfinder, shutter, remaining indicator, pending strip, Send, and voice-note action. The viewfinder surface is 9:16 (§4.4); when a frame is active its overlay is layered above the preview without mirroring.
+- Ready (camera unsupported or denied): show file-selection fallback; pending strip, remaining indicator, Send, and voice-note action remain available. File-picker uploads are intentionally unframed and are not normalized to 9:16.
 - Empty: usage of zero submissions is a valid ready state, not an error.
 - Limit reached: show the server-confirmed limit; disable the shutter as a hint; explain that the limit applies to this guest session. Voice note remains available if its limit is not reached.
 - Closed after Start: retain view access and usage where available; disable all submission actions; explain that the event is closed. Pending captures remain visible but cannot be submitted.
 - Session expired/invalid: discard in-memory session authority and usage state. Pending captures remain visible and are marked as not saved. Show an expiry/session-invalid message and require Start again. The expired session is never reused, and no quota is transferred between sessions. If the guest presses Start again, a new independent session and quota are created; any unsent captures from the previous session may be offered for explicit carry-over into the new session, where they count against the new session's budget. Carry-over requires explicit user action — it is never automatic. If the guest declines carry-over or the page is reloaded, pending captures are discarded. Never silently retry or restore authority from localStorage.
 - Offline/network failure: preserve unsent in-memory captures where safe; explain that no submission was confirmed; provide deliberate retry where safe.
 
-### 4.3 Photo flow
+### 4.4 Photo flow
 
 **Purpose:** Capture multiple photos into a local pending buffer, manage them before synchronization, synchronize them as a batch using existing server endpoints, and report per-item results.
+
+**Capture geometry (9:16 standard, owner decision 2026-08-17):** Every camera capture is composited to a fixed 1080×1920 (9:16) JPEG by deterministic center cover-crop: the sensor image is scaled to cover the output and the overflow is cropped, centered. This matches the live viewfinder, so the capture is WYSIWYG — the guest sees the photo they get, and every device produces the same output size and composition regardless of sensor ratio. The photo is mirrored for the front camera (matching the preview); the frame overlay is never mirrored and never stretched — it is drawn 1:1 over the 9:16 composition. A frame overlay that fails to load never blocks capture.
 
 **Batch synchronization:** Synchronization sends pending photos sequentially using the existing single-photo endpoint (`POST /api/events/{public_id}/photos`). No new endpoint, batch endpoint, or API contract change is introduced. Each upload response returns authoritative usage; the client updates from the response, not from optimistic local counters.
 
@@ -101,11 +123,11 @@ No additional guest or admin screen, route, endpoint, or workflow is defined.
 5. Review: tapping a pending thumbnail shows a full-size preview with delete and retake choices. Delete removes the item and frees the local budget. Retake removes the item and returns the camera to ready. Confirmed items cannot be deleted — no delete endpoint exists.
 6. Syncing (Send): pending items are uploaded sequentially. Each item transitions to `uploading`, then to `confirmed` on 201 or `error` on failure. Per-item progress is shown. Duplicate Send is disabled while syncing is in progress.
 7. Sync complete: show a summary of accepted and rejected items. Update the remaining-photo indicator from the server-confirmed count. Offer continued capture if budget remains.
-8. Error: associate the error code with the item; preserve the item when retry is safe; provide correction or retry. A failed upload is not counted as success. A failed item does not block other pending items. On `PHOTO_LIMIT_REACHED` (409), the item is marked `error`; remaining pending items stay `pending` and may be deleted by the guest. On `RATE_LIMITED` (429), pause the sync queue, honor `Retry-After` when present, then resume. On `SESSION_EXPIRED` or `SESSION_INVALID` (401), abort sync, discard session authority, and follow the session-expired behavior in §4.2. On `EVENT_CLOSED` (422), mark the item `error` with no retry.
+8. Error: associate the error code with the item; preserve the item when retry is safe; provide correction or retry. A failed upload is not counted as success. A failed item does not block other pending items. On `PHOTO_LIMIT_REACHED` (409), the item is marked `error`; remaining pending items stay `pending` and may be deleted by the guest. On `RATE_LIMITED` (429), pause the sync queue, honor `Retry-After` when present, then resume. On `SESSION_EXPIRED` or `SESSION_INVALID` (401), abort sync, discard session authority, and follow the session-expired behavior in §4.3. On `EVENT_CLOSED` (422), mark the item `error` with no retry.
 
 Client previews, the local capture budget, and pending counters are UX hints. They do not decide file validity, remaining capacity, or submission success. Server-confirmed counts from the upload response are authoritative.
 
-### 4.4 Voice-note flow
+### 4.5 Voice-note flow
 
 **Purpose:** Record, review, and submit one voice note.
 
@@ -124,7 +146,7 @@ Client previews, the local capture budget, and pending counters are UX hints. Th
 
 Do not present the browser timer as proof of accepted duration. Do not persist or silently resend an unsent recording after a failed request.
 
-### 4.5 Guest-message flow
+### 4.6 Guest-message flow
 
 **Purpose:** Compose, review, and submit one optional text message ("pesan & kesan", API Contract §6.6). The message is a standalone submission: never required, never attached to the voice note, and independent of photo and voice-note limits.
 
@@ -135,7 +157,7 @@ Do not present the browser timer as proof of accepted duration. Do not persist o
 3. Submitting: disable duplicate submission; announce progress.
 4. Success: confirm persistence, update usage, and remove/disable the message action because the one-message limit is consumed. Typed-but-unsent draft text is not resurrected in a new session.
 5. Error: show the cause with a correction path — empty or over-length text, limit already reached, closed event, rate limit, or persistence failure. Editing the text after an error returns the field to the editing state. Do not claim persistence before the server confirms it.
-6. Session expired/invalid during submission: follow §4.2 expiry behavior; the message is not submitted using the expired session.
+6. Session expired/invalid during submission: follow §4.3 expiry behavior; the message is not submitted using the expired session.
 
 ## 5. Admin experience
 
@@ -247,3 +269,4 @@ When no name was supplied, show `Anonymous Guest` in guest-facing session contex
 - ~~Camera and recorder implementation details, supported browser matrix, and permission-denial fallback details.~~ Resolved 2026-08: getUserMedia + MediaRecorder, file-selection fallback, multi-capture + batch sync (T030).
 - ~~How session expiry is surfaced in timing and wording; the expiry policy (30-minute session lifetime) is now resolved in canonical documents.~~ Resolved: 30-minute policy in canonical documents; wording implemented.
 - ~~Whether and how to communicate media retention to guests.~~ Resolved 2026-08-15 (owner): no guest-facing retention messaging for MVP; backend policy remains 7-day retention after event CLOSED with automatic cleanup.
+- ~~Frame-selection step contracting and capture/frame geometry.~~ Resolved 2026-08-17 (owner): frame selection contracted as §4.2; all camera captures and frame assets normalized to a single 9:16 (1080×1920) standard via deterministic center cover-crop; frame artwork is placeholder and replaceable without code changes; file-picker uploads intentionally unframed.
