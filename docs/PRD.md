@@ -789,7 +789,7 @@ To be decided at the technical design stage, after ERD and architecture are defi
 - ~~Hosting/deployment platform.~~ Resolved 2026-08: Vercel (owner).
 - ~~Deployment topology (single domain vs separate frontend/backend) and resulting CORS/cookie configuration.~~ Resolved 2026-08-11: same-origin single application — ADR-001.
 - ~~Exact API design.~~ Resolved 2026-08-11: API Contract LOCKED and implemented.
-- ~~Exact database schema.~~ Resolved: db_scheme approved; migrations 0001–0005 applied.
+- ~~Exact database schema.~~ Resolved: db_scheme approved; migrations 0001–0008 applied.
 - ~~Exact rate-limit values.~~ Resolved 2026-08-15: env-configurable defaults; topology per ADR-008.
 - ~~Exact file-size limits.~~ Resolved 2026-08-15 (owner): 4 MB per upload (photo and voice), sized to the hosting platform's request-body limit.
 - ~~Supported image formats.~~ Resolved: JPEG/PNG/WebP/GIF.

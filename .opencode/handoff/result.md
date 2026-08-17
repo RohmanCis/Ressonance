@@ -1,5 +1,7 @@
 # Result — comprehensive codebase QA audit (read-only)
 
+> **Addendum 2026-08-17 (session close):** C1 and C2 below are RESOLVED — migration 0007 (explicit service_role table grants) and migration 0008 (storage.objects policies scoped to the private `guest-media` bucket for service_role; applied manually via dashboard) are applied live; migration history records 0001–0008; canonical docs reconciled (db_scheme, API_CONTRACT §8.8, ARCHITECTURE_DECISIONS ADR-002 follow-up, PRD open-questions, AGENTS.md §10). The A-L "doc records 0001–0005" item is likewise resolved. Remaining top-3 item: B-M2 `TRUSTED_PROXY` verification. The findings tables below are the original audit record.
+
 ## Status
 DONE. Six lanes completed (A structure, B API layer, C DB/security, D frontend quality, E perf/reliability, F test coverage). All agents read mandatory docs; read-only respected (no repo files modified; handoff files only). Raw findings: **2 CRITICAL / 7 HIGH / 20 MEDIUM / 35 LOW** (≈57 unique after cross-lane dedupe). No fixes implemented per instruction.
 

@@ -1,3 +1,3 @@
 # Task: none
 
-No active task. The comprehensive read-only QA audit completed this session; consolidated A–F findings live in `result.md` (2 CRITICAL / 7 HIGH / 20 MEDIUM / 35 LOW, top-3 pre-deploy blockers, systemic patterns). Awaiting owner triage; fixes not implemented and require explicit tasking.
+No active task. Session closed 2026-08-17. Since the QA audit: C1 and C2 resolved (migrations 0007/0008, storage policies via dashboard), migrations 0006–0008 applied live and documented across canonical docs. Full audit findings remain in `result.md` — remaining top item is B-M2 (`TRUSTED_PROXY=1` verification on Vercel), then HIGH fixes. All fixes require explicit tasking.

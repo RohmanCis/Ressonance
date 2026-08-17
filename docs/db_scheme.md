@@ -2,7 +2,7 @@
 
 Version: 1.2
 Status: Approved schema design  
-Reconciled 2026-08-15 — closes open technical decisions; schema applied via migrations 0001–0005.
+Reconciled 2026-08-15 — closes open technical decisions; schema applied via migrations 0001–0008.
 Amended 2026-08-17: guest message feature (Opsi B) — adds `guest_messages` via migration 0005.
 Source of Truth: PRD v1.3 + Domain Model + ERD (all locked)
 
@@ -319,4 +319,4 @@ ARCHIVE→ status = 'ARCHIVED', closed_at = (tetap timestamp dari CLOSE)
 
 ## Next Step
 
-Schema applied to live Supabase via migrations 0001–0005 (verified: migration history records `0001`–`0005`; `guest_messages` present with the `uq_guest_messages_one_per_session` UNIQUE constraint, 1–280 char CHECK, RLS enabled, and no PUBLIC/anon/authenticated grants). Migration 0002 sets `search_path = public, extensions` so the pgcrypto `gen_random_bytes` backfill resolves on Supabase, where pgcrypto installs in the `extensions` schema. All migrations are idempotent and safe to re-run. Further schema changes require an approved change to this document plus a new migration.
+Schema applied to live Supabase via migrations 0001–0008 (verified: migration history records `0001`–`0008`; `guest_messages` present with the `uq_guest_messages_one_per_session` UNIQUE constraint, 1–280 char CHECK, RLS enabled, and no PUBLIC/anon/authenticated grants). Migration 0002 sets `search_path = public, extensions` so the pgcrypto `gen_random_bytes` backfill resolves on Supabase, where pgcrypto installs in the `extensions` schema. Migrations 0006–0008 (2026-08-17) change privileges/policies only, not schema shape: 0006 grants `guest_messages` SELECT+INSERT to `service_role`; 0007 pins explicit `service_role` table grants (photos/voice_notes SELECT+DELETE, events SELECT+INSERT+UPDATE, guest_sessions SELECT+INSERT, guest_messages SELECT+DELETE); 0008 asserts `storage.objects` RLS policies scoped to the private `guest-media` bucket for `service_role` (SELECT/INSERT/DELETE; applied via Supabase dashboard, repo file is documentation-only). All migrations are idempotent and safe to re-run. Further schema changes require an approved change to this document plus a new migration.
