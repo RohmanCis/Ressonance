@@ -89,14 +89,46 @@ export function rateLimitIdentity(
   return first || "unknown";
 }
 
-/** Load rate-limit config from environment with conservative defaults. */
-export function loadRateLimitConfig(
-  env: Partial<Record<string, string | undefined>> = process.env,
+/**
+ * Load a fixed-window config from `<PREFIX>_MAX` / `<PREFIX>_WINDOW_SECONDS`
+ * env vars with conservative defaults (configurable, not a policy invention).
+ */
+function loadEnvRateLimit(
+  prefix: string,
+  env: Record<string, string | undefined>,
 ): RateLimitConfig {
-  const max = Number(env.SESSION_RATE_LIMIT_MAX ?? 10);
-  const windowSeconds = Number(env.SESSION_RATE_LIMIT_WINDOW_SECONDS ?? 60);
+  const max = Number(env[`${prefix}_MAX`] ?? 10);
+  const windowSeconds = Number(env[`${prefix}_WINDOW_SECONDS`] ?? 60);
   return {
     max: Number.isFinite(max) && max > 0 ? max : 10,
     windowMs: (Number.isFinite(windowSeconds) && windowSeconds > 0 ? windowSeconds : 60) * 1000,
   };
+}
+
+/** Session-creation rate limit (env `SESSION_RATE_LIMIT_*`). */
+export function loadRateLimitConfig(
+  env: Partial<Record<string, string | undefined>> = process.env,
+): RateLimitConfig {
+  return loadEnvRateLimit("SESSION_RATE_LIMIT", env);
+}
+
+/** Photo-submission rate limit (API Contract §3 / ADR-008; env `PHOTO_RATE_LIMIT_*`). */
+export function loadPhotoRateLimitConfig(
+  env: Partial<Record<string, string | undefined>> = process.env,
+): RateLimitConfig {
+  return loadEnvRateLimit("PHOTO_RATE_LIMIT", env);
+}
+
+/** Voice-note-submission rate limit (API Contract §3 / ADR-008; env `VOICE_NOTE_RATE_LIMIT_*`). */
+export function loadVoiceNoteRateLimitConfig(
+  env: Partial<Record<string, string | undefined>> = process.env,
+): RateLimitConfig {
+  return loadEnvRateLimit("VOICE_NOTE_RATE_LIMIT", env);
+}
+
+/** Guest-message-submission rate limit (API Contract §3 / ADR-008; env `GUEST_MESSAGE_RATE_LIMIT_*`). */
+export function loadGuestMessageRateLimitConfig(
+  env: Partial<Record<string, string | undefined>> = process.env,
+): RateLimitConfig {
+  return loadEnvRateLimit("GUEST_MESSAGE_RATE_LIMIT", env);
 }

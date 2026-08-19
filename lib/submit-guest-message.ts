@@ -9,11 +9,11 @@ import {
  * POST /api/events/{public_id}/guest-messages orchestration (guest message
  * feature, Opsi B; API Contract §6.6).
  *
- * Auth resolution reuses `resolveVoiceNoteAuth` from
- * `lib/submit-voice-note.ts` — the event + guest-session authorization is
- * identical for every protected guest submission endpoint (unknown event →
- * 404, non-ACTIVE → 422 EVENT_CLOSED, missing/invalid/wrong-event/expired
- * cookie → 401). It is deliberately NOT duplicated here.
+ * Auth resolution is shared across all guest submissions via
+ * `resolveGuestSubmissionAuth` (lib/guest-submission-auth.ts), called by the
+ * shared route pipeline BEFORE reading the JSON body (unknown event → 404,
+ * non-ACTIVE → 422 EVENT_CLOSED, missing/invalid/wrong-event/expired cookie →
+ * 401). It is deliberately NOT duplicated here.
  *
  * `submitGuestMessage` validates the trimmed text (1–280 chars), then runs the
  * authoritative transaction (event-row lock → revalidate ACTIVE → insert →

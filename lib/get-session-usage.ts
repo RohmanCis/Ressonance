@@ -2,6 +2,7 @@ import {
   type GuestSession,
 } from "@/lib/guest-session";
 import { resolveGuestSession } from "@/lib/resolve-guest-session";
+import type { Usage } from "@/lib/usage";
 
 /**
  * GET /api/events/{public_id}/session orchestration (T005).
@@ -29,15 +30,9 @@ export interface UsageRepo {
   countGuestMessages(sessionId: string): Promise<number>;
 }
 
-export interface UsageBody {
+export interface UsageBody extends Usage {
   event: { public_id: string; title: string; status: string };
   guest_name: string | null;
-  photos_submitted: number;
-  photos_remaining: number;
-  voice_note_submitted: boolean;
-  voice_note_available: boolean;
-  guest_message_submitted: boolean;
-  guest_message_available: boolean;
 }
 
 export type GetUsageResult =

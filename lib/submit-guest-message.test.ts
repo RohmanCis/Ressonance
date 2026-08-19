@@ -2,10 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import { generateSessionToken, hashSessionToken, type GuestSession } from "@/lib/guest-session";
 import {
-  resolveVoiceNoteAuth,
-  type VoiceNoteSession,
-} from "@/lib/submit-voice-note";
-import {
   GUEST_MESSAGE_MAX_LENGTH,
   submitGuestMessage,
   validateGuestMessageText,
@@ -35,17 +31,6 @@ interface State {
   hasVoiceNote: boolean;
   inserted: { sessionId: string; messageText: string }[];
   rollbacks: string[];
-}
-
-function makeSessionRepo(state: State): VoiceNoteSession {
-  return {
-    async findEventByPublicId(pid) {
-      return state.events[pid] ?? null;
-    },
-    async findSessionByTokenHash(hash) {
-      return state.sessions[hash] ?? null;
-    },
-  };
 }
 
 function makeTxRepo(state: State): GuestMessageTxRepo {
@@ -143,76 +128,6 @@ describe("validateGuestMessageText", () => {
 
   it("exposes the same limit as the DB CHECK constraint", () => {
     expect(GUEST_MESSAGE_MAX_LENGTH).toBe(280);
-  });
-});
-
-describe("resolveVoiceNoteAuth (reused for guest messages)", () => {
-  it("authorizes a valid session on an ACTIVE event", async () => {
-    const { state, rawToken } = fresh();
-    const auth = await resolveVoiceNoteAuth(makeSessionRepo(state), {
-      publicId: "evt-active",
-      cookieValue: rawToken,
-    });
-    expect(auth.kind).toBe("ok");
-  });
-
-  it("returns not_found for an unknown event", async () => {
-    const { state } = fresh();
-    const auth = await resolveVoiceNoteAuth(makeSessionRepo(state), {
-      publicId: "evt-missing",
-      cookieValue: "unknown-token-123456",
-    });
-    expect(auth.kind).toBe("not_found");
-  });
-
-  it("returns event_closed for a non-ACTIVE event", async () => {
-    const { state } = fresh({ hasVoiceNote: false });
-    // Seed a session that belongs to the CLOSED event.
-    const token = generateSessionToken();
-    state.sessions[hashSessionToken(token)] = {
-      id: "session-2",
-      event_id: "event-2",
-      session_token: hashSessionToken(token),
-      guest_name: null,
-      expires_at: "2099-01-01T00:00:00Z",
-    };
-    const auth = await resolveVoiceNoteAuth(makeSessionRepo(state), {
-      publicId: "evt-closed",
-      cookieValue: token,
-    });
-    expect(auth.kind).toBe("event_closed");
-  });
-
-  it("returns session_required / session_invalid / session_expired without a body read", async () => {
-    const { state, rawToken } = fresh();
-    expect(
-      (await resolveVoiceNoteAuth(makeSessionRepo(state), {
-        publicId: "evt-active",
-        cookieValue: undefined,
-      })).kind,
-    ).toBe("session_required");
-    expect(
-      (await resolveVoiceNoteAuth(makeSessionRepo(state), {
-        publicId: "evt-active",
-        cookieValue: "unknown-token-123456",
-      })).kind,
-    ).toBe("session_invalid");
-
-    const expiredToken = generateSessionToken();
-    state.sessions[hashSessionToken(expiredToken)] = {
-      id: "session-exp",
-      event_id: "event-1",
-      session_token: hashSessionToken(expiredToken),
-      guest_name: null,
-      expires_at: new Date(Date.now() - 60000).toISOString(),
-    };
-    expect(
-      (await resolveVoiceNoteAuth(makeSessionRepo(state), {
-        publicId: "evt-active",
-        cookieValue: expiredToken,
-      })).kind,
-    ).toBe("session_expired");
-    void rawToken;
   });
 });
 

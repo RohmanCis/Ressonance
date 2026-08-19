@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Mic, Square } from "lucide-react";
-import type { UsageState } from "@/lib/pending-photos";
+import type { Usage } from "@/lib/usage";
 
 type VoiceState =
   | "idle"
@@ -11,7 +11,7 @@ type VoiceState =
   | "error"
   | "review-error"
   | "unsupported";
-type SessionData = UsageState & { guest_name: string | null };
+type SessionData = Usage & { guest_name: string | null };
 type EventData = { title: string; status: "ACTIVE" | "CLOSED" };
 
 const MAX_SECONDS = 30;

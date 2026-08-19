@@ -7,7 +7,8 @@ import { beforeAll, describe, expect, it } from "vitest";
 
 import type { AudioInspector } from "@/lib/audio-inspector";
 import { generateSessionToken, hashSessionToken } from "@/lib/guest-session";
-import { resolveVoiceNoteAuth, submitVoiceNote, type VoiceNoteSession } from "@/lib/submit-voice-note";
+import { resolveGuestSubmissionAuth, type GuestSubmissionRepo } from "@/lib/guest-submission-auth";
+import { submitVoiceNote } from "@/lib/submit-voice-note";
 import type { VoiceNoteStorage } from "@/lib/voice-note-storage";
 import { createVoiceNoteTxRepo } from "@/lib/voice-note-tx-repo";
 
@@ -104,7 +105,7 @@ describe("concurrent voice-note submissions (TECHNICAL_DESIGN §9)", () => {
       },
     };
 
-    const sessionRepo: VoiceNoteSession = {
+    const sessionRepo: GuestSubmissionRepo = {
       async findEventByPublicId(pid) {
         const { rows } = await db.query("SELECT id, status FROM events WHERE public_id = $1", [pid]);
         return rows[0] ?? null;
@@ -118,7 +119,7 @@ describe("concurrent voice-note submissions (TECHNICAL_DESIGN §9)", () => {
       },
     };
 
-    const auth = await resolveVoiceNoteAuth(sessionRepo, {
+    const auth = await resolveGuestSubmissionAuth(sessionRepo, {
       publicId,
       cookieValue: rawToken,
     });
@@ -132,7 +133,6 @@ describe("concurrent voice-note submissions (TECHNICAL_DESIGN §9)", () => {
         try {
           return await submitVoiceNote(
             {
-              sessionRepo,
               txRepo: createVoiceNoteTxRepo(client),
               storage,
               inspector,

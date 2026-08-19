@@ -6,9 +6,7 @@ import type { PhotoStorage } from "@/lib/photo-storage";
 import type { PhotoTxRepo } from "@/lib/photo-tx-repo";
 import {
   PHOTO_LIMIT,
-  resolvePhotoAuth,
   submitPhoto,
-  type PhotoSession,
 } from "@/lib/submit-photo";
 
 /** Minimal but structurally plausible JPEG header (FF D8 FF ...). */
@@ -41,17 +39,6 @@ interface State {
   deletes: string[];
   rollbacks: string[];
   inserted: { sessionId: string; storageKey: string; fileSize: number }[];
-}
-
-function makeSessionRepo(state: State): PhotoSession {
-  return {
-    async findEventByPublicId(pid) {
-      return state.events[pid] ?? null;
-    },
-    async findSessionByTokenHash(hash) {
-      return state.sessions[hash] ?? null;
-    },
-  };
 }
 
 function makeTxRepo(state: State): PhotoTxRepo {
@@ -125,7 +112,6 @@ const config: PhotoFileConfig = { maxSizeBytes: 1000 };
 
 function depsOf(state: State) {
   return {
-    sessionRepo: makeSessionRepo(state),
     txRepo: makeTxRepo(state),
     storage: makeStorage(state),
     config,
@@ -140,78 +126,6 @@ function activeInput(state: State, data: Uint8Array) {
     data,
   };
 }
-
-describe("resolvePhotoAuth", () => {
-  it("resolves an ACTIVE event and its session", async () => {
-    const { state, rawToken } = fresh();
-    const result = await resolvePhotoAuth(makeSessionRepo(state), {
-      publicId: "evt-active",
-      cookieValue: rawToken,
-    });
-    expect(result.kind).toBe("ok");
-    if (result.kind !== "ok") return;
-    expect(result.event).toEqual({ id: "event-1", status: "ACTIVE" });
-    expect(result.session.id).toBe("session-1");
-  });
-
-  it("returns not_found for an unknown event", async () => {
-    const { state } = fresh();
-    const result = await resolvePhotoAuth(makeSessionRepo(state), {
-      publicId: "evt-missing",
-      cookieValue: "whatever-12345678",
-    });
-    expect(result.kind).toBe("not_found");
-  });
-
-  it("returns event_closed for a CLOSED event", async () => {
-    const { state } = fresh();
-    const result = await resolvePhotoAuth(makeSessionRepo(state), {
-      publicId: "evt-closed",
-      cookieValue: "whatever-12345678",
-    });
-    expect(result.kind).toBe("event_closed");
-  });
-
-  it("returns session_required when no cookie", async () => {
-    const { state } = fresh();
-    const result = await resolvePhotoAuth(makeSessionRepo(state), {
-      publicId: "evt-active",
-      cookieValue: undefined,
-    });
-    expect(result.kind).toBe("session_required");
-  });
-
-  it("returns session_invalid for an unknown token", async () => {
-    const { state } = fresh();
-    const result = await resolvePhotoAuth(makeSessionRepo(state), {
-      publicId: "evt-active",
-      cookieValue: "unknown-token-123456",
-    });
-    expect(result.kind).toBe("session_invalid");
-  });
-
-  it("returns session_invalid for a session of another event", async () => {
-    const { state, rawToken } = fresh();
-    state.sessions[Object.keys(state.sessions)[0]].event_id = "event-2";
-    const result = await resolvePhotoAuth(makeSessionRepo(state), {
-      publicId: "evt-active",
-      cookieValue: rawToken,
-    });
-    expect(result.kind).toBe("session_invalid");
-  });
-
-  it("returns session_expired for an expired session", async () => {
-    const { state, rawToken } = fresh();
-    state.sessions[Object.keys(state.sessions)[0]].expires_at = new Date(
-      Date.now() - 60000,
-    ).toISOString();
-    const result = await resolvePhotoAuth(makeSessionRepo(state), {
-      publicId: "evt-active",
-      cookieValue: rawToken,
-    });
-    expect(result.kind).toBe("session_expired");
-  });
-});
 
 describe("submitPhoto", () => {
   it("accepts a valid photo and returns the exact submission + usage shape", async () => {

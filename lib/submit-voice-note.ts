@@ -12,7 +12,6 @@ import {
   voiceNoteExtension,
 } from "@/lib/audio-file";
 import type { GuestSession } from "@/lib/guest-session";
-import { resolveGuestSession, type SessionByTokenRepo } from "@/lib/resolve-guest-session";
 import { PHOTO_LIMIT } from "@/lib/submit-photo";
 import type { VoiceNoteStorage } from "@/lib/voice-note-storage";
 import {
@@ -23,61 +22,16 @@ import {
 /**
  * POST /api/events/{public_id}/voice-notes orchestration (T007).
  *
- * Auth resolution (`resolveVoiceNoteAuth`) is split from submission
- * (`submitVoiceNote`) so the route can authenticate/authorize the event and
- * guest session BEFORE parsing the multipart body (QA-2). `submitVoiceNote`
- * validates bytes, runs `ffprobe` for format + duration (ADR-006), then runs
- * the authoritative transaction (event-row lock → revalidate ACTIVE →
- * upload → insert → commit) with compensation on failure. The
- * `UNIQUE(guest_session_id)` constraint is the race-safe guard; no per-session
- * row lock is taken (TD §9). Rate limiting is applied by the route after auth
- * and before body parsing (QA-3).
+ * Auth resolution is shared across all guest submissions via
+ * `resolveGuestSubmissionAuth` (lib/guest-submission-auth.ts), called by the
+ * shared route pipeline BEFORE parsing the multipart body (QA-2).
+ * `submitVoiceNote` validates bytes, runs `ffprobe` for format + duration
+ * (ADR-006), then runs the authoritative transaction (event-row lock →
+ * revalidate ACTIVE → upload → insert → commit) with compensation on failure.
+ * The `UNIQUE(guest_session_id)` constraint is the race-safe guard; no
+ * per-session row lock is taken (TD §9). Rate limiting is applied by the
+ * pipeline after auth and before body parsing (QA-3).
  */
-
-export interface VoiceNoteSession extends SessionByTokenRepo {
-  findEventByPublicId(publicId: string): Promise<{ id: string; status: string } | null>;
-}
-
-export type VoiceNoteAuthResult =
-  | { kind: "not_found" }
-  | { kind: "event_closed" }
-  | { kind: "session_required" }
-  | { kind: "session_invalid" }
-  | { kind: "session_expired" }
-  | { kind: "ok"; event: { id: string; status: string }; session: GuestSession };
-
-/**
- * Resolve and authorize the event + guest session without touching the body.
- * Unknown event → not_found; non-ACTIVE → event_closed; missing/invalid/unknown
- * or wrong-event cookie → session_required/session_invalid. The route calls this
- * before parsing multipart so unauthenticated requests never read the body.
- */
-export async function resolveVoiceNoteAuth(
-  sessionRepo: VoiceNoteSession,
-  input: { publicId: string; cookieValue: string | undefined },
-): Promise<VoiceNoteAuthResult> {
-  const event = await sessionRepo.findEventByPublicId(input.publicId);
-  if (!event) return { kind: "not_found" };
-  if (event.status !== "ACTIVE") return { kind: "event_closed" };
-
-  const resolved = await resolveGuestSession(
-    sessionRepo,
-    input.cookieValue,
-    event.id,
-  );
-  switch (resolved.kind) {
-    case "missing":
-      return { kind: "session_required" };
-    case "invalid":
-    case "not_found":
-    case "wrong_event":
-      return { kind: "session_invalid" };
-    case "session_expired":
-      return { kind: "session_expired" };
-    case "ok":
-      return { kind: "ok", event, session: resolved.session };
-  }
-}
 
 export interface Submission {
   id: string;
@@ -107,7 +61,6 @@ export type SubmitVoiceNoteResult =
   | { kind: "ok"; submission: Submission; usage: VoiceNoteUsage };
 
 export interface SubmitVoiceNoteDeps {
-  sessionRepo: VoiceNoteSession;
   txRepo: VoiceNoteTxRepo;
   storage: VoiceNoteStorage;
   inspector: AudioInspector;

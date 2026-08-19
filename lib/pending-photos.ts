@@ -22,15 +22,6 @@ export interface PendingPhoto {
   errorMessage?: string;
 }
 
-export interface UsageState {
-  photos_submitted: number;
-  photos_remaining: number;
-  voice_note_submitted: boolean;
-  voice_note_available: boolean;
-  guest_message_submitted: boolean;
-  guest_message_available: boolean;
-}
-
 /**
  * Local capture budget = 5 − (server-confirmed accepted) − (local pending+uploading).
  * Never negative. Never authoritative (§4.4 Capture budget).

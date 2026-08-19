@@ -3,6 +3,7 @@
 import { ChangeEvent, FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useCamera } from "@/hooks/use-camera";
 import { loadFrameImage, type Frame } from "@/lib/frames";
+import { applyUsageDelta, type Usage, type UsageDelta } from "@/lib/usage";
 import {
   applySyncResult,
   isEventClosedError,
@@ -14,7 +15,6 @@ import {
   parseRetryAfterSeconds,
   photoErrorMessage,
   type PendingPhoto,
-  type UsageState,
 } from "@/lib/pending-photos";
 import { PreSession } from "@/components/guest/screens/PreSession";
 import { FrameSelection } from "@/components/guest/screens/FrameSelection";
@@ -24,7 +24,7 @@ import { Voice } from "@/components/guest/screens/VoiceAndMessage";
 import { Done } from "@/components/guest/screens/Done";
 
 type EventData = { title: string; status: "ACTIVE" | "CLOSED" };
-type SessionData = UsageState & { guest_name: string | null };
+type SessionData = Usage & { guest_name: string | null };
 type ViewState =
   | "loading"
   | "ready"
@@ -319,14 +319,16 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
           body: formData,
         });
         const body = (await response.json().catch(() => ({}))) as {
-          usage?: UsageState;
+          usage?: UsageDelta;
           error?: { code?: string };
         };
 
         if (response.status === 201 && body.usage) {
           setPendingPhotos((prev) => applySyncResult(prev, itemId, { status: "confirmed" }));
           setSession((prev) =>
-            prev ? { ...prev, ...body.usage! } : prev,
+            prev && body.usage
+              ? { ...applyUsageDelta(prev, body.usage), guest_name: prev.guest_name }
+              : prev,
           );
         } else {
           const code = body.error?.code;

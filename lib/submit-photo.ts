@@ -10,66 +10,20 @@ import {
 } from "@/lib/photo-file";
 import type { PhotoStorage } from "@/lib/photo-storage";
 import type { PhotoTxRepo } from "@/lib/photo-tx-repo";
-import { resolveGuestSession, type SessionByTokenRepo } from "@/lib/resolve-guest-session";
 
 /**
  * POST /api/events/{public_id}/photos orchestration (T006).
  *
- * Auth resolution (`resolvePhotoAuth`) is split from submission (`submitPhoto`)
- * so the route can authenticate/authorize the event and guest session BEFORE
- * parsing the multipart body (QA-2). `submitPhoto` validates bytes and runs the
- * authoritative transaction (lock → revalidate ACTIVE → count → upload →
- * insert → commit) with compensation on failure. Rate limiting is applied by
- * the route after auth and before body parsing (QA-3).
+ * Auth resolution is shared across all guest submissions via
+ * `resolveGuestSubmissionAuth` (lib/guest-submission-auth.ts), called by the
+ * shared route pipeline BEFORE parsing the multipart body (QA-2). `submitPhoto`
+ * validates bytes and runs the authoritative transaction (lock → revalidate
+ * ACTIVE → count → upload → insert → commit) with compensation on failure.
+ * Rate limiting is applied by the pipeline after auth and before body parsing
+ * (QA-3).
  */
 
 export const PHOTO_LIMIT = 5;
-
-export interface PhotoSession
-  extends SessionByTokenRepo {
-  findEventByPublicId(publicId: string): Promise<{ id: string; status: string } | null>;
-}
-
-export type PhotoAuthResult =
-  | { kind: "not_found" }
-  | { kind: "event_closed" }
-  | { kind: "session_required" }
-  | { kind: "session_invalid" }
-  | { kind: "session_expired" }
-  | { kind: "ok"; event: { id: string; status: string }; session: GuestSession };
-
-/**
- * Resolve and authorize the event + guest session without touching the body.
- * Unknown event → not_found; non-ACTIVE → event_closed; missing/invalid/unknown
- * or wrong-event cookie → session_required/session_invalid. The route calls this
- * before `request.formData()` so unauthenticated requests never parse multipart.
- */
-export async function resolvePhotoAuth(
-  sessionRepo: PhotoSession,
-  input: { publicId: string; cookieValue: string | undefined },
-): Promise<PhotoAuthResult> {
-  const event = await sessionRepo.findEventByPublicId(input.publicId);
-  if (!event) return { kind: "not_found" };
-  if (event.status !== "ACTIVE") return { kind: "event_closed" };
-
-  const resolved = await resolveGuestSession(
-    sessionRepo,
-    input.cookieValue,
-    event.id,
-  );
-  switch (resolved.kind) {
-    case "missing":
-      return { kind: "session_required" };
-    case "invalid":
-    case "not_found":
-    case "wrong_event":
-      return { kind: "session_invalid" };
-    case "session_expired":
-      return { kind: "session_expired" };
-    case "ok":
-      return { kind: "ok", event, session: resolved.session };
-  }
-}
 
 export interface Submission {
   id: string;
@@ -96,7 +50,6 @@ export type SubmitPhotoResult =
   | { kind: "ok"; submission: Submission; usage: PhotoUsage };
 
 export interface SubmitPhotoDeps {
-  sessionRepo: PhotoSession;
   txRepo: PhotoTxRepo;
   storage: PhotoStorage;
   config: PhotoFileConfig;

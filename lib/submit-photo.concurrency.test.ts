@@ -6,14 +6,13 @@ import { Pool } from "pg";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { generateSessionToken, hashSessionToken } from "@/lib/guest-session";
+import {
+  resolveGuestSubmissionAuth,
+  type GuestSubmissionRepo,
+} from "@/lib/guest-submission-auth";
 import type { PhotoStorage } from "@/lib/photo-storage";
 import { createPhotoTxRepo } from "@/lib/photo-tx-repo";
-import {
-  PHOTO_LIMIT,
-  resolvePhotoAuth,
-  submitPhoto,
-  type PhotoSession,
-} from "@/lib/submit-photo";
+import { PHOTO_LIMIT, submitPhoto } from "@/lib/submit-photo";
 
 /**
  * Concurrency integration test (TECHNICAL_DESIGN §8 / task.md).
@@ -104,7 +103,7 @@ describe("concurrent photo submissions (TECHNICAL_DESIGN §8)", () => {
       },
     };
 
-    const sessionRepo: PhotoSession = {
+    const sessionRepo: GuestSubmissionRepo = {
       async findEventByPublicId(pid) {
         const { rows } = await db.query("SELECT id, status FROM events WHERE public_id = $1", [pid]);
         return rows[0] ?? null;
@@ -118,7 +117,7 @@ describe("concurrent photo submissions (TECHNICAL_DESIGN §8)", () => {
       },
     };
 
-    const auth = await resolvePhotoAuth(sessionRepo, {
+    const auth = await resolveGuestSubmissionAuth(sessionRepo, {
       publicId,
       cookieValue: rawToken,
     });
@@ -132,7 +131,6 @@ describe("concurrent photo submissions (TECHNICAL_DESIGN §8)", () => {
         try {
           return await submitPhoto(
             {
-              sessionRepo,
               txRepo: createPhotoTxRepo(client),
               storage,
               config: { maxSizeBytes: 1000 },

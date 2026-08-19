@@ -5,11 +5,11 @@ import {
   canRetakePhoto,
   localBudgetRemaining,
   type PendingPhoto,
-  type UsageState,
 } from "@/lib/pending-photos";
+import type { Usage } from "@/lib/usage";
 
 type EventData = { title: string; status: "ACTIVE" | "CLOSED" };
-type SessionData = UsageState & { guest_name: string | null };
+type SessionData = Usage & { guest_name: string | null };
 
 const PRE_EXPIRY_WARN_SECONDS = 300;
 
