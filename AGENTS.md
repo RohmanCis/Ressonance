@@ -62,7 +62,35 @@ For details, read the relevant source document instead of expanding this list.
 
 Do not introduce an ORM, provider, framework, service, schema field, endpoint, or dependency without an approved design change.
 
-## 5. Minimal-context loading
+## 5. Setup and commands
+
+Package manager: npm. Node LTS. Install: `npm install`.
+
+| Purpose | Command |
+|---|---|
+| Dev server | `npm run dev` |
+| Production build | `npm run build` |
+| Typecheck | `npm run typecheck` (`tsc --noEmit`) |
+| Lint | `npm run lint` (ESLint 9; known baseline: 1 pre-existing `any` error in `e2e/print-qa.spec.ts`, warnings only otherwise) |
+| Unit/integration tests | `npm test` (`vitest run`) — serialized on purpose: destructive Postgres suites; never run two vitest instances concurrently |
+| E2E | `npm run e2e` (Playwright; all suites share one dev server on port 3000 — never run two suites concurrently) |
+| Live-DB tests | `npm run test:postgres` (requires live Supabase env) |
+| Live E2E | `PLAYWRIGHT_LIVE=1 npm run e2e` (requires live Supabase env) |
+
+Environment: Supabase credentials and rate-limit/upload caps come from env (see `docs/TECHNICAL_DESIGN.md`); never commit secrets. Chromium for Playwright is installed.
+
+## 6. Code style
+
+- TypeScript strict mode; no `any` in new code.
+- Next.js App Router: server-side API under `app/api/**/route.ts`; client components under `components/`.
+- Styling: Tailwind CSS v4 with the token variables from `docs/UI_DESIGN.md` §5 (`--background`, `--primary`, `--ring`, …); shadcn/ui primitives; no inline color literals that bypass tokens.
+- Accessibility is not optional: focus-visible rings, aria-live/status regions, 44px+ touch targets (48px guest primaries), safe-area insets — per `docs/UI_DESIGN.md` §13 and `docs/UI_UX.md` §2.
+- Comments: sparse, only where a non-obvious invariant or canonical-doc cross-reference must be recorded (see existing `lib/*.ts` docblocks for the pattern).
+- Tests: Vitest co-located as `*.test.ts` next to the code under test; route tests live beside routes. Every non-trivial behavior change leaves a focused runnable test.
+- E2E specs live in `e2e/` (Playwright).
+- Commits: imperative subject line, scope confined to the task contract; never commit secrets, never commit canonical-doc changes outside an approved scope.
+
+## 7. Minimal-context loading
 
 - **Any task:** `AGENTS.md` + governing canonical document.
 - **Product/domain task:** `docs/PRD.md` relevant sections; `docs/db_scheme.md` for data impact.
@@ -73,7 +101,7 @@ Do not introduce an ORM, provider, framework, service, schema field, endpoint, o
 
 Inspect existing code and conventions after loading context. Read the governing document before modifying code. Do not load every document by default.
 
-## 6. Required workflow
+## 8. Required workflow
 
 1. Orchestrator identifies the governing document, scope, dependencies, and acceptance evidence.
 2. Orchestrator delegates bounded reconnaissance, design review, implementation, and testing tasks to the appropriate specialist.
@@ -85,7 +113,7 @@ Inspect existing code and conventions after loading context. Read the governing 
 
 Every agent reports assumptions, files changed, tests/checks run, failures, and unresolved risks through the task handoff mechanism.
 
-## 7. Task coordination harness
+## 9. Task coordination harness
 
 The handoff directory has exactly four files:
 
@@ -119,7 +147,7 @@ File state is the durable synchronization mechanism. Do not carry large conversa
 
 Do not create per-task `STATUS.md`, `HANDOFF.md`, `T001.md`, `result-T001.md`, task directories, or result directories. `task.md` and `result.md` are replaced for each current task. Canonical documents remain the source of truth; do not duplicate PRD, schema, architecture, API, or UI content into handoff files.
 
-Context strategy: load the smallest governing document set defined in §5; reference paths/sections instead of copying content.
+Context strategy: load the smallest governing document set defined in §7; reference paths/sections instead of copying content.
 
 Session close protocol — triggered by an explicit session-close instruction (e.g., "I want to close sessions"):
 
@@ -133,7 +161,7 @@ Session close protocol — triggered by an explicit session-close instruction (e
 8. Never commit or push automatically.
 9. Provide a concise session-close summary and a proposed Git commit message covering the work completed in the session.
 
-## 8. Conflict and drift handling
+## 10. Conflict and drift handling
 
 - Report any SSOT conflict before implementation. Do not silently choose a resolution.
 - Report architecture drift: stack/provider/topology changes, unauthorized endpoints, schema changes, security weakening, or behavior outside the approved contract.
@@ -142,18 +170,18 @@ Session close protocol — triggered by an explicit session-close instruction (e
 - QA and review may rely only on this repository's canonical documents and this file. External projects, workspaces, absolute paths outside the repository, imported external requirements, and external AGENTS files are invalid authority and must not be used to change, challenge, or QA this repository.
 - Do not implement before required design documents are approved. Canonical status: API Contract LOCKED, Database Schema approved cleanup complete, Technical Design LOCKED, Architecture Decisions LOCKED, UI/UX Contract LOCKED, UI Design LOCKED, implementation gate cleared.
 
-## 9. Testing and security gate
+## 11. Testing and security gate
 
 Every non-trivial behavior change leaves a runnable focused test or equivalent check. Required coverage, as components land: session creation timing and cookies; event status/ownership; photo concurrency limit; voice-note uniqueness and duration; private media authorization; signed URLs; admin authentication; rate limits; storage failure cleanup; API error consistency.
 
 Never trust frontend limits, localStorage, client MIME/duration, public storage URLs, database PKs as credentials, or client-provided ownership. Never report success before required persistence succeeds. Preserve accessibility and security requirements during UI work.
 
-## 10. Current repository state
+## 12. Current repository state
 
-Guest-side API, Admin API, Guest UI, and Admin UI are implemented. Implemented since initial MVP: 30-minute GuestSession expiry (`expires_at`, 401 SESSION_EXPIRED), opaque `guest_sessions.public_ref` grouping identifier (migration `0002`), admin submission grouping by GuestSession, print UX (one-page artifacts), camera-first guest capture with multi-capture pending buffer and sequential batch sync, Vercel Node runtime compatibility with bundled `@ffprobe-installer/ffprobe`, DB-backed session-create rate limiting (R1), structured API error logging (R2), Admin Event Index at `/admin` with `GET /api/admin/events` (T031), Retake in photo review (T030-R), 4 MB photo/voice upload caps (B2), 7-day media retention cleanup via Vercel Cron + CRON_SECRET (B3), pre-camera guest frame selection with compositing at shutter time (`lib/frames.ts`, client-side UX only), and the guest message feature ("pesan & kesan", API Contract §6.6 / schema migration 0005): standalone 1–280 character text submission, one per GuestSession, rendered read-only in the admin timeline.
+Guest-side API, Admin API, Guest UI, and Admin UI are implemented. Implemented since initial MVP: 30-minute GuestSession expiry (`expires_at`, 401 SESSION_EXPIRED), opaque `guest_sessions.public_ref` grouping identifier (migration `0002`), admin submission grouping by GuestSession, print UX (one-page artifacts), camera-first guest capture with multi-capture pending buffer and sequential batch sync, Vercel Node runtime compatibility with bundled `@ffprobe-installer/ffprobe`, DB-backed session-create rate limiting (R1), structured API error logging (R2), Admin Event Index at `/admin` with `GET /api/admin/events` (T031), Retake in photo review (T030-R), 4 MB photo/voice upload caps (B2), 7-day media retention cleanup via Vercel Cron + CRON_SECRET (B3), pre-camera guest frame selection with compositing at shutter time (`lib/frames.ts`, client-side UX only), and the sequential full-screen guest flow (2026-08-20, owner decision): PRE_SESSION → FRAME_SELECT → CAPTURE → PHOTO_REVIEW → VOICE → DONE as distinct full-screen states in `components/guest-event-entry.tsx` with screen components under `components/guest/screens/` (`PreSession`, `FrameSelection`, `Capture`, `PhotoReview` grid with per-item delete and sync-then-advance, full-screen `Voice` in `VoiceAndMessage.tsx`, `Done` thank-you). Capture auto-advances to review at budget 0; manual "Lanjut" when pending photos exist; photo sync runs from the review screen; voice submit or skip advances to DONE. The guest message feature ("pesan & kesan", API Contract §6.6 / migration 0005) is implemented server-side but NOT exposed in the guest or admin UI — removed from MVP UI scope (2026-08-20); re-enabling requires a UI_UX and API_CONTRACT amendment only. The earlier modal-sheet presentation was replaced by this sequential flow. Session expiry discards unsent voice takes per UI_UX §4.6.
 
-Live Supabase integration verified: live PostgreSQL schema tests PASS, `PLAYWRIGHT_LIVE=1` PASS, seeded events present (1 ACTIVE). Live DB migration state verified: `supabase_migrations.schema_migrations` records `0001`–`0008`. `guest_sessions.public_ref` applied — NOT NULL, unique index `uq_guest_sessions_public_ref`, 0 NULL/duplicate values; `expires_at` present with 30-minute default. `guest_messages` applied (2026-08-17 amendment): UNIQUE one-per-session constraint, 1–280 char CHECK, `idx_guest_messages_guest_session_id`, RLS enabled with no PUBLIC/anon/authenticated grants. Migration `0006` (2026-08-17): grants `guest_messages` SELECT+INSERT to service_role. Migration `0007` (2026-08-17): pins explicit service_role table grants — photos/voice_notes SELECT+DELETE, events SELECT+INSERT+UPDATE, guest_sessions SELECT+INSERT, guest_messages SELECT+DELETE; no grants for admins/session_create_rate_limits (no service_role usage). Migration `0008` (2026-08-17): guest-media `storage.objects` RLS policies — service_role SELECT/INSERT/DELETE, applied manually via dashboard (3 policies); repo file is documentation-only. All migrations are idempotent; migration 0002 sets `search_path = public, extensions` for pgcrypto resolution on Supabase.
+Live Supabase integration verified: live PostgreSQL schema tests PASS, `PLAYWRIGHT_LIVE=1` PASS, seeded events present (1 ACTIVE). Live DB migration state verified: `supabase_migrations.schema_migrations` records `0001`–`0008`. `guest_sessions.public_ref` applied — NOT NULL, unique index `uq_guest_sessions_public_ref`, 0 NULL/duplicate values; `expires_at` present with 30-minute default. Migration `0006` (2026-08-17): grants guest tables SELECT+INSERT to service_role. Migration `0007` (2026-08-17): pins explicit service_role table grants — photos/voice_notes SELECT+DELETE, events SELECT+INSERT+UPDATE, guest_sessions SELECT+INSERT; no grants for admins/session_create_rate_limits (no service_role usage). Migration `0008` (2026-08-17): guest-media `storage.objects` RLS policies — service_role SELECT/INSERT/DELETE, applied manually via dashboard (3 policies); repo file is documentation-only. All migrations are idempotent; migration 0002 sets `search_path = public, extensions` for pgcrypto resolution on Supabase.
 
-Local QA: `npx vitest run` 375/375 (41 files) PASS; Playwright `smoke+qr-qa+print-qa` 11 passed / 1 skipped / 0 failed; `mobile-media-qa` 12/12 PASS. Typecheck and build PASS; lint has pre-existing issues only (1 `any` error in `e2e/print-qa.spec.ts`, 7 warnings, `next-env.d.ts` excluded). Chromium is installed.
+Local QA: `npx vitest run` 375/375 (41 files) PASS; Typecheck PASS. Playwright `smoke+qr-qa+print-qa` 11 passed / 1 skipped / 0 failed and `mobile-media-qa` 18/18 PASS were verified before the sequential-flow refactor; after it, `e2e/mobile-media-qa.spec.ts` voice-path tests target the removed sheet flow and will fail until the spec is updated to the sequential screens — updating that spec is the outstanding next task. Lint has pre-existing issues only (1 `any` error in `e2e/print-qa.spec.ts`, 7 warnings, `next-env.d.ts` excluded). Chromium is installed.
 
 Known implementation limitations: live scanner verification with a physical device, broader browser capability, and live visual QA with an authenticated admin remain outstanding. Owner decisions (2026-08-15): MVP relies on Supabase managed backups (no custom backup/restore); monitoring is structured API logs + Vercel logs only (no Sentry/OTel/custom alerting); no guest-facing retention messaging for MVP (7-day post-CLOSED cleanup unchanged); existing APAC Supabase production project/region ratified; signed URL TTL ratified at 900 seconds; ARCHIVED behavior deferred/post-MVP. Do not fix canonical documents silently.

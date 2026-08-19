@@ -1,33 +1,81 @@
-# Current Execution State
+# Current Task Status
 
-- Phase: Session closed (2026-08-17). No active task. Awaiting owner triage of remaining audit findings (B-M2 TRUSTED_PROXY, HIGH runners-up).
-- Status: working tree = this session's docs/handoff reconciliation only; migrations 0007/0008 and the previously pending frames change-set already committed by owner. `npx vitest run` 375/375 (41 files) PASS this session; `npx tsc --noEmit` PASS.
+**Status:** SESSION_CLOSED
+**Last updated:** 2026-08-20
 
-## Since the audit (this session)
-- C1 resolved: migration 0008 (storage.objects policies, service_role, guest-media) — applied manually via dashboard (3 policies); repo file documentation-only.
-- C2 resolved: migration 0007 (explicit service_role grants) applied live by owner; 0006 confirmed in history.
-- Docs reconciled to 0001–0008: db_scheme.md, API_CONTRACT.md, ARCHITECTURE_DECISIONS.md, PRD.md, AGENTS.md §10 (incl. vitest count 375/375, 41 files).
+---
 
-## Session summary (QA audit session)
-Six read-only lanes dispatched and completed: A structure/architecture (exp-1), B API layer (exp-2), C DB/security (ora-1), D frontend quality (exp-3), E perf/reliability (ora-2), F test coverage (qa-1). All mandatory docs read by every lane; no repo files modified.
+## Session Summary
 
-**Totals: 2 CRITICAL / 7 HIGH / 20 MEDIUM / 35 LOW (~57 unique).** Full per-area tables, top-3 pre-deploy blockers, systemic patterns in `result.md`.
+### Completed Work
 
-Top 3 before deploy:
-1. ~~C1~~ RESOLVED (2026-08-17): storage bucket privacy + storage.objects policies now asserted — 3 policies (SELECT/INSERT/DELETE) applied manually via Supabase dashboard to the `guest-media` bucket, scoped to service_role; migration 0008 documents them (no SQL executed from repo; dashboard-managed).
-2. ~~C2~~ RESOLVED (2026-08-17): migration 0007 applied — explicit service_role table grants pinned (photos/voice_notes SELECT+DELETE, events SELECT+INSERT+UPDATE, guest_sessions SELECT+INSERT, guest_messages SELECT+DELETE); no longer relying on undocumented platform defaults.
-3. B-M2 — without `TRUSTED_PROXY=1` all guests share one 10 req/min bucket → mass 429 at live event; verify Vercel env.
+1. **Sequential guest flow UI refactor** (des-1)
+   - Refactored guest flow to sequential full-screen navigation: PRE_SESSION → FRAME_SELECT → CAPTURE → PHOTO_REVIEW → VOICE → DONE
+   - Removed guest message feature from UI (API/schema/migration retained)
+   - Created new screens: `PhotoReview.tsx`, `Voice.tsx` (replaced `VoiceAndMessage.tsx`), `Done.tsx`
+   - Updated `GuestEventEntry` ViewState: removed sheet state/handlers
+   - Removed sheet triggers from `Capture.tsx`
 
-HIGH runners-up: camera/mic stream leaks on session expiry & unmount (guest-event-entry.tsx:219-241, 488-495, voice recorder), no error.tsx/global-error.tsx/not-found.tsx, admin per-tile signed-URL waterfall (~5 DB hops × N tiles), cron sequential loop timeout risk, orphaned storage objects never swept.
+2. **Canonical docs amendment** (fix-1)
+   - `docs/UI_UX.md`: §1 scope, §3 screen map, §4.3–4.7 sequential structure
+   - `docs/PRD.md`: guest message moved to non-goals, 2026-08-20 amendment
+   - `docs/API_CONTRACT.md`: §6.6 marked not exposed in UI
 
-Positives: auth-before-body universal, consistent error envelope, deny-all RLS + REVOKE everywhere, parameterized SQL only, ADR-004 cookie/token hygiene, transactional compensation, 375/375 tests incl. real-Postgres concurrency.
+3. **AGENTS.md agents.md-format alignment** (orchestrator)
+   - Added §5 Setup and commands, §6 Code style
+   - Renumbered §5–§10 → §7–§12
+   - Updated §12 Current repository state to reflect sequential flow
 
-## Open items for owner
-1. **Triage audit findings** (result.md) — top-3 first; then HIGH fixes. Fixes need explicit tasking; nothing implemented.
-2. Pre-existing: frames change-set commit decision (RESOLVED 2026-08-17 — committed by owner); final frame artwork; guest-message retention policy; C3–C5 decisions; N2/N3; R3 prerequisites; TRUSTED_PROXY Vercel env verification (B-M2, only remaining top-3 item); stale landing copy (A-L).
+4. **Doc crosscheck** (orchestrator)
+   - Fixed `docs/UI_DESIGN.md` §11 stale refs: geometry §4.4→§4.5, Send action → photo-review sync CTA
 
-## Migration state (2026-08-17)
-- Migrations 0006–0008 applied to production by owner; migration history now `0001`–`0008`.
-- Storage policies applied manually via Supabase dashboard: 3 policies (SELECT/INSERT/DELETE) on `storage.objects` WHERE bucket_id = `guest-media`, scoped to service_role.
-- 0007 explicit service_role grants applied (photos/voice_notes SELECT+DELETE; events SELECT+INSERT+UPDATE; guest_sessions SELECT+INSERT; guest_messages SELECT+DELETE; none for admins/session_create_rate_limits).
-- 0008 in-repo file is documentation only — no SQL executed from the migration file; storage policies are dashboard-managed.
+5. **QA verification** (qa-1)
+   - `npx vitest run`: 375/375 PASS
+   - `npx tsc --noEmit`: 0 errors
+   - All canonical docs verified consistent
+
+### Repository State
+
+**Modified files (11):**
+- `.opencode/handoff/` (CURRENT.md, task.md, result.md)
+- `AGENTS.md`
+- `app/globals.css` (trailing blank line)
+- `components/guest-event-entry.tsx`
+- `docs/API_CONTRACT.md`, `docs/PRD.md`, `docs/UI_DESIGN.md`, `docs/UI_UX.md`, `docs/db_scheme.md`
+
+**New directory:**
+- `components/guest/screens/` (Capture.tsx, PhotoReview.tsx, Voice.tsx, Done.tsx, PreSession.tsx, FrameSelection.tsx)
+
+**Pre-existing uncommitted work:** None identified that predates this session.
+
+**Verification:**
+- `tsc --noEmit`: PASS (0 errors)
+- `vitest run`: 375/375 PASS
+- `git diff --check`: clean (LF→CRLF warnings only, 1 trailing blank line in globals.css)
+
+### Known Outstanding
+
+- `e2e/mobile-media-qa.spec.ts` voice tests target old sheet flow — will fail until updated to sequential screens (flagged in AGENTS.md §12)
+
+### Next Actions
+
+None — session closed. Repository ready for commit when user chooses.
+
+---
+
+## Proposed Commit Message
+
+```
+refactor(guest): sequential full-screen navigation, remove message UI
+
+- Refactor guest flow to sequential screens: PRE_SESSION → FRAME_SELECT → CAPTURE → PHOTO_REVIEW → VOICE → DONE
+- Remove guest message feature from UI (API/schema unchanged)
+- Create PhotoReview, Voice, Done screens; replace VoiceAndMessage
+- Remove sheet state/handlers from GuestEventEntry
+- Update AGENTS.md: add setup/code-style sections, align with agents.md format
+- Amend UI_UX.md, PRD.md, API_CONTRACT.md, UI_DESIGN.md for sequential flow
+- Fix UI_DESIGN.md stale cross-refs (§4.4→§4.5, sync CTA)
+
+Verification: tsc 0 errors, vitest 375/375 PASS
+Outstanding: e2e voice tests need sequential-flow update
+```

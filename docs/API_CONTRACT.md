@@ -6,7 +6,7 @@ Source: PRD v1.3, `docs/db_scheme.md`, `docs/TECHNICAL_DESIGN.md`, and `docs/ARC
 
 Amended 2026-08-15: documentation reconciliation — adds §5.9 as implemented; closes resolved decisions. No behavior change.
 
-Amended 2026-08-17: guest message feature (Opsi B).
+Amended 2026-08-20: guest message feature removed from MVP UI scope. API Contract §6.6 (guest message endpoint), schema migration 0005, and related error codes remain in place but are not exposed in the guest or admin UI. Re-enabling requires a UI_UX and API_CONTRACT amendment only — no schema change needed.
 
 This contract defines behavior only. Framework, database, and storage implementation details remain outside the API surface.
 
@@ -598,6 +598,8 @@ Invalid, corrupt, unsupported, or uninspectable audio is rejected before success
 **Errors:** `400 INVALID_REQUEST`, `401 SESSION_REQUIRED|SESSION_INVALID|SESSION_EXPIRED`, `404 NOT_FOUND`, `409 VOICE_NOTE_LIMIT_REACHED`, `422 EVENT_CLOSED`, `422 UNSUPPORTED_MEDIA`, `422 FILE_TOO_LARGE`, `422 AUDIO_DURATION_INVALID`, `422 AUDIO_UNINSPECTABLE`, `429 RATE_LIMITED`, `502 MEDIA_PERSISTENCE_FAILED`.
 
 ### 6.6 Submit guest message
+
+**UI scope (2026-08-20):** this endpoint is implemented but is NOT exposed in the guest UI as of the 2026-08-20 MVP UI scope decision (sequential full-screen guest flow, `docs/UI_UX.md` §4). The API and schema are unchanged.
 
 ```text
 POST /api/events/{public_id}/guest-messages

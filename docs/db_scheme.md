@@ -3,7 +3,7 @@
 Version: 1.2
 Status: Approved schema design  
 Reconciled 2026-08-15 — closes open technical decisions; schema applied via migrations 0001–0008.
-Amended 2026-08-17: guest message feature (Opsi B) — adds `guest_messages` via migration 0005.
+Amended 2026-08-20: guest message feature removed from MVP UI scope. Schema `guest_messages` (migration 0005), endpoint, and error codes remain in place but are not exposed in the guest or admin UI. Re-enabling requires a UI_UX and API_CONTRACT amendment only — no schema change needed.
 Source of Truth: PRD v1.3 + Domain Model + ERD (all locked)
 
 ---
