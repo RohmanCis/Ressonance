@@ -1,57 +1,81 @@
-# Task: Sequential Guest Flow Refactor + Guest Message UI Removal
+﻿# Task: Architecture deepening #1 — GuestSubmissionAuth + shared guest-submission route pipeline
 
 ## Context
 
-Owner approved unfreezing canonical docs for this task. Guest flow must become sequential full-screen navigation matching Sepia reference UX. Guest message UI removed entirely; backend/schema/API endpoint stays.
+Architecture review found byte-identical `resolvePhotoAuth`/`resolveVoiceNoteAuth` functions (7-line session SQL + event/limits/expiry checks + discriminated result; differing only by the `kind` string literal). All three guest-submission routes (photos, voice-notes, guest-messages) duplicate the same pipeline: auth resolver → HTTP status/error mapping → multipart/content guards → submission call → usage-response building → rate-limit config, differing only in the I/O adapter (ffprobe vs field name) and limit constant.
 
-## Target flow
+**Deletion test:** removing the auth functions would force duplication of session SQL + event-check + expiry-check logic at each route. Removing the pipeline choreography would duplicate the exact status/logging/rate-limit pattern across 3+ routes (and any future submission kind). Both pass the deletion test — keep and deepen.
 
-PRE_SESSION → FRAME_SELECT → CAPTURE → PHOTO_REVIEW → VOICE → DONE (distinct full-screen states in GuestEventEntry ViewState)
+## Design (decided — implement as specified)
 
-## Screen specs
+### Part A: GuestSubmissionAuth seam
 
-- CAPTURE: fullscreen camera, frame overlay, shutter, counter "X remaining" bottom-right. Auto-advance to PHOTO_REVIEW when budgetRemaining hits 0. Manual: "Lanjut →" button when pendingPhotos.length > 0.
-- PHOTO_REVIEW: header "Foto Anda (N)", subtext "Hapus yang tidak diinginkan sebelum dikirim.", grid with per-photo X delete, primary CTA "Lanjut ke pesan suara" full-width bottom. Photos synced to backend before advancing; syncing state on CTA; block advance until no pending/uploading remains.
-- VOICE: full-screen, header "Pesan suara", subtext "Tinggalkan satu pesan suara hingga 30 detik untuk host.", mic icon center, timer "00:00 / MAKS 30 DETIK". After recording: audio playback bar, primary "✓ Kirim semua", secondary text "Rekam ulang", tertiary link "Lewati & kirim foto saja". Voice submit or skip → DONE.
-- DONE: full-screen thank-you, event title, brief message, no actions. Session closed from guest perspective.
+New module `lib/guest-submission-auth.ts`:
 
-## Remove from UI (keep in backend/schema/API)
+Extract digest from __Host-guest_session cookie, SQL join guest_sessions + events, check session found/event match/expired/ACTIVE status, return discriminated union (ok: sessionId+eventId+eventStatus | !ok: missing/invalid/expired/wrong_event/event_inactive).
 
-- "Leave a message" + "Add a voice note" buttons in Capture.tsx bottom action band
-- guest_message_available check and onOpenSheet("message") in Capture.tsx
-- GuestSheet, VoiceNoteAction, GuestMessageAction in VoiceAndMessage.tsx — replace file entirely with full-screen Voice screen
-- sheetOpen, sheetStep, sheetClosing state and all sheet handlers in GuestEventEntry
+Docblock cross-refs: API Contract §6, db_scheme.md guest_sessions/events, TECHNICAL_DESIGN.md §4.1.
 
-## Files in scope (designer lane)
+Co-located test `lib/guest-submission-auth.test.ts`: covers all 5 result branches with pg Client fixture (pattern: existing submit-photo.test.ts).
 
-- components/guest-event-entry.tsx — ViewState gains PHOTO_REVIEW, VOICE, DONE; wire handlers; remove sheet state
-- components/guest/screens/Capture.tsx — remove sheet buttons, add "Lanjut →" advance, keep shutter/counter/strip/file-picker
-- components/guest/screens/PhotoReview.tsx — CREATE
-- components/guest/screens/VoiceAndMessage.tsx — REPLACE with Voice screen
-- components/guest/screens/Done.tsx — CREATE
+### Part B: Shared route pipeline factory
 
-## Files in scope (fixer lane: docs)
+New module `lib/guest-submission-pipeline.ts`:
 
-- docs/UI_UX.md — amend §1 scope, §3 screen map, §4 sequential screens, remove guest message UI
-- docs/PRD.md — guest message UI to non-goals, note API/schema remains
-- docs/API_CONTRACT.md — §6.6 marked implemented but not exposed in guest UI
+`createGuestSubmissionHandler<T>(config: { extract, submit, rateLimitConfig })` returns Next.js POST handler. Factory handles: rate-limit → resolveGuestSubmissionAuth → map auth failures to 401/403/409 + logApiError → config.extract(req) → config.submit(publicId, sessionId, eventId, payload) → map submit result (ok: 201+usage | !ok: status+logApiError).
+
+Route becomes ~10 lines: import factory + payload extractor + submitPhoto, export POST = factory call.
+
+Co-located test: verify auth-kind → HTTP mapping, extract/submit failure handling, 201 success.
+
+### Part C: Thin payload-extraction adapters
+
+New modules:
+- `lib/photo-payload.ts` — extractPhotoPayload: multipart → MIME/size guards → {ok, payload: {blob, contentType}} | {!ok, kind}. Lifted from photos route :88–141.
+- `lib/voice-note-payload.ts` — extractVoiceNotePayload: multipart → ffprobe → {ok, payload: {blob, contentType, durationSeconds}} | error. Lifted from voice-notes route :107–176.
+- `lib/guest-message-payload.ts` — extractGuestMessagePayload: multipart → 280-char validation → {ok, payload: {messageText}} | error.
+
+Each with co-located test.
+
+### Part D: Route file updates
+
+Update 3 route files to use factory (~10–15 lines each). Keep route-level tests (*.route.test.ts) — they exercise factory via route; optionally slim if lib tests cover branches.
+
+## Files in scope
+
+New:
+- lib/guest-submission-auth.ts + test
+- lib/guest-submission-pipeline.ts + test
+- lib/photo-payload.ts + test
+- lib/voice-note-payload.ts + test
+- lib/guest-message-payload.ts + test
+
+Modified:
+- app/api/events/[public_id]/photos/route.ts (refactor to factory)
+- app/api/events/[public_id]/voice-notes/route.ts (refactor to factory)
+- app/api/events/[public_id]/guest-messages/route.ts (refactor to factory)
+- lib/submit-photo.ts — delete resolvePhotoAuth, import resolveGuestSubmissionAuth
+- lib/submit-voice-note.ts — delete resolveVoiceNoteAuth, import resolveGuestSubmissionAuth
+- lib/submit-guest-message.ts — delete resolver if present
+- Route tests (*.route.test.ts) — adjust if needed
+- lib/rate-limit.ts — export named configs if not already
 
 ## Do NOT change
 
-API routes, backend logic, hooks (use-camera, pending-photos lib), session/upload endpoints, admin screens, DB schema, tests (only if type error forces).
+- Any canonical doc, migration, admin code, e2e specs, client components, hooks
+- submitPhoto/submitVoiceNote/submitGuestMessage internal logic
+- Wire format (same 201 + usage body)
+- Existing tx-repo/storage/audio-inspector adapters
 
 ## Acceptance criteria
 
-- npx vitest run same pass count (375)
+- resolvePhotoAuth/resolveVoiceNoteAuth deleted; all callers use resolveGuestSubmissionAuth
+- All 3 guest-submission routes use createGuestSubmissionHandler — route files ≤15 lines
+- Duplication deleted: session SQL, auth→HTTP, rate-limit, logging, status selection all in pipeline once
 - npx tsc --noEmit 0 errors
-- ViewState includes PHOTO_REVIEW, VOICE, DONE
-- No sheetOpen/sheetStep/sheetClosing in GuestEventEntry
-- No guest_message_available in guest screen components
-- Capture.tsx has no "Leave a message"/"Add a voice note" sheet triggers
-- PhotoReview.tsx blocks advance until photos confirmed or error
-- Done.tsx exists with event title + thank-you copy
-- All 3 canonical docs updated and consistent
+- npx vitest run — 378 baseline + new tests (expect ~390+)
+- Route behavior unchanged: same status codes, error codes, 201+usage shape
 
 ## Report
 
-Write result.md: files changed, vitest result, tsc result, doc sections amended, blockers.
+Write result.md: status, files changed (new + modified with line-count delta), diffs summary, tsc + vitest output, blockers, SSOT conflicts, deviations.

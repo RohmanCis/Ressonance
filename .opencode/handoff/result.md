@@ -149,3 +149,112 @@ Docs fixer amends UI_UX/PRD/API_CONTRACT; then update `e2e/mobile-media-qa.spec.
 **Blockers:** None. **Architecture drift:** None - backend behavior, schema, and admin experience untouched.
 
 **Next step:** designer lane aligns `docs/UI_DESIGN.md` section 9 (sheet -> full-screen voice; 4.4 cross-ref) and implements code per task spec; orchestrator reconciles.
+
+---
+
+# Task Result: Architecture Deepening #3 — Usage Type Unification (2026-08-20)
+
+**Status:** COMPLETED
+**Scope:** `lib/usage.ts` (Usage / UsageDelta / applyUsageDelta); delete `UsageState`; repoint importers; photo-sync 201 handler merges via `applyUsageDelta` so `guest_message_*` can no longer be clobbered to `undefined`. No wire-format change, no canonical docs, no API routes, no e2e changes.
+
+## Files Changed
+
+| File | Change |
+|---|---|
+| `lib/usage.ts` (NEW) | `Usage` (6 fields), `UsageDelta` (4 fields), `applyUsageDelta(usage, delta) => { ...usage, ...delta }`. Docblock cross-refs API Contract §4/§6.4/§6.5 + invariant: deltas never carry `guest_message_*`; merge must not clobber them. |
+| `lib/usage.test.ts` (NEW) | 3 Vitest tests: merge preserves `guest_message_*`; overrides the 4 delta fields; input object not mutated. Plus compile-time field-overlap assertions (`UsageDelta` fields ⊆ `Usage` fields). |
+| `lib/pending-photos.ts` | Deleted `UsageState` interface (was lines 25–32). Nothing else changed. |
+| `components/guest-event-entry.tsx` | Import `applyUsageDelta, type Usage, type UsageDelta` from `@/lib/usage`; dropped `UsageState` import. `SessionData = Usage & { guest_name: string | null }`. Photo-sync 201 branch: `body` typed `{ usage?: UsageDelta; error?: { code?: string } }`; `setSession((prev) => prev && body.usage ? applyUsageDelta(prev, body.usage) : prev)` — raw spread of a delta over session state is now impossible. |
+| `components/guest/screens/Capture.tsx` | `SessionData = Usage & { guest_name: string | null }`; import from `@/lib/usage` instead of `UsageState` from `@/lib/pending-photos`. |
+| `components/guest/screens/VoiceAndMessage.tsx` | Same repoint: `Usage` from `@/lib/usage`. |
+| `lib/get-session-usage.ts` | `UsageBody` now `extends Usage` (adds `event` + `guest_name`); duplicated 6 usage fields removed. No route/test churn (task #6 reuse, verified: `UsageBody` consumers unaffected). |
+
+## Validation
+
+- `npx tsc --noEmit` — **0 errors** (output: clean)
+- `npx vitest run` — **378/378 PASS (42 files)** — baseline 375/41 + 3 new `lib/usage.test.ts` tests. stderr noise is expected malformed-JSON/log-fixture output from existing tests, not failures.
+
+## Notes / Deviations
+
+- Voice-submit 201 path: does NOT spread a delta — it re-hydrates via `confirmUsage()` (full 6-field GET §4). Task #5 said apply merge "if it currently spreads usage"; it doesn't, so left unchanged. No clobber risk exists there.
+- `pending-photos.test.ts` never referenced `UsageState` — untouched.
+- LSP stale-cache diagnostics on `guest-event-entry.tsx` (pre-refactor line refs) ignored per task note; file on disk is 573 lines and tsc is authoritative.
+
+## Blockers / SSOT Conflicts
+
+None. No canonical documents, migrations, routes, or e2e specs modified.
+
+## Next Step
+
+Update `e2e/mobile-media-qa.spec.ts` voice-path selectors to sequential screens (outstanding from prior task); then Playwright.
+
+---
+
+# Task Result: Architecture Deepening #1 — GuestSubmissionAuth + Shared Guest-Submission Pipeline (2026-08-20)
+
+**Status:** COMPLETED
+**Scope:** Unify guest-submission auth (`resolveGuestSubmissionAuth`), a shared route pipeline factory (`createGuestSubmissionHandler`), per-kind payload-extraction adapters, and thin factory-based routes. Duplication deleted: byte-identical `resolvePhotoAuth`/`resolveVoiceNoteAuth`, per-route auth→HTTP mapping, rate-limit setup, logging, status-code selection. Wire behavior identical (acceptance #6 verified by unchanged route tests).
+
+## Files Changed
+
+**New (10):**
+
+| File | Lines | Change |
+|---|---|---|
+| `lib/guest-submission-auth.ts` | ~60 | `GuestSubmissionRepo`, `GuestSubmissionAuthResult` (6 kinds: not_found / event_closed / session_required / session_invalid / session_expired / ok), `resolveGuestSubmissionAuth(repo, input)` — same semantics as the two deleted resolvers, one implementation. |
+| `lib/guest-submission-auth.test.ts` | ~100 | 7 tests: all 6 branches (ok + 5 failure kinds) + wrong-event-vs-unknown both → session_invalid, fake repo fixture. |
+| `lib/guest-submission-pipeline.ts` | ~170 | `createGuestSubmissionHandler<T>` factory + `ExtractResult`/`SubmissionResult`/`SubmitContext`/`SubmissionError` types. Choreography: content-type guard → pool-client auth (exact pre-existing SQL) → rate limit (after auth, QA-3) → extract → submit → 201. Preserves Set-Cookie clears (invalid/expired), Retry-After on 429, catch-all 500 + logApiError, client.release in finally. |
+| `lib/guest-submission-pipeline.test.ts` | ~215 | 10 tests: 5 auth-kind→HTTP mappings (404/422/401×3), extract failure 4xx, submit success 201 + usage, submit failure with fields, 429 + Retry-After, 500 + logApiError. Typed fakes; mocked pg pool. |
+| `lib/photo-payload.ts` | ~110 | `guardPhotoPayload` (pre-auth content-type) + `extractPhotoPayload` (content-length guard → bounded body → `photo` field bytes). Lifted from old photos route lines 88–208. |
+| `lib/photo-payload.test.ts` | ~90 | 6 tests: guard reject/pass, extraction, missing field, body-cap FILE_TOO_LARGE, near-limit envelope. |
+| `lib/voice-note-payload.ts` | ~110 | `guardVoiceNotePayload` + `extractVoiceNotePayload` (`voice_note` field). ffprobe stays in submitVoiceNote (task forbade changing submit internals; deviation from sketch noted below). |
+| `lib/voice-note-payload.test.ts` | ~80 | 5 tests: guard, extraction, missing field, body-cap 422. |
+| `lib/guest-message-payload.ts` | ~110 | `guardGuestMessagePayload` (JSON content-type) + `extractGuestMessagePayload` (4 KB bounded read → parse/shape → raw `messageText`). Text validation stays in submitGuestMessage. |
+| `lib/guest-message-payload.test.ts` | ~90 | 7 tests: guard, extraction, malformed JSON, over-cap, non-object JSON, empty body. |
+
+**Modified (11):**
+
+| File | Change |
+|---|---|
+| `app/api/events/[public_id]/photos/route.ts` | 263 → 71 lines. Factory call: `guard`/`extract` adapters, submit adapter (submitPhoto deps: txRepo/storage/config — `sessionRepo` dep removed), `photoErrorMap` (6 kinds → status/code/message), rate-limit config imported from `lib/rate-limit`. |
+| `app/api/events/[public_id]/voice-notes/route.ts` | 280 → 90 lines. Same pattern; `voiceErrorMap` (8 kinds); ffprobe inspector constructed in the submit adapter. |
+| `app/api/events/[public_id]/guest-messages/route.ts` | 247 → 66 lines. Same pattern; `messageErrorMap` (4 kinds); invalid_input carries `fields`. |
+| `lib/submit-photo.ts` | Deleted `resolvePhotoAuth`, `PhotoAuthResult`, `PhotoSession` interface. `SubmitPhotoDeps.sessionRepo` removed (dead field — submitPhoto never read it). `submitPhoto` body unchanged. Docblock updated. |
+| `lib/submit-voice-note.ts` | Same: deleted `resolveVoiceNoteAuth`, `VoiceNoteAuthResult`, `VoiceNoteSession`; `SubmitVoiceNoteDeps.sessionRepo` removed. Body unchanged. |
+| `lib/submit-guest-message.ts` | Docblock only (reused `resolveVoiceNoteAuth` mention → `resolveGuestSubmissionAuth`). No code change. |
+| `lib/submit-photo.test.ts` | 359 → ~250: auth describe (7 tests) moved to `guest-submission-auth.test.ts`; `makeSessionRepo`/`depsOf.sessionRepo` removed. |
+| `lib/submit-voice-note.test.ts` | 430 → ~315: same (auth describe moved; `makeSessionRepo`/`depsOf.sessionRepo` removed). |
+| `lib/submit-guest-message.test.ts` | 378 → ~260: auth describe + `makeSessionRepo` removed. |
+| `lib/submit-photo.concurrency.test.ts` | Auth repointed: `resolvePhotoAuth`/`PhotoSession` → `resolveGuestSubmissionAuth`/`GuestSubmissionRepo`; `sessionRepo` dropped from submitPhoto deps. |
+| `lib/submit-voice-note.concurrency.test.ts` | Same repoint. |
+| `lib/rate-limit.ts` | Added `loadPhotoRateLimitConfig` / `loadVoiceNoteRateLimitConfig` / `loadGuestMessageRateLimitConfig` named exports via shared `loadEnvRateLimit(prefix, env)` helper; existing `loadRateLimitConfig` (session) now delegates to it. Deletes the three duplicated per-route loaders. Behavior identical (same env names + defaults; `lib/rate-limit.test.ts` 9/9 unchanged). |
+
+**Unchanged:** all 3 route test files (`photos`/`voice-notes`/`guest-messages` `route.test.ts`) — pass as-is, proving wire behavior identical.
+
+## Validation
+
+- `npx tsc --noEmit` — **PASS, 0 errors** (final run after rate-limit centralization)
+- `npx vitest run` — **395/395 PASS (47 files)** = 378 baseline − 18 auth tests moved out of submit suites + 35 new (7 auth + 10 pipeline + 6 photo-payload + 5 voice-payload + 7 guest-message-payload). Re-run after rate-limit centralization: 395/395 PASS (47 files); focused 9-file suite (route + payload + auth + pipeline + rate-limit) 93/93. stderr noise = expected malformed-JSON/log-fixture output.
+
+## Blockers
+
+None.
+
+## SSOT Conflicts / Deviations from task.md sketch
+
+Sketch assumed raw-SQL auth (`token_digest` column, pool.query) and different wire kinds (403 WRONG_EVENT, 409 EVENT_NOT_ACTIVE, INVALID_SESSION). Those contradict the locked API Contract and the real schema — `guest_sessions` column is `session_token` (holds the SHA-256 digest), current routes return 404/422 EVENT_CLOSED/401 SESSION_INVALID/SESSION_EXPIRED with Set-Cookie clears. Acceptance #6 (behavior unchanged) + route tests pin the real contract. Deviations:
+
+1. **Auth seam kept repo-injected** (via pool client inside the factory), not `pool.query` — preserves exact SQL and the mocked-pool test pattern; also no `token_digest` column exists.
+2. **Auth kinds/mappings preserved** (6 kinds incl. not_found→404, event_closed→422, SESSION_INVALID/SESSION_EXPIRED→401 + cookie clear). Sketch's 5 kinds would have changed wire format.
+3. **Rate limit after auth, not before** (QA-3; test "does not consume the rate limit for an unauthorized request" pins it). Sketch had rate-limit first.
+4. **Content-type guard runs pre-auth** (test "400 for non-multipart without cookie" pins it) via a `guard` config field; sketch had it inside post-auth extract.
+5. **Guest-message payload is JSON, not multipart** — sketch said multipart.
+6. **ffprobe not moved into voice payload adapter** — stays in `submitVoiceNote` (task forbids changing submit internals; route test mocks `@/lib/audio-inspector` which the route adapter still constructs).
+7. **`logApiError` uses the real `{event, request, code, error}` signature**; mapped 4xx/409/502 errors not logged (matches current routes; only catch-all 500 + request_body_parse_failed log).
+8. **`sessionRepo` removed from Submit*Deps** (was never read by submitPhoto/submitVoiceNote) — small signature change beyond "keep submitPhoto unchanged", required so route adapters don't pass dead weight; tx/compensation choreography untouched.
+9. **Named rate-limit config exports in `lib/rate-limit.ts`** — added (task.md file list) as `loadPhotoRateLimitConfig` / `loadVoiceNoteRateLimitConfig` / `loadGuestMessageRateLimitConfig` over a shared `loadEnvRateLimit(prefix, env)` helper; session `loadRateLimitConfig` delegates to it. Three per-route loaders deleted; same env names + defaults.
+10. Routes are 66–90 lines, not ≤15 — the sketch's line target assumed the factory absorbed storage/config/inspector wiring, which the Do-Not-Change list (tx-repo/storage adapters, submit internals) prevents; even the sketch's own Part D example route is ~30 lines. Routes are now config-only (error map + submit adapter), zero pipeline choreography.
+
+## Next Step
+
+QA: confirm pipeline auth/rate-limit ordering against API_CONTRACT §3/§6 one more time; then e2e/mobile-media-qa voice-path update (outstanding).

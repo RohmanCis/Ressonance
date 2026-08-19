@@ -101,3 +101,16 @@ Date: 2026-08-11
 **Decision:** Use Supabase Storage with a private bucket. Uploads remain backend-mediated; admin media access uses short-lived signed URLs generated only after authorization.
 
 **Reason:** Matches the locked private-media and Browser → Backend API → Object Storage flow without introducing a separate storage provider.
+
+## ADR-012 — Shared guest-submission seam and canonical usage types
+
+**Status:** Approved; implemented 2026-08-20  
+**Decision:** All guest-submission routes (photos, voice-notes, guest-messages) share one auth module and one route pipeline factory; the client uses one canonical usage type pair.
+
+- `lib/guest-submission-auth.ts` — `resolveGuestSubmissionAuth(repo, input)` returns a discriminated result: `ok` (sessionId, eventId, eventStatus) or one of `not_found` / `event_closed` / `session_required` / `session_invalid` / `session_expired`. Replaces the previously duplicated per-module resolvers (`resolvePhotoAuth`, `resolveVoiceNoteAuth`).
+- `lib/guest-submission-pipeline.ts` — `createGuestSubmissionHandler(config)` builds the POST route handler. The factory owns the shared choreography: content-type guard → auth → rate limit → payload extraction → submission → 201/4xx/5xx mapping, including Set-Cookie clears on invalid/expired sessions, `Retry-After` on 429, and structured error logging. Each route supplies only its delta: payload adapter (`lib/{photo,voice-note,guest-message}-payload.ts`), submit adapter, rate-limit config, and error map.
+- `lib/usage.ts` — canonical usage types: `Usage` (6 fields, GET session shape, API Contract §4), `UsageDelta` (4 fields, photo/voice 201 shape, API Contract §6.4/§6.5), and `applyUsageDelta` merge. Client code merges deltas through this function only; spreading a raw delta over full session state is prevented at compile time.
+
+**Reason:** The three routes duplicated byte-identical auth resolvers and verbatim pipeline choreography; the client had drifted usage shapes (silent `guest_message_*` clobber risk). Both duplications passed the deletion test — concentrating them removed real duplication without changing wire behavior (route tests unchanged and green).
+
+**Consequence:** A future submission kind implements a payload adapter, submit adapter, and error map — no new pipeline or auth code. Wire format, error codes, and API Contract are unchanged by this decision.
