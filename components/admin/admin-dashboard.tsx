@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { ChevronDown, ChevronRight, Download, Image as ImageIcon, Loader2, MessageSquare, Mic, Pause, Play, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Download, Image as ImageIcon, Loader2, Mic, Pause, Play, X } from "lucide-react";
 import { api, AuthGate, Button, Busy, Event, Shell, Status, Submission } from "./admin-ui";
 import { describeDownloadResponse, downloadErrorCodeFromResponse, downloadErrorMessage } from "@/lib/admin-download";
 
@@ -31,7 +31,7 @@ const fmtRange = (oldestIso: string, newestIso: string) => {
   return `${fmtDate(newest)} · ${fmtTime(oldest)}–${fmtTime(newest)}`;
 };
 const fmtDuration = (s?: number | null) => (s == null ? "" : `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`);
-const typeLabel = (item: Submission) => (item.type === "PHOTO" ? "Photo" : item.type === "VOICE_NOTE" ? "Voice note" : "Message");
+const typeLabel = (item: Submission) => (item.type === "PHOTO" ? "Photo" : "Voice note");
 
 type Group = { ref: string; name: string; session: number | null; items: Submission[] };
 
@@ -68,7 +68,7 @@ const focusRing = "focus-visible:outline focus-visible:outline-3 focus-visible:o
 const downloadFileName = (item: Submission) => {
   const m = item.mime_type.toLowerCase();
   const ext = m.includes("png") ? "png" : m.includes("jpeg") ? "jpg" : m.includes("webm") ? "webm" : m.includes("mpeg") ? "m4a" : m.includes("quicktime") ? "mov" : "bin";
-  const base = item.type === "PHOTO" ? "photo" : item.type === "VOICE_NOTE" ? "voice-note" : "message";
+  const base = item.type === "PHOTO" ? "photo" : "voice-note";
   return `${base}-${item.created_at.slice(0, 10)}.${ext}`;
 };
 
@@ -297,27 +297,6 @@ function VoiceTile({ item, name }: { item: Submission; name: string }) {
   );
 }
 
-/** Read-only guest message tile (Opsi B) — text only, no media, no download. */
-function MessageTile({ item, name }: { item: Submission; name: string }) {
-  return (
-    <div className="rounded-[10px] border border-border bg-card p-3 shadow-[var(--shadow-1)]">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <span className="inline-flex items-center gap-1.5 text-xs font-semibold">
-          <MessageSquare className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
-          Message
-        </span>
-        <span className="text-xs text-muted-foreground">from {name}</span>
-        <time dateTime={item.created_at} className="ml-auto text-xs tabular-nums text-muted-foreground">
-          {fmtShort(item.created_at)}
-        </time>
-      </div>
-      <blockquote className="mt-2 whitespace-pre-wrap text-sm text-foreground">
-        {item.message_text}
-      </blockquote>
-    </div>
-  );
-}
-
 function GuestGroup({ group, onPreview }: { group: Group; onPreview: (item: Submission, index: number) => void }) {
   const [open, setOpen] = useState(true);
   const contentId = useId();
@@ -325,11 +304,9 @@ function GuestGroup({ group, onPreview }: { group: Group; onPreview: (item: Subm
   const oldest = group.items[group.items.length - 1];
   const photos = group.items.filter((i) => i.type === "PHOTO");
   const voices = group.items.filter((i) => i.type === "VOICE_NOTE");
-  const messages = group.items.filter((i) => i.type === "GUEST_MESSAGE");
   const breakdown = [
     photos.length ? `${photos.length} photo${photos.length === 1 ? "" : "s"}` : "",
     voices.length ? `${voices.length} voice note${voices.length === 1 ? "" : "s"}` : "",
-    messages.length ? `${messages.length} message${messages.length === 1 ? "" : "s"}` : "",
   ]
     .filter(Boolean)
     .join(" · ");
@@ -379,18 +356,6 @@ function GuestGroup({ group, onPreview }: { group: Group; onPreview: (item: Subm
               <div className="grid gap-2">
                 {voices.map((item) => (
                   <VoiceTile key={item.id} item={item} name={group.name} />
-                ))}
-              </div>
-            </div>
-          )}
-          {messages.length > 0 && (
-            <div className={(photos.length > 0 || voices.length > 0) ? "border-t border-border pt-4" : ""}>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[.08em] text-muted-foreground">
-                Message{messages.length === 1 ? "" : "s"}
-              </p>
-              <div className="grid gap-2">
-                {messages.map((item) => (
-                  <MessageTile key={item.id} item={item} name={group.name} />
                 ))}
               </div>
             </div>

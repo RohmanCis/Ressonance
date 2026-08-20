@@ -6,7 +6,7 @@ import { resolveGuestSession, type SessionByTokenRepo } from "@/lib/resolve-gues
  *
  * Replaces the byte-identical `resolvePhotoAuth` / `resolveVoiceNoteAuth`
  * duplicated in submit-photo.ts and submit-voice-note.ts: every protected
- * guest submission endpoint (photos, voice-notes, guest-messages) authorizes
+ * guest submission endpoint (photos, voice-notes) authorizes
  * the same way — unknown event → 404, non-ACTIVE event → 422 EVENT_CLOSED,
  * missing/invalid/unknown/wrong-event cookie → 401, expired → 401
  * SESSION_EXPIRED (API Contract §3, §6).

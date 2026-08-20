@@ -1,60 +1,70 @@
-﻿# Task: Fix Photo-Review Advance Race Condition
+﻿# Task: Remove Guest Message Feature from Codebase
 
 ## Context
 
-E2E spec discovered a race in `components/guest-event-entry.tsx` `handleReviewNext()`: after `await syncPhotos()`, the function checks `pendingPhotosRef.current.every(p => p.status === "confirmed")` before React flushes the final "confirmed" state updates from the sync loop.
+Owner decision: guest message feature ("pesan & kesan") was removed from MVP UI scope on 2026-08-20, but backend implementation, migrations, types, and tests remain. This creates maintenance burden and confusion. Complete removal required.
 
-**Current behavior:** First CTA click syncs photos successfully but doesn't advance (predicate fails on stale ref); second click advances (ref now reflects committed state).
+## Scope
 
-**Expected behavior:** Single CTA click syncs → state commits → predicate passes → advances to voice screen.
+Remove all guest_message artifacts:
 
-## Root Cause
+### 1. Migrations (DO NOT RUN — documentation cleanup only)
+- **DELETE**: `supabase/migrations/0005_guest_messages.sql` (table creation)
+- **DELETE**: `supabase/migrations/0006_guest_messages_service_role_grant.sql` (grants)
+- **EDIT**: `supabase/migrations/0007_service_role_grants.sql` — remove lines 46 (`GRANT SELECT, DELETE ON guest_messages TO service_role;`) and related comments (lines 7, 23, 25)
 
-`handleReviewNext` checks the ref immediately after `syncPhotos()` resolves, but `syncPhotos()` updates `pendingPhotos` state via `setPendingPhotos` inside a loop — those state updates are batched and don't commit until after the function returns. The ref sees stale "uploading" status.
+Note: Live DB already has migrations 0001–0008 applied. Do NOT create a new drop-table migration or modify applied migrations beyond file cleanup. Schema drift acceptable — live DB keeps the unused table, repo reflects MVP scope.
 
-## Fix
+### 2. Backend Code
+- **DELETE**: `lib/guest-message-payload.ts`
+- **DELETE**: `lib/guest-message-payload.test.ts`
+- **DELETE**: `lib/guest-message-tx-repo.ts`
+- **DELETE**: `app/api/events/[public_id]/guest-messages/route.ts` (if exists)
 
-Re-check the advance predicate after the state flush using an effect-based approach:
+### 3. Types — Remove `guest_message_submitted` and `guest_message_available`
+- **EDIT**: `lib/usage.ts` — `Usage` type drops 2 fields; `UsageDelta` unchanged (already omits them per comment); `applyUsageDelta` drops preservation logic
+- **EDIT**: `lib/get-session-usage.ts` — remove `guest_message_submitted` and `guest_message_available` from return object
+- **EDIT**: `components/guest-event-entry.tsx` — remove 2 fields from session state type, `confirmUsage()` validator, and `setSession()` call
 
-**Option D (preferred):** Track `advancePendingAfterSync` boolean ref; `handleReviewNext` sets it true before sync, effect fires when `!syncing` + flag true + all confirmed, then clears flag and advances.
+### 4. Tests — Remove all `guest_message_*` mock fields
+- **EDIT**: `lib/usage.test.ts` — remove 2 fields from `requiredUsageKeys` array and test case
+- **EDIT**: `lib/get-session-usage.test.ts` — remove assertions and mock data
+- **EDIT**: `e2e/mobile-media-qa.spec.ts` — remove fields from all mock usage responses (11 occurrences)
+- **EDIT**: `test/admin-media-db.ts` — remove `guest_messages?: FakeGuestMessageRow[]` optional field and its clone in `clone()`
 
-## Implementation
+### 5. Admin UI
+- **EDIT**: `components/admin/admin-dashboard.tsx` — delete `GuestMessageTile` component and JSX comment (line 300: "Read-only guest message tile…")
 
-**File:** `components/guest-event-entry.tsx`
+### 6. Canonical Docs
+- **EDIT**: `docs/db_scheme.md` — remove guest_messages table definition, constraints, indices, amendment notes
+- **EDIT**: `docs/API_CONTRACT.md` — remove §6.6 "Submit guest message" section, rate-limit references, usage field docs
+- **EDIT**: `docs/UI_UX.md` — remove amendment text referencing guest message removal
+- **EDIT**: `docs/ARCHITECTURE_DECISIONS.md` — remove guest-message references from ADR-012 shared-submission-seam decision
+- **EDIT**: `AGENTS.md` §12 — remove guest-message feature description from "Current repository state"
 
-1. Add `const advancePendingRef = useRef(false);` near other refs
-2. In `handleReviewNext()`:
-   - Set `advancePendingRef.current = true` before `await syncPhotos()`
-   - Remove the immediate `if (pendingPhotosRef.current.every(...)) setViewState("voice")` check after sync
-3. Add `useEffect`:
-   ```tsx
-   useEffect(() => {
-     if (
-       advancePendingRef.current &&
-       !syncing &&
-       pendingPhotosRef.current.every(p => p.status === "confirmed")
-     ) {
-       advancePendingRef.current = false;
-       setViewState("voice");
-     }
-   }, [syncing, pendingPhotos]);
-   ```
+## Out of Scope
 
-This defers the advance check until React commits the final state updates from `syncPhotos()`.
+- Do NOT drop the `guest_messages` table from live Supabase DB
+- Do NOT modify applied migrations beyond file cleanup
+- Do NOT change `docs/PRD.md` (product scope, not implementation state)
+- Do NOT touch photo/voice-note submission logic (only remove guest-message-specific code)
 
-## Acceptance Criteria
+## Acceptance
 
-- First "Lanjut ke pesan suara" click syncs AND advances (no second click needed)
-- `npx vitest run` — all tests pass (no behavior change for existing unit tests)
-- `npm run e2e` — 38/38 pass (e2e spec's two-click workaround becomes redundant but still passes)
-- No new lint/typecheck errors
+- `npm run typecheck` — PASS
+- `npx vitest run` — all pass (expected reduction: −3 test files, test count drops by ~10–15)
+- `npm run lint` — no new issues beyond pre-existing baseline
+- Grep `guest.?message` returns ONLY:
+  - PRD references (if any — product history)
+  - This task.md and result.md
+- All removed files confirmed deleted via `git status`
 
-## Files in Scope
+## Report Format
 
-**Modified:** `components/guest-event-entry.tsx` (add ref + effect, remove immediate advance check)
-
-**Do NOT change:** e2e spec (the two-click helper becomes redundant but remains valid), canonical docs, routes, hooks, other components.
-
-## Report
-
-Write `result.md`: status, code changes (ref + effect + removed check), tsc + vitest + e2e output, whether single-click advance now works (manual verification or e2e observation), blockers.
+Write `result.md`:
+- Status: PASS/BLOCKED
+- Files deleted (count + paths)
+- Files edited (count + paths, 1-line summary per file)
+- Validation: typecheck/vitest/lint exit codes
+- Grep check: `guest.?message` match count after cleanup
+- Issues: schema drift acceptable? any SSOT conflicts? any blockers?

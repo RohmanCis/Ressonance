@@ -23,8 +23,8 @@ import type { UsageDelta } from "@/lib/usage";
 /**
  * Shared guest-submission route pipeline (architecture deepening #1).
  *
- * All three guest-submission routes (photos §6.4, voice-notes §6.5,
- * guest-messages §6.6) run the same choreography — request-shape guard →
+ * Both guest-submission routes (photos §6.4, voice-notes §6.5) run the same
+ * choreography — request-shape guard →
  * auth (via the pool client, before any body read, QA-2) → rate limit (after
  * auth, before body read, QA-3) → payload extraction → submission → 201 usage
  * response — differing only in the payload parser and the submit adapter.

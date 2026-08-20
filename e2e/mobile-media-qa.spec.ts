@@ -26,17 +26,14 @@ function mockStatefulSession(page: Page, opts?: { photos?: number; voice?: boole
   let voiceSubmitted = opts?.voice ?? false;
   const eventStatus = opts?.eventStatus ?? "ACTIVE";
 
-  // Usage shape must match API Contract §4/§6.3 (2026-08-17 amendment):
-  // six fields including guest_message_submitted/available. The app
-  // validates all six on GET; omitting any leaves the UI stale.
+  // Usage shape must match API Contract §4/§6.3: four fields. The app
+  // validates all four on GET; omitting any leaves the UI stale.
   const usage = () => ({
     guest_name: "QA Tester",
     photos_submitted: photosSubmitted,
     photos_remaining: 5 - photosSubmitted,
     voice_note_submitted: voiceSubmitted,
     voice_note_available: !voiceSubmitted,
-    guest_message_submitted: false,
-    guest_message_available: true,
   });
 
   page.route(`**/api/events/${EVENT_ID}/session`, async (route) => {
@@ -60,9 +57,9 @@ function mockStatefulSession(page: Page, opts?: { photos?: number; voice?: boole
   };
 }
 
-// Contracted usage shape for upload-route mocks (API Contract §4/§6.4–§6.6):
-// six fields including guest_message_*. The app's confirmUsage() validates
-// all six; serving a partial shape here previously masked real state sync.
+// Contracted usage shape for upload-route mocks (API Contract §4/§6.4–§6.5):
+// four fields. The app's confirmUsage() validates all four; serving a partial
+// shape here previously masked real state sync.
 function uploadUsage(session: ReturnType<typeof mockStatefulSession>) {
   return {
     guest_name: "QA Tester",
@@ -70,8 +67,6 @@ function uploadUsage(session: ReturnType<typeof mockStatefulSession>) {
     photos_remaining: 5 - session.getPhotos(),
     voice_note_submitted: session.getVoice(),
     voice_note_available: !session.getVoice(),
-    guest_message_submitted: false,
-    guest_message_available: true,
   };
 }
 
@@ -365,8 +360,8 @@ test.describe("Mobile-media QA", () => {
 
   // 4a. VOICE REGRESSION: a 201 POST must re-fetch the session via the
   // contracted GET shape. This catches GET /session responses that omit
-  // contracted usage fields (e.g. guest_message_*): confirmUsage() then
-  // rejects the body and silently keeps stale state.
+  // contracted usage fields: confirmUsage() then rejects the body and
+  // silently keeps stale state.
   test("voice regression: POST 201 re-fetches full session shape before done", async ({ page, context }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await context.grantPermissions(["microphone"]);
@@ -386,20 +381,18 @@ test.describe("Mobile-media QA", () => {
     page.unroute(`**/api/events/${EVENT_ID}/session`);
     page.route(`**/api/events/${EVENT_ID}/session`, async (route) => {
       if (route.request().method() === "POST") {
-        await route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ session: { guest_name: "QA Tester", photos_submitted: 0, photos_remaining: 5, voice_note_submitted: false, voice_note_available: true, guest_message_submitted: false, guest_message_available: true } }) });
+        await route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ session: { guest_name: "QA Tester", photos_submitted: 0, photos_remaining: 5, voice_note_submitted: false, voice_note_available: true } }) });
       } else {
         sessionGets++;
         await route.fulfill({
           status: 200, contentType: "application/json",
-          // Full contracted usage shape (API Contract §4/§6.3, 2026-08-17).
+          // Full contracted usage shape (API Contract §4/§6.3).
           body: JSON.stringify({
             guest_name: "QA Tester",
             photos_submitted: session.getPhotos(),
             photos_remaining: 5 - session.getPhotos(),
             voice_note_submitted: session.getVoice(),
             voice_note_available: !session.getVoice(),
-            guest_message_submitted: false,
-            guest_message_available: true,
             event: { title: "QA Media Event", status: "ACTIVE" },
           }),
         });
@@ -583,7 +576,7 @@ test.describe("Mobile-media QA", () => {
     await context.grantPermissions(["microphone"]);
     const session = mockStatefulSession(page);
     mockPhotoUploadSuccess(page, session);
-    mockVoiceUpload(page, 201, { submission: { id: "v1", type: "VOICE_NOTE" }, usage: { guest_name: "QA Tester", photos_submitted: 0, photos_remaining: 5, voice_note_submitted: true, voice_note_available: false, guest_message_submitted: false, guest_message_available: true } });
+    mockVoiceUpload(page, 201, { submission: { id: "v1", type: "VOICE_NOTE" }, usage: { guest_name: "QA Tester", photos_submitted: 0, photos_remaining: 5, voice_note_submitted: true, voice_note_available: false } });
 
     await startSession(page);
     await advanceToVoiceScreen(page);
@@ -647,7 +640,7 @@ test.describe("Mobile-media QA", () => {
   test("photo: delete pending photo frees budget", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     mockStatefulSession(page);
-    mockPhotoUpload(page, 201, { submission: { id: "p1", type: "PHOTO" }, usage: { guest_name: "QA Tester", photos_submitted: 1, photos_remaining: 4, voice_note_submitted: false, voice_note_available: true, guest_message_submitted: false, guest_message_available: true } });
+    mockPhotoUpload(page, 201, { submission: { id: "p1", type: "PHOTO" }, usage: { guest_name: "QA Tester", photos_submitted: 1, photos_remaining: 4, voice_note_submitted: false, voice_note_available: true } });
 
     await startSession(page);
 
@@ -676,7 +669,7 @@ test.describe("Mobile-media QA", () => {
       photoPosts++;
       await route.fulfill({
         status: 201, contentType: "application/json",
-        body: JSON.stringify({ submission: { id: "p1", type: "PHOTO" }, usage: { guest_name: "QA Tester", photos_submitted: 1, photos_remaining: 4, voice_note_submitted: false, voice_note_available: true, guest_message_submitted: false, guest_message_available: true } }),
+        body: JSON.stringify({ submission: { id: "p1", type: "PHOTO" }, usage: { guest_name: "QA Tester", photos_submitted: 1, photos_remaining: 4, voice_note_submitted: false, voice_note_available: true } }),
       });
     });
 

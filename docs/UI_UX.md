@@ -4,13 +4,13 @@
 **Authority:** Level 6 UI/UX contract under `AGENTS.md` §2. It defines MVP screen behavior and presentation constraints. PRD, schema, architecture, technical design, and API contract remain higher authorities.  
 **Scope:** MVP guest and admin experiences only.
 
-**Amended 2026-08-20 (sequential full-screen guest flow; guest message UI removed):** the post-Start guest experience is a sequential full-screen flow — capture (§4.3) → photo review (§4.4) → voice (§4.6) → done (§4.7) — and the guest message feature (API Contract §6.6, schema `guest_messages` migration 0005) is removed from MVP UI scope. The guest message endpoint, schema, and migration remain in place but the feature is not exposed in the guest or admin UI. Re-enabling requires a UI_UX and API_CONTRACT amendment only — no schema change needed.
+**Amended 2026-08-20 (sequential full-screen guest flow):** the post-Start guest experience is a sequential full-screen flow — capture (§4.3) → photo review (§4.4) → voice (§4.6) → done (§4.7).
 
 **Amended 2026-08-17 (frame pipeline normalization, owner decision):** the frame-selection step between Start and the capture screen is now contracted here as §4.2, and the photo flow is normalized to a single 9:16 technical standard: every camera capture is composited at a fixed 1080×1920 via deterministic center cover-crop, with the selected frame overlay drawn unmirrored on top. Frame assets are 1080×1920 PNGs with a true alpha channel and a transparent central photo area; current artwork is placeholder and replaceable without code changes. File-picker uploads remain intentionally unframed. No endpoint, schema, session, or upload-flow change is involved — this remains a client-side presentation concern.
 
 ## 1. Scope and non-goals
 
-The guest experience supports event access, optional naming, an optional frame selection before capture, and a sequential full-screen submission flow: up to five photos per guest session, then an optional voice note of 5–30 seconds, ending on a thank-you (done) screen. No guest text message ("pesan & kesan") is part of the MVP guest or admin experience. The admin experience supports sign-in, event creation and closure, event access/QR, chronological media review, guest-name search, photo preview, voice playback, and individual download.
+The guest experience supports event access, optional naming, an optional frame selection before capture, and a sequential full-screen submission flow: up to five photos per guest session, then an optional voice note of 5–30 seconds, ending on a thank-you (done) screen. The admin experience supports sign-in, event creation and closure, event access/QR, chronological media review, guest-name search, photo preview, voice playback, and individual download.
 
 Excluded: AI or moderation, transcription, guest accounts, social login, guest profiles, live gallery, reactions, sharing, analytics, reports, advanced filters, bulk download, bulk media management, multiple QR variants, and other PRD §24 deferrals. No new feature, endpoint, identity, or client-side authority is defined here.
 
@@ -87,7 +87,7 @@ No additional guest or admin screen, route, endpoint, or workflow is defined.
 
 **Content:** Event title; guest name or `Anonymous Guest`; camera viewfinder with shutter; the active frame overlay (when a frame was chosen in §4.2) rendered unmirrored above the live preview; a remaining-photo counter ("X remaining") that reflects a local capture budget; a pending photo strip of captured-but-unsent items; a "Lanjut" advance action when pending photos exist; status and recovery messages.
 
-**Presentation (amendment 2026-08-20):** The camera viewfinder is presented as a fullscreen layer (minus safe areas) to maximize framing utility. This screen hosts only capture: no voice-note or guest-message entry exists here. The voice note is entered exclusively on the sequential voice screen (§4.6) reached after photo review (§4.4).
+**Presentation (amendment 2026-08-20):** The camera viewfinder is presented as a fullscreen layer (minus safe areas) to maximize framing utility. This screen hosts only capture. The voice note is entered exclusively on the sequential voice screen (§4.6) reached after photo review (§4.4).
 
 **Capture budget indicator:** The remaining-photo counter is a UX hint computed as `5 − (server-confirmed accepted count) − (local pending capture count)`. It may show zero before the server confirms anything. It is never authoritative for the 5-photo limit; backend limit enforcement remains authoritative (§4.5, §7).
 

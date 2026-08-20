@@ -41,8 +41,6 @@ export interface SessionBody {
   photos_remaining: number;
   voice_note_submitted: boolean;
   voice_note_available: boolean;
-  guest_message_submitted: boolean;
-  guest_message_available: boolean;
 }
 
 export type StartSessionResult =
@@ -107,8 +105,6 @@ export async function startGuestSession(
       photos_remaining: 5,
       voice_note_submitted: false,
       voice_note_available: true,
-      guest_message_submitted: false,
-      guest_message_available: true,
     },
   };
 }

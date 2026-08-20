@@ -48,9 +48,6 @@ function repo(overrides: Partial<UsageRepo> = {}): UsageRepo {
     async countVoiceNotes() {
       return 0;
     },
-    async countGuestMessages() {
-      return 0;
-    },
     ...overrides,
   };
 }
@@ -102,22 +99,8 @@ describe("getSessionUsage", () => {
         photos_remaining: 3,
         voice_note_submitted: false,
         voice_note_available: true,
-        guest_message_submitted: false,
-        guest_message_available: true,
       },
     });
-  });
-
-  it("reports guest-message state when a message exists", async () => {
-    const r = await getSessionUsage(
-      repo({ async countGuestMessages() { return 1; } }),
-      { publicId: "evt-active", cookieValue: TOKEN },
-    );
-    expect(r.kind).toBe("ok");
-    if (r.kind === "ok") {
-      expect(r.body.guest_message_submitted).toBe(true);
-      expect(r.body.guest_message_available).toBe(false);
-    }
   });
 
   it("keeps CLOSED events readable and reports voice-note state", async () => {

@@ -74,14 +74,6 @@ function seed() {
         created_at: "2026-08-11T12:16:40Z",
       },
     ],
-    guest_messages: [
-      {
-        id: "message-1",
-        guest_session_id: "session-1",
-        message_text: "Terima kasih, acaranya sangat berkesan!",
-        created_at: "2026-08-11T12:17:32Z",
-      },
-    ],
   };
 }
 
@@ -131,7 +123,6 @@ describe("GET /api/admin/events/{public_id}/submissions", () => {
     const body = JSON.parse(text);
     expect(body).toEqual({
       submissions: [
-        { id: "message-1", type: "GUEST_MESSAGE", guest_name: "Fante", guest_session_ref: "ref-s1", created_at: "2026-08-11T12:17:32Z", mime_type: "text/plain", file_size: 0, duration_seconds: null, message_text: "Terima kasih, acaranya sangat berkesan!" },
         { id: "voice-1", type: "VOICE_NOTE", guest_name: "Fante", guest_session_ref: "ref-s1", created_at: "2026-08-11T12:16:40Z", mime_type: "audio/webm", file_size: 300, duration_seconds: 12 },
         { id: "photo-2", type: "PHOTO", guest_name: "Ana", guest_session_ref: "ref-s2", created_at: "2026-08-11T12:16:00Z", mime_type: "image/png", file_size: 200, duration_seconds: null },
         { id: "photo-1", type: "PHOTO", guest_name: "Fante", guest_session_ref: "ref-s1", created_at: "2026-08-11T12:15:21Z", mime_type: "image/jpeg", file_size: 100, duration_seconds: null },

@@ -3,9 +3,7 @@
 -- Migration 0006 established that service_role is NOT a superuser on Supabase
 -- (rolsuper = false): it only holds BYPASSRLS, which skips row policies, not
 -- table GRANTs. The 0001 tables currently work because the platform's earlier
--- default-privilege wiring granted them full DML — the same wiring that
--- silently stopped covering guest_messages and broke
--- GET /api/admin/events/{id}/submissions. This migration pins the
+-- default-privilege wiring granted them full DML. This migration pins the
 -- server-only read/write path explicitly, per table, so a future platform
 -- default-privilege change cannot break the API the same way.
 --
@@ -20,11 +18,6 @@
 --     /api/admin/events); UPDATE for closeAdminEvent (POST .../close).
 --   * guest_sessions — SELECT for usage/admin/cleanup queries; INSERT for
 --     GuestSession start (POST /api/events/{public_id}/session).
---   * guest_messages — SELECT for the admin listing and usage counts
---     (INSERT was already granted by migration 0006; message writes go
---     through the direct-pg guest-message-tx-repo); DELETE reserved for the
---     future retention sweep of messages (no code path yet — granted per
---     approved task scope).
 --
 -- Deliberately NOT granted (verified 2026-08-17, no service-role client
 -- usage; owner decision):
@@ -43,4 +36,3 @@ GRANT SELECT, DELETE ON photos TO service_role;
 GRANT SELECT, DELETE ON voice_notes TO service_role;
 GRANT SELECT, INSERT, UPDATE ON events TO service_role;
 GRANT SELECT, INSERT ON guest_sessions TO service_role;
-GRANT SELECT, DELETE ON guest_messages TO service_role;

@@ -148,7 +148,7 @@ Pre-session uses a paper page frame with event title at the top, a compact conte
 
 **Photo review screen (UI_UX §4.4):** A paper page with header, subtext, and a grid of captured photo tiles, each with a delete control and per-item status. The primary CTA is full-width at the bottom and shows the syncing state while photos upload; it is the only sync entry point in the flow.
 
-**Voice screen (UI_UX §4.6):** A dedicated full-screen state — not a modal sheet. No sheet elevation, `--scrim` backdrop, focus trap, or sheet enter/exit transitions apply. Header and subtext at the top, a centered mic control in the recording state, an audio playback bar in the review state, and primary/secondary/tertiary actions arranged per guest CTA rules. All behavior, states, limits, and accessibility requirements from UI_UX §4.6 remain authoritative. There is no guest-message step or entry point in the guest UI.
+**Voice screen (UI_UX §4.6):** A dedicated full-screen state — not a modal sheet. No sheet elevation, `--scrim` backdrop, focus trap, or sheet enter/exit transitions apply. Header and subtext at the top, a centered mic control in the recording state, an audio playback bar in the review state, and primary/secondary/tertiary actions arranged per guest CTA rules. All behavior, states, limits, and accessibility requirements from UI_UX §4.6 remain authoritative. It is the only submission step after photo review (§4.4).
 
 **Done screen (UI_UX §4.7):** A quiet centered thank-you page: one success mark, event title, brief receipt copy, and no further actions.
 

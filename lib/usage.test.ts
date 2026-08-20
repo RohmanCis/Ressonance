@@ -8,8 +8,6 @@ const _usageFields: (keyof Usage)[] = [
   "photos_remaining",
   "voice_note_submitted",
   "voice_note_available",
-  "guest_message_submitted",
-  "guest_message_available",
 ];
 const _deltaFields: (keyof UsageDelta)[] = [
   "photos_submitted",
@@ -23,39 +21,12 @@ _deltaFields.forEach((field) => {
 });
 
 describe("applyUsageDelta", () => {
-  it("preserves guest_message_* when overlaying a delta", () => {
-    const usage: Usage = {
-      photos_submitted: 2,
-      photos_remaining: 3,
-      voice_note_submitted: false,
-      voice_note_available: true,
-      guest_message_submitted: true,
-      guest_message_available: false,
-    };
-    const delta: UsageDelta = {
-      photos_submitted: 3,
-      photos_remaining: 2,
-      voice_note_submitted: false,
-      voice_note_available: true,
-    };
-    expect(applyUsageDelta(usage, delta)).toEqual({
-      photos_submitted: 3,
-      photos_remaining: 2,
-      voice_note_submitted: false,
-      voice_note_available: true,
-      guest_message_submitted: true,
-      guest_message_available: false,
-    });
-  });
-
   it("overrides the 4 delta fields", () => {
     const usage: Usage = {
       photos_submitted: 0,
       photos_remaining: 5,
       voice_note_submitted: false,
       voice_note_available: true,
-      guest_message_submitted: false,
-      guest_message_available: true,
     };
     const delta: UsageDelta = {
       photos_submitted: 5,
@@ -76,8 +47,6 @@ describe("applyUsageDelta", () => {
       photos_remaining: 4,
       voice_note_submitted: false,
       voice_note_available: true,
-      guest_message_submitted: true,
-      guest_message_available: false,
     };
     const delta: UsageDelta = {
       photos_submitted: 2,
@@ -87,6 +56,6 @@ describe("applyUsageDelta", () => {
     };
     applyUsageDelta(usage, delta);
     expect(usage.photos_submitted).toBe(1);
-    expect(usage.guest_message_submitted).toBe(true);
+    expect(usage.voice_note_submitted).toBe(false);
   });
 });

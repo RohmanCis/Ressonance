@@ -5,7 +5,6 @@
  * that returns signed URLs. Supports the query shapes `admin-media-repo` uses:
  * select / eq / in / maybeSingle, and storage.createSignedUrl.
  */
-
 export interface FakeEventIdRow {
   id: string;
   public_id: string;
@@ -34,19 +33,12 @@ export interface FakeVoiceRow {
   duration_seconds: number;
   created_at: string;
 }
-export interface FakeGuestMessageRow {
-  id: string;
-  guest_session_id: string;
-  message_text: string;
-  created_at: string;
-}
 
 export interface FakeMediaDbState {
   events: FakeEventIdRow[];
   sessions: FakeSessionIdRow[];
   photos: FakePhotoRow[];
   voice_notes: FakeVoiceRow[];
-  guest_messages?: FakeGuestMessageRow[];
   signError?: { message?: string } | null;
 }
 
@@ -111,7 +103,6 @@ export function createFakeAdminMediaDb(state: FakeMediaDbState) {
     guest_sessions: state.sessions.map((r) => ({ ...r })),
     photos: state.photos.map((r) => ({ ...r })),
     voice_notes: state.voice_notes.map((r) => ({ ...r })),
-    guest_messages: (state.guest_messages ?? []).map((r) => ({ ...r })),
   };
 
   return {

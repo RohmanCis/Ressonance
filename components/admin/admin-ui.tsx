@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FormEvent, ReactNode, useEffect, useState } from "react";
 
 export type Event = { public_id: string; title: string; status: "ACTIVE" | "CLOSED"; created_at?: string; closed_at?: string | null };
-export type Submission = { id: string; type: "PHOTO" | "VOICE_NOTE" | "GUEST_MESSAGE"; guest_name?: string | null; guest_session_ref: string; created_at: string; mime_type: string; file_size: number; duration_seconds?: number | null; message_text?: string };
+export type Submission = { id: string; type: "PHOTO" | "VOICE_NOTE"; guest_name?: string | null; guest_session_ref: string; created_at: string; mime_type: string; file_size: number; duration_seconds?: number | null };
 
 const errorText: Record<string, string> = {
   AUTHENTICATION_REQUIRED: "Sign-in is required.", AUTHENTICATION_FAILED: "Those credentials were not accepted.", FORBIDDEN: "This event is not available to this account.", NOT_FOUND: "This event is no longer available.", RATE_LIMITED: "Too many requests. Try again later.", ACTIVE_EVENT_EXISTS: "An active event already exists. Open it instead.", EVENT_ALREADY_CLOSED: "The event is already closed.", INVALID_EVENT_STATE: "The event cannot be changed right now.", INVALID_INPUT: "Check the highlighted field and try again.", MEDIA_ACCESS_FAILED: "This media could not be opened.", INTERNAL_ERROR: "The service could not complete that request.",

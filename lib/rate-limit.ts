@@ -125,10 +125,3 @@ export function loadVoiceNoteRateLimitConfig(
 ): RateLimitConfig {
   return loadEnvRateLimit("VOICE_NOTE_RATE_LIMIT", env);
 }
-
-/** Guest-message-submission rate limit (API Contract §3 / ADR-008; env `GUEST_MESSAGE_RATE_LIMIT_*`). */
-export function loadGuestMessageRateLimitConfig(
-  env: Partial<Record<string, string | undefined>> = process.env,
-): RateLimitConfig {
-  return loadEnvRateLimit("GUEST_MESSAGE_RATE_LIMIT", env);
-}
