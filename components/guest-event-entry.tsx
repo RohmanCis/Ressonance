@@ -61,6 +61,9 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
   const [syncing, setSyncing] = useState(false);
   const [reviewIndex, setReviewIndex] = useState<number | null>(null);
   const syncAbortedRef = useRef(false);
+  // Set when the review CTA requested an advance after sync; the effect
+  // consumes it once the sync's final state commits (race fix, 2026-08-20).
+  const advancePendingRef = useRef(false);
 
   // Expiry / carry-over
   const [expiredPending, setExpiredPending] = useState<PendingPhoto[]>([]);
@@ -225,6 +228,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
     setSecondsLeft(null);
     setSyncing(false);
     syncAbortedRef.current = true;
+    advancePendingRef.current = false;
     resetVoice();
     setState("ready");
     setCarryOverPrompt(unsaved.length > 0);
@@ -376,12 +380,32 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
   async function handleReviewNext() {
     if (syncing) return;
     if (pendingPhotosRef.current.some((p) => p.status === "pending")) {
+      advancePendingRef.current = true;
       await syncPhotos();
+      // Advance is deferred to the effect below: pendingPhotosRef.current is
+      // still stale ("uploading") here because the sync loop's final state
+      // updates have not committed yet.
+      return;
     }
+    // Nothing left to sync — no in-flight state, so the ref is current.
     if (pendingPhotosRef.current.every((p) => p.status === "confirmed")) {
       setState("voice");
     }
   }
+
+  // Deferred advance: fires after React commits the sync loop's last state
+  // update (syncing → false, items → confirmed), so the predicate reads the
+  // committed ref — single CTA click syncs AND advances.
+  useEffect(() => {
+    if (
+      advancePendingRef.current &&
+      !syncing &&
+      pendingPhotosRef.current.every((p) => p.status === "confirmed")
+    ) {
+      advancePendingRef.current = false;
+      setState("voice");
+    }
+  }, [syncing, pendingPhotos]);
 
   // --- Voice note handlers ---
   function stopVoiceTimer() { if (voiceTimer.current) { clearInterval(voiceTimer.current); voiceTimer.current = null; } }

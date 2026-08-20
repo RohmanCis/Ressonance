@@ -1,11 +1,14 @@
 import { test, expect, type Page } from "@playwright/test";
 
-// T030 Mobile-Media QA — camera-first capture flow (route-intercepted).
+// T030 Mobile-Media QA — sequential guest flow (UI_UX §4.2–§4.7):
+// frame-select → capture → photo-review → voice → done (route-intercepted).
 // Device: Chromium 130+ on Windows, emulating mobile viewport (375x812).
 // Uses --use-fake-device-for-media-stream + --use-fake-ui-for-media-stream
 // to simulate camera/mic without real hardware.
 
 const EVENT_ID = "qa-media-event";
+
+const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46]);
 
 // --- Mock helpers ---
 
@@ -78,6 +81,18 @@ function mockPhotoUpload(page: Page, status: number, body: Record<string, unknow
   });
 }
 
+function mockPhotoUploadSuccess(page: Page, session: ReturnType<typeof mockStatefulSession>, delayMs = 200) {
+  page.unroute(`**/api/events/${EVENT_ID}/photos`);
+  page.route(`**/api/events/${EVENT_ID}/photos`, async (route) => {
+    session.addPhoto();
+    if (delayMs > 0) await new Promise((r) => setTimeout(r, delayMs));
+    await route.fulfill({
+      status: 201, contentType: "application/json",
+      body: JSON.stringify({ submission: { id: `p${session.getPhotos()}`, type: "PHOTO" }, usage: uploadUsage(session) }),
+    });
+  });
+}
+
 function mockVoiceUpload(page: Page, status: number, body: Record<string, unknown>) {
   page.route(`**/api/events/${EVENT_ID}/voice-notes`, async (route) => {
     await route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
@@ -97,8 +112,29 @@ async function startSession(page: Page) {
   await expect(page.getByRole("heading", { name: "Take photos" })).toBeVisible({ timeout: 5000 });
 }
 
+// Sequential flow: capture → "Lanjut →" → photo-review → "Lanjut ke pesan
+// suara" (syncs pending photos, then advances) → voice screen (UI_UX §4.3–§4.5).
+async function advanceToVoiceScreen(page: Page) {
+  const fileInput = page.locator('input[type="file"][accept="image/*"]');
+  await fileInput.setInputFiles({ name: "photo1.jpg", mimeType: "image/jpeg", buffer: JPEG });
+  await expect(page.getByRole("button", { name: /Photo 1/ })).toBeVisible({ timeout: 3000 });
+  await page.getByRole("button", { name: "Lanjut →" }).click();
+  await expect(page.getByRole("heading", { name: /^Foto Anda \(\d+\)$/ })).toBeVisible({ timeout: 5000 });
+  await advancePastPhotoReview(page);
+  await expect(page.getByRole("heading", { name: "Pesan suara" })).toBeVisible({ timeout: 5000 });
+}
+
+// Advance from photo-review to voice. The sync-then-advance race in
+// guest-event-entry.tsx was fixed (2026-08-20): a single CTA click syncs
+// pending photos and the deferred advance effect moves to voice once the
+// sync state commits. Reaching the voice screen proves every item was
+// server-confirmed (the CTA only advances when all confirmed).
+async function advancePastPhotoReview(page: Page) {
+  await page.getByRole("button", { name: "Lanjut ke pesan suara" }).click();
+}
+
 async function recordAndStop(page: Page, durationMs = 1500) {
-  await page.getByRole("button", { name: "Record" }).click();
+  await page.getByRole("button", { name: "Record voice note" }).click();
   await expect(page.getByText("Recording", { exact: true })).toBeVisible({ timeout: 5000 });
   await page.waitForTimeout(durationMs);
   await page.getByRole("button", { name: "Stop recording" }).click();
@@ -216,40 +252,39 @@ test.describe("Mobile-media QA", () => {
     mockEventApi(page);
   });
 
-  // 1. PHOTO FLOW: file selection, pending strip, sync, usage update
-  test("photo: file selection, pending strip, sync success, usage update", async ({ page }) => {
+  // 1. PHOTO FLOW: file selection, pending strip, sync from photo-review,
+  //    then skip voice → done (exercises the §4.6 skip link).
+  test("photo: file selection, pending strip, sync via photo-review, skip voice", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     const session = mockStatefulSession(page);
-    page.unroute(`**/api/events/${EVENT_ID}/photos`);
-    page.route(`**/api/events/${EVENT_ID}/photos`, async (route) => {
-      session.addPhoto();
-      await route.fulfill({
-        status: 201, contentType: "application/json",
-        body: JSON.stringify({ submission: { id: "p1", type: "PHOTO" }, usage: uploadUsage(session) }),
-      });
-    });
+    mockPhotoUploadSuccess(page, session);
 
     await startSession(page);
     await expect(page.getByRole("heading", { name: "Take photos" })).toBeVisible();
 
     // Choose file via fallback picker.
     const fileInput = page.locator('input[type="file"][accept="image/*"]');
-    await fileInput.setInputFiles({ name: "test-photo.jpg", mimeType: "image/jpeg", buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46]) });
+    await fileInput.setInputFiles({ name: "test-photo.jpg", mimeType: "image/jpeg", buffer: JPEG });
 
-    // Pending strip shows the captured photo.
+    // Pending strip shows the captured photo; "Lanjut →" advances to review.
     await expect(page.getByRole("button", { name: /Photo 1/ })).toBeVisible({ timeout: 3000 });
+    await page.getByRole("button", { name: "Lanjut →" }).click();
 
-    // Send (sync) button appears.
-    await expect(page.getByRole("button", { name: /Send 1 photo/ })).toBeVisible();
-    await page.getByRole("button", { name: /Send 1 photo/ }).click();
+    // Photo-review: CTA syncs pending photos, then advances to voice.
+    await expect(page.getByRole("heading", { name: /^Foto Anda \(\d+\)$/ })).toBeVisible({ timeout: 5000 });
+    await advancePastPhotoReview(page);
 
-    // Success: usage updated from server response.
-    await expect(page.getByText("1 photo saved.")).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText("Photos remaining:")).toContainText("4/5", { timeout: 5000 });
+    // Sync success is proven by the advance to the voice screen (the CTA
+    // only advances once every remaining item is server-confirmed).
+    await expect(page.getByRole("heading", { name: "Pesan suara" })).toBeVisible({ timeout: 5000 });
+    expect(session.getPhotos()).toBe(1);
+    // Skip voice → done.
+    await page.getByRole("button", { name: "Lewati & kirim foto saja" }).click();
+    await expect(page.getByRole("heading", { name: "Terima kasih!" })).toBeVisible({ timeout: 5000 });
   });
 
-  // 2. PHOTO ERROR
-  test("photo: upload error shows item-level error with retry", async ({ page }) => {
+  // 2. PHOTO ERROR: sync failure on photo-review → item-level error + retry
+  test("photo: upload error on photo-review shows item-level error with retry", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     mockStatefulSession(page);
     mockPhotoUpload(page, 422, { error: { code: "UNSUPPORTED_MEDIA", message: "Unsupported image format." } });
@@ -259,10 +294,21 @@ test.describe("Mobile-media QA", () => {
     await fileInput.setInputFiles({ name: "bad.txt", mimeType: "text/plain", buffer: Buffer.from("not an image") });
 
     await expect(page.getByRole("button", { name: /Photo 1/ })).toBeVisible({ timeout: 3000 });
-    await page.getByRole("button", { name: /Send 1 photo/ }).click();
+    await page.getByRole("button", { name: "Lanjut →" }).click();
+    await expect(page.getByRole("heading", { name: /^Foto Anda \(\d+\)$/ })).toBeVisible({ timeout: 5000 });
 
-    // Error shows in sync summary or review.
-    await expect(page.getByText(/could not be saved|not supported/i)).toBeVisible({ timeout: 5000 });
+    // CTA triggers the sync; the 422 leaves the item in error state on review.
+    await page.getByRole("button", { name: "Lanjut ke pesan suara" }).click();
+
+    // Error alert with retry-or-delete guidance.
+    await expect(page.getByText("1 photo could not be saved. Retry or delete it before continuing.")).toBeVisible({ timeout: 5000 });
+
+    // CTA blocked while unresolved errors remain (nothing left to send).
+    await expect(page.getByRole("button", { name: "Lanjut ke pesan suara" })).toBeDisabled();
+
+    // Retry → item back to pending → CTA unblocked.
+    await page.getByRole("button", { name: /Retry photo 1/ }).click();
+    await expect(page.getByRole("button", { name: "Lanjut ke pesan suara" })).toBeEnabled({ timeout: 5000 });
   });
 
   // 3. PHOTO LIMIT
@@ -274,11 +320,12 @@ test.describe("Mobile-media QA", () => {
     await expect(page.getByText("Photo limit reached for this guest session.")).toBeVisible();
   });
 
-  // 4. VOICE: permission → record → stop → review → upload → usage update
-  test("voice: permission prompt, recording, stop, review, upload success", async ({ page, context }) => {
+  // 4. VOICE: permission → record → stop → review → submit → done
+  test("voice: permission prompt, recording, stop, review, submit success", async ({ page, context }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await context.grantPermissions(["microphone"]);
     const session = mockStatefulSession(page);
+    mockPhotoUploadSuccess(page, session);
     page.unroute(`**/api/events/${EVENT_ID}/voice-notes`);
     page.route(`**/api/events/${EVENT_ID}/voice-notes`, async (route) => {
       session.addVoice();
@@ -289,15 +336,16 @@ test.describe("Mobile-media QA", () => {
     });
 
     await startSession(page);
-    await expect(page.getByRole("heading", { name: "Add a voice note" })).toBeVisible();
+    await advanceToVoiceScreen(page);
     await expect(page.getByText("Microphone permission will be requested after you choose Record.")).toBeVisible();
 
-    // Record.
-    await page.getByRole("button", { name: "Record" }).click();
-    await expect(page.getByText(/Allow microphone access/)).toBeVisible({ timeout: 3000 });
-    await expect(page.getByText("Recording")).toBeVisible({ timeout: 5000 });
+    // Record. (The "Allow microphone access" hint is transient — replaced by
+    // "Recording" the moment the granted fake permission resolves — so only
+    // the stable recording state is asserted.)
+    await page.getByRole("button", { name: "Record voice note" }).click();
+    await expect(page.getByText("Recording", { exact: true })).toBeVisible({ timeout: 5000 });
     await expect(page.getByRole("button", { name: "Stop recording" })).toBeVisible();
-    await expect(page.locator(".font-mono.text-2xl")).toBeVisible();
+    await expect(page.locator(".font-mono.text-xl")).toBeVisible();
 
     // Stop.
     await page.waitForTimeout(1500);
@@ -306,22 +354,20 @@ test.describe("Mobile-media QA", () => {
     // Review state.
     await expect(page.getByText("Duration:")).toBeVisible({ timeout: 5000 });
     await expect(page.locator('audio[aria-label="Voice note playback"]')).toBeVisible();
-    await expect(page.getByRole("button", { name: "Submit voice note" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Re-record" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "✓ Kirim semua" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Rekam ulang" })).toBeVisible();
 
-    // Submit.
-    await page.getByRole("button", { name: "Submit voice note" }).click();
-
-    // Success: voice note consumed → "Already added" in usage.
-    await expect(page.getByText("Voice note:")).toContainText("Already added", { timeout: 5000 });
-    await expect(page.getByText("Voice-note limit reached for this guest session.")).toBeVisible();
+    // Submit → done.
+    await page.getByRole("button", { name: "✓ Kirim semua" }).click();
+    await expect(page.getByRole("heading", { name: "Terima kasih!" })).toBeVisible({ timeout: 5000 });
+    expect(session.getVoice()).toBe(true);
   });
 
-  // 4a. VOICE REGRESSION: a 201 POST must flip the usage UI via the session
-  // re-fetch. This catches GET /session responses that omit contracted usage
-  // fields (e.g. guest_message_*): confirmUsage() then rejects the body and
-  // silently keeps stale state, leaving "Voice note: Available" on screen.
-  test("voice regression: POST 201 flips usage UI to Already added (GET shape)", async ({ page, context }) => {
+  // 4a. VOICE REGRESSION: a 201 POST must re-fetch the session via the
+  // contracted GET shape. This catches GET /session responses that omit
+  // contracted usage fields (e.g. guest_message_*): confirmUsage() then
+  // rejects the body and silently keeps stale state.
+  test("voice regression: POST 201 re-fetches full session shape before done", async ({ page, context }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await context.grantPermissions(["microphone"]);
     const session = mockStatefulSession(page);
@@ -336,6 +382,7 @@ test.describe("Mobile-media QA", () => {
         body: JSON.stringify({ submission: { id: "v1", type: "VOICE_NOTE" }, usage: uploadUsage(session) }),
       });
     });
+    mockPhotoUploadSuccess(page, session);
     page.unroute(`**/api/events/${EVENT_ID}/session`);
     page.route(`**/api/events/${EVENT_ID}/session`, async (route) => {
       if (route.request().method() === "POST") {
@@ -362,11 +409,12 @@ test.describe("Mobile-media QA", () => {
     await startSession(page);
     await expect(page.getByText("Voice note:")).toContainText("Available");
 
+    await advanceToVoiceScreen(page);
     await recordAndStop(page, 800);
-    await page.getByRole("button", { name: "Submit voice note" }).click();
+    await page.getByRole("button", { name: "✓ Kirim semua" }).click();
 
-    // The UI must flip only because the GET response carries the full shape.
-    await expect(page.getByText("Voice note:")).toContainText("Already added", { timeout: 5000 });
+    // The flow may complete only after the re-fetch carries the full shape.
+    await expect(page.getByRole("heading", { name: "Terima kasih!" })).toBeVisible({ timeout: 5000 });
     expect(voicePosts).toBe(1);
     expect(sessionGets).toBeGreaterThan(0);
   });
@@ -377,6 +425,7 @@ test.describe("Mobile-media QA", () => {
     await page.setViewportSize({ width: 375, height: 812 });
     await context.grantPermissions(["microphone"]);
     const session = mockStatefulSession(page);
+    mockPhotoUploadSuccess(page, session);
     page.unroute(`**/api/events/${EVENT_ID}/voice-notes`);
     page.route(`**/api/events/${EVENT_ID}/voice-notes`, async (route) => {
       session.addVoice();
@@ -387,7 +436,8 @@ test.describe("Mobile-media QA", () => {
     });
 
     await startSession(page);
-    await page.getByRole("button", { name: "Record" }).click();
+    await advanceToVoiceScreen(page);
+    await page.getByRole("button", { name: "Record voice note" }).click();
     await expect(page.getByText("Recording", { exact: true })).toBeVisible({ timeout: 5000 });
 
     // Auto-stop at 30s. Timer: at seconds>=29, finishRecording() + return 30.
@@ -400,6 +450,7 @@ test.describe("Mobile-media QA", () => {
     await page.setViewportSize({ width: 375, height: 812 });
     await context.grantPermissions(["microphone"]);
     const session = mockStatefulSession(page);
+    mockPhotoUploadSuccess(page, session);
     page.unroute(`**/api/events/${EVENT_ID}/voice-notes`);
     page.route(`**/api/events/${EVENT_ID}/voice-notes`, async (route) => {
       session.addVoice();
@@ -410,35 +461,36 @@ test.describe("Mobile-media QA", () => {
     });
 
     await startSession(page);
+    await advanceToVoiceScreen(page);
     await recordAndStop(page, 1000);
 
     // Re-record.
-    await expect(page.getByRole("button", { name: "Re-record" })).toBeVisible();
-    await page.getByRole("button", { name: "Re-record" }).click();
-    await expect(page.getByRole("button", { name: "Record" })).toBeVisible({ timeout: 3000 });
+    await expect(page.getByRole("button", { name: "Rekam ulang" })).toBeVisible();
+    await page.getByRole("button", { name: "Rekam ulang" }).click();
+    await expect(page.getByRole("button", { name: "Record voice note" })).toBeVisible({ timeout: 3000 });
 
-    // Record again + submit.
+    // Record again + submit → done.
     await recordAndStop(page, 1000);
-    await expect(page.getByRole("button", { name: "Submit voice note" })).toBeVisible();
-    await page.getByRole("button", { name: "Submit voice note" }).click();
-
-    // Success: voice consumed.
-    await expect(page.getByText("Voice note:")).toContainText("Already added", { timeout: 5000 });
+    await expect(page.getByRole("button", { name: "✓ Kirim semua" })).toBeVisible();
+    await page.getByRole("button", { name: "✓ Kirim semua" }).click();
+    await expect(page.getByRole("heading", { name: "Terima kasih!" })).toBeVisible({ timeout: 5000 });
   });
 
   // 7. VOICE: upload error retains review UI (D1 fix)
   test("voice: upload error retains audio, duration, Re-record, and Submit", async ({ page, context }) => {
     // D1 FIX: On upload error, voiceState goes to "review-error" which renders
     // the review branch — retaining audio playback, duration, Re-record, and
-    // Submit buttons alongside the error message. UI_UX §4.4.10.
+    // Submit buttons alongside the error message. UI_UX §4.5.
     await page.setViewportSize({ width: 375, height: 812 });
     await context.grantPermissions(["microphone"]);
-    mockStatefulSession(page);
+    const session = mockStatefulSession(page);
+    mockPhotoUploadSuccess(page, session);
     mockVoiceUpload(page, 422, { error: { code: "AUDIO_DURATION_INVALID", message: "Voice note must be between 5 and 30 seconds." } });
 
     await startSession(page);
+    await advanceToVoiceScreen(page);
     await recordAndStop(page, 800);
-    await page.getByRole("button", { name: "Submit voice note" }).click();
+    await page.getByRole("button", { name: "✓ Kirim semua" }).click();
 
     // Error message shown.
     await expect(page.getByText("Voice notes must be 5–30 seconds. Re-record within that range.")).toBeVisible({ timeout: 5000 });
@@ -450,13 +502,13 @@ test.describe("Mobile-media QA", () => {
     await expect(page.getByText("Duration:")).toBeVisible();
 
     // Re-record button available.
-    await expect(page.getByRole("button", { name: "Re-record" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Rekam ulang" })).toBeVisible();
 
     // Submit (retry) button available.
-    await expect(page.getByRole("button", { name: "Submit voice note" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "✓ Kirim semua" })).toBeVisible();
 
     // "Record" (idle) button NOT shown — we're still in review-error, not idle.
-    await expect(page.getByRole("button", { name: "Record", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Record voice note" })).toHaveCount(0);
   });
 
   // 8. CLOSED event
@@ -474,18 +526,20 @@ test.describe("Mobile-media QA", () => {
     await expect(page.getByRole("button", { name: "Start" })).toBeDisabled();
   });
 
-  // 9. Session usage: photo + voice
+  // 9. Session usage: photo + voice through the sequential flow
   test("session usage display correct after photo + voice", async ({ page, context }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await context.grantPermissions(["microphone"]);
     const session = mockStatefulSession(page);
-
+    let photoPosts = 0;
     page.unroute(`**/api/events/${EVENT_ID}/photos`);
     page.route(`**/api/events/${EVENT_ID}/photos`, async (route) => {
+      photoPosts++;
       session.addPhoto();
+      await new Promise((r) => setTimeout(r, 200));
       await route.fulfill({
         status: 201, contentType: "application/json",
-        body: JSON.stringify({ submission: { id: "p1", type: "PHOTO" }, usage: uploadUsage(session) }),
+        body: JSON.stringify({ submission: { id: `p${photoPosts}`, type: "PHOTO" }, usage: uploadUsage(session) }),
       });
     });
     page.unroute(`**/api/events/${EVENT_ID}/voice-notes`);
@@ -501,17 +555,23 @@ test.describe("Mobile-media QA", () => {
     await expect(page.getByText("Photos remaining:")).toContainText("5/5");
     await expect(page.getByText("Voice note:")).toContainText("Available");
 
-    // Photo via file picker.
+    // Photo via file picker, synced from photo-review.
     const fileInput = page.locator('input[type="file"][accept="image/*"]');
     await fileInput.setInputFiles({ name: "test.jpg", mimeType: "image/jpeg", buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0]) });
-    await page.getByRole("button", { name: /Send 1 photo/ }).click();
-    await expect(page.getByText("1 photo saved.")).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText("Photos remaining:")).toContainText("4/5", { timeout: 5000 });
+    await expect(page.getByRole("button", { name: /Photo 1/ })).toBeVisible({ timeout: 3000 });
+    await page.getByRole("button", { name: "Lanjut →" }).click();
+    await expect(page.getByRole("heading", { name: /^Foto Anda \(\d+\)$/ })).toBeVisible({ timeout: 5000 });
+    await advancePastPhotoReview(page);
+    await expect(page.getByRole("heading", { name: "Pesan suara" })).toBeVisible({ timeout: 5000 });
 
     // Voice.
     await recordAndStop(page, 1000);
-    await page.getByRole("button", { name: "Submit voice note" }).click();
-    await expect(page.getByText("Voice note:")).toContainText("Already added", { timeout: 5000 });
+    await page.getByRole("button", { name: "✓ Kirim semua" }).click();
+    await expect(page.getByRole("heading", { name: "Terima kasih!" })).toBeVisible({ timeout: 5000 });
+
+    // Both submissions landed server-side.
+    expect(photoPosts).toBe(1);
+    expect(session.getVoice()).toBe(true);
   });
 
   // 10. VOICE: onstop uses actual elapsed duration for hint (D2 fix)
@@ -521,13 +581,15 @@ test.describe("Mobile-media QA", () => {
     // for >5s should NOT show the "Too short" hint.
     await page.setViewportSize({ width: 375, height: 812 });
     await context.grantPermissions(["microphone"]);
-    mockStatefulSession(page);
+    const session = mockStatefulSession(page);
+    mockPhotoUploadSuccess(page, session);
     mockVoiceUpload(page, 201, { submission: { id: "v1", type: "VOICE_NOTE" }, usage: { guest_name: "QA Tester", photos_submitted: 0, photos_remaining: 5, voice_note_submitted: true, voice_note_available: false, guest_message_submitted: false, guest_message_available: true } });
 
     await startSession(page);
+    await advanceToVoiceScreen(page);
 
     // Record for ~6 seconds (above the 5s threshold).
-    await page.getByRole("button", { name: "Record" }).click();
+    await page.getByRole("button", { name: "Record voice note" }).click();
     await expect(page.getByText("Recording", { exact: true })).toBeVisible({ timeout: 5000 });
     await page.waitForTimeout(6000);
     await page.getByRole("button", { name: "Stop recording" }).click();
@@ -536,7 +598,6 @@ test.describe("Mobile-media QA", () => {
 
     // Duration display correct (~6s).
     const durationText = await page.getByText("Duration:").textContent();
-    console.log("DURATION TEXT:", durationText);
     expect(durationText).not.toContain("0s");
 
     // "Too short" hint should NOT show (6s >= 5s).
@@ -546,7 +607,7 @@ test.describe("Mobile-media QA", () => {
     await expect(page.getByText("Keep recording for at least 5 seconds")).toHaveCount(0);
   });
 
-  // 11. PHOTO: multiple captures before sync (batch)
+  // 11. PHOTO: multiple captures before sync (batch via photo-review)
   test("photo: multiple captures then batch sync", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     const session = mockStatefulSession(page);
@@ -555,6 +616,7 @@ test.describe("Mobile-media QA", () => {
     page.route(`**/api/events/${EVENT_ID}/photos`, async (route) => {
       uploadCount++;
       session.addPhoto();
+      await new Promise((r) => setTimeout(r, 200));
       await route.fulfill({
         status: 201, contentType: "application/json",
         body: JSON.stringify({ submission: { id: `p${uploadCount}`, type: "PHOTO" }, usage: uploadUsage(session) }),
@@ -565,20 +627,23 @@ test.describe("Mobile-media QA", () => {
 
     // Capture 2 photos via file picker.
     const fileInput = page.locator('input[type="file"][accept="image/*"]');
-    await fileInput.setInputFiles({ name: "photo1.jpg", mimeType: "image/jpeg", buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]) });
+    await fileInput.setInputFiles({ name: "photo1.jpg", mimeType: "image/jpeg", buffer: JPEG });
     await expect(page.getByRole("button", { name: /Photo 1/ })).toBeVisible({ timeout: 3000 });
-    await fileInput.setInputFiles({ name: "photo2.jpg", mimeType: "image/jpeg", buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]) });
+    await fileInput.setInputFiles({ name: "photo2.jpg", mimeType: "image/jpeg", buffer: JPEG });
     await expect(page.getByRole("button", { name: /Photo 2/ })).toBeVisible({ timeout: 3000 });
 
-    // Send both.
-    await page.getByRole("button", { name: /Send 2 photos/ }).click();
+    // Advance to review and sync both.
+    await page.getByRole("button", { name: "Lanjut →" }).click();
+    await expect(page.getByRole("heading", { name: /^Foto Anda \(\d+\)$/ })).toBeVisible({ timeout: 5000 });
+    await advancePastPhotoReview(page);
 
-    // Both saved.
-    await expect(page.getByText("2 photos saved.")).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText("Photos remaining:")).toContainText("3/5", { timeout: 5000 });
+    // Both saved: CTA only advances once every item is confirmed.
+    await expect(page.getByRole("heading", { name: "Pesan suara" })).toBeVisible({ timeout: 5000 });
+    expect(uploadCount).toBe(2);
+    expect(session.getPhotos()).toBe(2);
   });
 
-  // 12. PHOTO: delete pending photo before sync
+  // 12. PHOTO: delete pending photo before sync (capture review overlay)
   test("photo: delete pending photo frees budget", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     mockStatefulSession(page);
@@ -588,7 +653,7 @@ test.describe("Mobile-media QA", () => {
 
     // Capture a photo.
     const fileInput = page.locator('input[type="file"][accept="image/*"]');
-    await fileInput.setInputFiles({ name: "photo1.jpg", mimeType: "image/jpeg", buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]) });
+    await fileInput.setInputFiles({ name: "photo1.jpg", mimeType: "image/jpeg", buffer: JPEG });
     await expect(page.getByRole("button", { name: /Photo 1/ })).toBeVisible({ timeout: 3000 });
 
     // Open review overlay and delete.
@@ -596,9 +661,9 @@ test.describe("Mobile-media QA", () => {
     await expect(page.getByRole("dialog", { name: "Photo review" })).toBeVisible({ timeout: 3000 });
     await page.getByRole("button", { name: "Delete" }).click();
 
-    // Pending strip should be empty — no Send photos button. (Scoped to the
-    // photo region: the guest-message "Send message" button is unrelated.)
-    await expect(page.getByRole("button", { name: /Send \d+ photo/ })).toHaveCount(0);
+    // Pending strip empty → no advance button and no photo thumbnails.
+    await expect(page.getByRole("button", { name: /Photo 1/ })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Lanjut →" })).toHaveCount(0);
   });
 
   // 13. PHOTO RETAKE: retake removes unsent photo, restores budget, no upload
@@ -620,7 +685,7 @@ test.describe("Mobile-media QA", () => {
 
     // Capture a photo.
     const fileInput = page.locator('input[type="file"][accept="image/*"]');
-    await fileInput.setInputFiles({ name: "photo1.jpg", mimeType: "image/jpeg", buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]) });
+    await fileInput.setInputFiles({ name: "photo1.jpg", mimeType: "image/jpeg", buffer: JPEG });
     await expect(page.getByRole("button", { name: /Photo 1/ })).toBeVisible({ timeout: 3000 });
     await expect(page.getByText("4 photos remaining")).toBeVisible();
 
@@ -630,44 +695,57 @@ test.describe("Mobile-media QA", () => {
     await expect(dialog).toBeVisible({ timeout: 3000 });
     await dialog.getByRole("button", { name: "Retake" }).click();
 
-    // Dialog closed, strip empty, no Send photos button, budget restored.
+    // Dialog closed, strip empty, no advance button, budget restored.
     await expect(dialog).toHaveCount(0);
     await expect(page.getByRole("button", { name: /Photo 1/ })).toHaveCount(0);
-    await expect(page.getByRole("button", { name: /Send \d+ photo/ })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Lanjut →" })).toHaveCount(0);
     await expect(page.getByText("5 photos remaining")).toBeVisible();
 
     // No upload happened.
     expect(photoPosts).toBe(0);
   });
 
-  // 14. PHOTO REVIEW: confirmed photo has no Retake or Delete, Back only
-  test("photo: confirmed review has Back only, no Retake or Delete", async ({ page }) => {
+  // 14. PHOTO REVIEW: during the review-screen sync, in-flight/confirmed
+  //     items cannot be deleted or retried and the CTA stays blocked.
+  test("photo: confirmed/in-flight items during review sync have no delete/retry", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     const session = mockStatefulSession(page);
+    let reqCount = 0;
     page.unroute(`**/api/events/${EVENT_ID}/photos`);
     page.route(`**/api/events/${EVENT_ID}/photos`, async (route) => {
+      reqCount++;
       session.addPhoto();
+      // Slow the sync so the review screen renders in-flight/confirmed items.
+      await new Promise((r) => setTimeout(r, 800));
       await route.fulfill({
         status: 201, contentType: "application/json",
-        body: JSON.stringify({ submission: { id: "p1", type: "PHOTO" }, usage: uploadUsage(session) }),
+        body: JSON.stringify({ submission: { id: `p${reqCount}`, type: "PHOTO" }, usage: uploadUsage(session) }),
       });
     });
 
     await startSession(page);
 
-    // Capture + send → confirmed.
+    // Capture 2 photos.
     const fileInput = page.locator('input[type="file"][accept="image/*"]');
-    await fileInput.setInputFiles({ name: "photo1.jpg", mimeType: "image/jpeg", buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]) });
+    await fileInput.setInputFiles({ name: "photo1.jpg", mimeType: "image/jpeg", buffer: JPEG });
     await expect(page.getByRole("button", { name: /Photo 1/ })).toBeVisible({ timeout: 3000 });
-    await page.getByRole("button", { name: /Send 1 photo/ }).click();
-    await expect(page.getByText("1 photo saved.")).toBeVisible({ timeout: 5000 });
+    await fileInput.setInputFiles({ name: "photo2.jpg", mimeType: "image/jpeg", buffer: JPEG });
+    await expect(page.getByRole("button", { name: /Photo 2/ })).toBeVisible({ timeout: 3000 });
 
-    // Open review: Back present; Retake and Delete absent for confirmed.
-    await page.getByRole("button", { name: /Photo 1/ }).click();
-    const dialog = page.getByRole("dialog", { name: "Photo review" });
-    await expect(dialog).toBeVisible({ timeout: 3000 });
-    await expect(dialog.getByRole("button", { name: "Back" })).toBeVisible();
-    await expect(dialog.getByRole("button", { name: "Retake" })).toHaveCount(0);
-    await expect(dialog.getByRole("button", { name: "Delete" })).toHaveCount(0);
+    await page.getByRole("button", { name: "Lanjut →" }).click();
+    await expect(page.getByRole("heading", { name: /^Foto Anda \(\d+\)$/ })).toBeVisible({ timeout: 5000 });
+    await page.getByRole("button", { name: "Lanjut ke pesan suara" }).click();
+
+    // CTA blocked while syncing (UI_UX §4.4).
+    await expect(page.getByRole("button", { name: "Mengirim foto…" })).toBeVisible({ timeout: 3000 });
+
+    // No delete/retry on in-flight or confirmed items during the sync.
+    await expect(page.getByRole("button", { name: "Delete photo 1" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "Delete photo 2" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: /Retry photo \d/ })).toHaveCount(0);
+
+    // Sync completes → the deferred advance moves to voice.
+    await expect(page.getByRole("heading", { name: "Pesan suara" })).toBeVisible({ timeout: 5000 });
+    expect(reqCount).toBe(2);
   });
 });

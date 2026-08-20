@@ -1,81 +1,60 @@
-﻿# Task: Architecture deepening #1 — GuestSubmissionAuth + shared guest-submission route pipeline
+﻿# Task: Fix Photo-Review Advance Race Condition
 
 ## Context
 
-Architecture review found byte-identical `resolvePhotoAuth`/`resolveVoiceNoteAuth` functions (7-line session SQL + event/limits/expiry checks + discriminated result; differing only by the `kind` string literal). All three guest-submission routes (photos, voice-notes, guest-messages) duplicate the same pipeline: auth resolver → HTTP status/error mapping → multipart/content guards → submission call → usage-response building → rate-limit config, differing only in the I/O adapter (ffprobe vs field name) and limit constant.
+E2E spec discovered a race in `components/guest-event-entry.tsx` `handleReviewNext()`: after `await syncPhotos()`, the function checks `pendingPhotosRef.current.every(p => p.status === "confirmed")` before React flushes the final "confirmed" state updates from the sync loop.
 
-**Deletion test:** removing the auth functions would force duplication of session SQL + event-check + expiry-check logic at each route. Removing the pipeline choreography would duplicate the exact status/logging/rate-limit pattern across 3+ routes (and any future submission kind). Both pass the deletion test — keep and deepen.
+**Current behavior:** First CTA click syncs photos successfully but doesn't advance (predicate fails on stale ref); second click advances (ref now reflects committed state).
 
-## Design (decided — implement as specified)
+**Expected behavior:** Single CTA click syncs → state commits → predicate passes → advances to voice screen.
 
-### Part A: GuestSubmissionAuth seam
+## Root Cause
 
-New module `lib/guest-submission-auth.ts`:
+`handleReviewNext` checks the ref immediately after `syncPhotos()` resolves, but `syncPhotos()` updates `pendingPhotos` state via `setPendingPhotos` inside a loop — those state updates are batched and don't commit until after the function returns. The ref sees stale "uploading" status.
 
-Extract digest from __Host-guest_session cookie, SQL join guest_sessions + events, check session found/event match/expired/ACTIVE status, return discriminated union (ok: sessionId+eventId+eventStatus | !ok: missing/invalid/expired/wrong_event/event_inactive).
+## Fix
 
-Docblock cross-refs: API Contract §6, db_scheme.md guest_sessions/events, TECHNICAL_DESIGN.md §4.1.
+Re-check the advance predicate after the state flush using an effect-based approach:
 
-Co-located test `lib/guest-submission-auth.test.ts`: covers all 5 result branches with pg Client fixture (pattern: existing submit-photo.test.ts).
+**Option D (preferred):** Track `advancePendingAfterSync` boolean ref; `handleReviewNext` sets it true before sync, effect fires when `!syncing` + flag true + all confirmed, then clears flag and advances.
 
-### Part B: Shared route pipeline factory
+## Implementation
 
-New module `lib/guest-submission-pipeline.ts`:
+**File:** `components/guest-event-entry.tsx`
 
-`createGuestSubmissionHandler<T>(config: { extract, submit, rateLimitConfig })` returns Next.js POST handler. Factory handles: rate-limit → resolveGuestSubmissionAuth → map auth failures to 401/403/409 + logApiError → config.extract(req) → config.submit(publicId, sessionId, eventId, payload) → map submit result (ok: 201+usage | !ok: status+logApiError).
+1. Add `const advancePendingRef = useRef(false);` near other refs
+2. In `handleReviewNext()`:
+   - Set `advancePendingRef.current = true` before `await syncPhotos()`
+   - Remove the immediate `if (pendingPhotosRef.current.every(...)) setViewState("voice")` check after sync
+3. Add `useEffect`:
+   ```tsx
+   useEffect(() => {
+     if (
+       advancePendingRef.current &&
+       !syncing &&
+       pendingPhotosRef.current.every(p => p.status === "confirmed")
+     ) {
+       advancePendingRef.current = false;
+       setViewState("voice");
+     }
+   }, [syncing, pendingPhotos]);
+   ```
 
-Route becomes ~10 lines: import factory + payload extractor + submitPhoto, export POST = factory call.
+This defers the advance check until React commits the final state updates from `syncPhotos()`.
 
-Co-located test: verify auth-kind → HTTP mapping, extract/submit failure handling, 201 success.
+## Acceptance Criteria
 
-### Part C: Thin payload-extraction adapters
+- First "Lanjut ke pesan suara" click syncs AND advances (no second click needed)
+- `npx vitest run` — all tests pass (no behavior change for existing unit tests)
+- `npm run e2e` — 38/38 pass (e2e spec's two-click workaround becomes redundant but still passes)
+- No new lint/typecheck errors
 
-New modules:
-- `lib/photo-payload.ts` — extractPhotoPayload: multipart → MIME/size guards → {ok, payload: {blob, contentType}} | {!ok, kind}. Lifted from photos route :88–141.
-- `lib/voice-note-payload.ts` — extractVoiceNotePayload: multipart → ffprobe → {ok, payload: {blob, contentType, durationSeconds}} | error. Lifted from voice-notes route :107–176.
-- `lib/guest-message-payload.ts` — extractGuestMessagePayload: multipart → 280-char validation → {ok, payload: {messageText}} | error.
+## Files in Scope
 
-Each with co-located test.
+**Modified:** `components/guest-event-entry.tsx` (add ref + effect, remove immediate advance check)
 
-### Part D: Route file updates
-
-Update 3 route files to use factory (~10–15 lines each). Keep route-level tests (*.route.test.ts) — they exercise factory via route; optionally slim if lib tests cover branches.
-
-## Files in scope
-
-New:
-- lib/guest-submission-auth.ts + test
-- lib/guest-submission-pipeline.ts + test
-- lib/photo-payload.ts + test
-- lib/voice-note-payload.ts + test
-- lib/guest-message-payload.ts + test
-
-Modified:
-- app/api/events/[public_id]/photos/route.ts (refactor to factory)
-- app/api/events/[public_id]/voice-notes/route.ts (refactor to factory)
-- app/api/events/[public_id]/guest-messages/route.ts (refactor to factory)
-- lib/submit-photo.ts — delete resolvePhotoAuth, import resolveGuestSubmissionAuth
-- lib/submit-voice-note.ts — delete resolveVoiceNoteAuth, import resolveGuestSubmissionAuth
-- lib/submit-guest-message.ts — delete resolver if present
-- Route tests (*.route.test.ts) — adjust if needed
-- lib/rate-limit.ts — export named configs if not already
-
-## Do NOT change
-
-- Any canonical doc, migration, admin code, e2e specs, client components, hooks
-- submitPhoto/submitVoiceNote/submitGuestMessage internal logic
-- Wire format (same 201 + usage body)
-- Existing tx-repo/storage/audio-inspector adapters
-
-## Acceptance criteria
-
-- resolvePhotoAuth/resolveVoiceNoteAuth deleted; all callers use resolveGuestSubmissionAuth
-- All 3 guest-submission routes use createGuestSubmissionHandler — route files ≤15 lines
-- Duplication deleted: session SQL, auth→HTTP, rate-limit, logging, status selection all in pipeline once
-- npx tsc --noEmit 0 errors
-- npx vitest run — 378 baseline + new tests (expect ~390+)
-- Route behavior unchanged: same status codes, error codes, 201+usage shape
+**Do NOT change:** e2e spec (the two-click helper becomes redundant but remains valid), canonical docs, routes, hooks, other components.
 
 ## Report
 
-Write result.md: status, files changed (new + modified with line-count delta), diffs summary, tsc + vitest output, blockers, SSOT conflicts, deviations.
+Write `result.md`: status, code changes (ref + effect + removed check), tsc + vitest + e2e output, whether single-click advance now works (manual verification or e2e observation), blockers.
