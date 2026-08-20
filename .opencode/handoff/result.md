@@ -1,67 +1,37 @@
-# Result: Remove Guest Message Feature from Codebase
+# Result: Phase 2 — Guest Flow Redesign (DESIGN.md P1)
 
 ## Status: PASS
 
-## Files deleted (10)
+Implementation: @designer (des-1, cancelled mid-validation after stalling — code complete on disk). Reconciliation, flakiness triage, and full validation: orchestrator.
 
-- `supabase/migrations/0005_guest_messages.sql`
-- `supabase/migrations/0006_guest_messages_service_role_grant.sql`
-- `lib/guest-message-payload.ts`
-- `lib/guest-message-payload.test.ts`
-- `lib/guest-message-tx-repo.ts`
-- `lib/guest-message-tx-repo.test.ts`
-- `lib/submit-guest-message.ts`
-- `lib/submit-guest-message.test.ts`
-- `app/api/events/[public_id]/guest-messages/route.ts`
-- `app/api/events/[public_id]/guest-messages/route.test.ts`
+## Files changed (13)
 
-Note: task.md listed 7 files; grep inventory found 3 more guest-message-only files (`submit-guest-message.ts`, `submit-guest-message.test.ts`, `guest-message-tx-repo.test.ts`) and the `guest-messages` route test — all deleted. All confirmed via `git status` (10 `D` entries).
+- `components/guest/screens/AudioRecorderPanel.tsx` — NEW (replaces VoiceAndMessage.tsx): bottom slide-up panel per DESIGN.md §5.3 — 60dvh `bg-bg-elevated` panel over `bg-overlay` scrim, `duration-slow` (350ms) `translate-y` ease-out/ease-in, `role="dialog"` + `aria-modal`, header/close button, recording state (label + DM Mono tabular elapsed + stop), review state (`audio[aria-label="Voice note playback"]`, duration, re-record/submit), skip link "Lewati & kirim foto saja", safe-area insets.
+- `components/guest/screens/VoiceAndMessage.tsx` — DELETED (rename per DESIGN.md §7).
+- `components/guest-event-entry.tsx` — `"voice"` ViewState removed; `voicePanelOpen` state renders AudioRecorderPanel alongside Capture (never a screen change); photo-review sync-then-advance now targets `done` (deferred-advance race fix preserved); `handleVoiceSkip`/submit → `done`; leaving Capture or expiry closes the panel and discards unsent takes (§4.6); SESSION_STATES drops "voice". Voice state machine logic semantically unchanged.
+- `components/guest/screens/Capture.tsx` — fullscreen viewfinder hero, translucent top bar, DM Mono "N / M" counter pill, 72px gold shutter + safe-area, pending strip with per-item status, bottom-right mic trigger ("Voice note", 44px+) opening the panel (hidden when voice unavailable), shutter press feedback. File-picker fallback + full-size review overlay retained.
+- `components/guest/screens/PreSession.tsx`, `FrameSelection.tsx` (radio-group a11y preserved), `PhotoReview.tsx`, `Done.tsx` — restyled on dark tokens per §5.1/§5.2/§5.3/§5.4.
+- `app/globals.css` — `--on-accent: #0d0d0f` added (text on gold fills, §2) + `--color-on-accent` exposure. No token value changes.
+- `e2e/mobile-media-qa.spec.ts` — rewritten for the new flow: `openVoicePanel()` helper asserts dialog opens AND Capture heading persists; photo-review CTA advances to done; all prior behavioral scenarios retained (sync-then-advance, upload errors, re-record, auto-stop 30s, D2 stale-closure fix, expiry, carry-over, usage re-sync, limit/disable). Coverage not weakened: 18 guest tests (was 18).
 
-## Files edited (26)
+## Validation (orchestrator-run, serial — AGENTS.md single-lane rule)
 
-- `supabase/migrations/0007_service_role_grants.sql`: removed guest_messages grant + related comment lines
-- `lib/usage.ts`: `Usage` drops 2 guest_message fields; docblock updated; `applyUsageDelta` simplified (raw spread now safe, 4-field types)
-- `lib/usage.test.ts`: removed 2 fields from `_usageFields`; removed preservation test case (was the only difference between `Usage` and `UsageDelta`)
-- `lib/get-session-usage.ts`: removed `countGuestMessages` from `UsageRepo`, message count fetch, 2 response fields
-- `lib/get-session-usage.test.ts`: removed mock `countGuestMessages`, guest-message state test, 2 expected fields
-- `lib/start-guest-session.ts`: `SessionBody` + success body drop 2 fields
-- `lib/start-guest-session.test.ts`: expected body drops 2 fields
-- `components/guest-event-entry.tsx`: `confirmUsage()` body type, validator, and `setSession()` drop the 2 fields
-- `components/admin/admin-ui.tsx`: `Submission` type drops `GUEST_MESSAGE` + `message_text`
-- `components/admin/admin-dashboard.tsx`: deleted `MessageTile` + JSX comment; removed `MessageSquare` import, messages filter/breakdown/render, `typeLabel`/`downloadFileName` GUEST_MESSAGE branches
-- `app/api/events/[public_id]/session/route.ts`: removed `countGuestMessages` repo method
-- `app/api/events/[public_id]/session/route.test.ts`: removed `guestMessagesBySession`, table branch, seed opt, guest-message state test, 2 expected fields in 2 bodies
-- `app/api/admin/events/[public_id]/submissions/route.test.ts`: removed `guest_messages` seed + expected `GUEST_MESSAGE` entry
-- `lib/admin-media-repo.ts`: `MediaType` drops `GUEST_MESSAGE`; removed `message_text` field, message query/results loop, doc refs
-- `lib/rate-limit.ts`: removed `loadGuestMessageRateLimitConfig` (only consumer was deleted route)
-- `lib/guest-submission-auth.ts`: docblock — removed "guest-messages" from endpoint list
-- `lib/guest-submission-pipeline.ts`: docblock — "three routes" → "both routes"
-- `test/admin-media-db.ts`: removed `FakeGuestMessageRow`, `guest_messages` state field, tables entry
-- `e2e/mobile-media-qa.spec.ts`: all 11 mock usage bodies + 4 comment refs drop the 2 fields; comments updated 6→4 fields
-- `docs/db_scheme.md`: removed amendment note, decision-row, DDL block, 2 constraint rows, 2 index rows, "not in schema" guest_messages mention, live-DB verification text; renumbered DDL section 6/7 → 6; dropped 0006/0007 guest_messages grant descriptions
-- `docs/API_CONTRACT.md`: removed §6.6 section, amendment note, 409 `GUEST_MESSAGE_LIMIT_REACHED`, rate-limit sentence, usage-shape fields (3 examples), §6.3 amendment sentence, submission-type paragraph + §5.7 GUEST_MESSAGE text
-- `docs/UI_UX.md`: amendment text simplified to sequential-flow-only; removed "pesan & kesan" scope sentence; removed guest-message mention in §4.3 presentation note
-- `docs/ARCHITECTURE_DECISIONS.md`: ADR-012 decision/listing/reason — two routes, `Usage` 4 fields, no guest-message payload adapter
-- `docs/UI_DESIGN.md`: §Voice screen — replaced "no guest-message step" sentence (unlisted in task but required by grep acceptance)
-- `AGENTS.md`: §12 — removed feature sentence; `lib/{photo,voice-note,guest-message}-payload.ts` → `{photo,voice-note}`; `Usage` 6→4 fields; QA line updated 395/47 → 344/43; removed migration 0006 grant description
+- `npx tsc --noEmit` — PASS
+- `npx vitest run` — 344/344 PASS (43 files)
+- `npx playwright test --workers=1` — **39 passed, 0 failed**, 1 skipped (live-DB test), (4.3m→3.3m serial)
+- `npm run lint` — 1 pre-existing error (`e2e/print-qa.spec.ts:34` `any`) + 12 warnings (clean tree: 11; the 1 new is a `no-img-element` warning for PhotoReview's object-URL preview `<img>`, same class as 8 pre-existing baseline ones — object URLs can't use next/image)
+- `npm run build` — PASS
 
-## Validation
+## Flakiness triage (designer's "failures")
 
-- `npm run typecheck` — PASS (exit 0)
-- `npx vitest run` — PASS: 43 files, 344 tests (was 47 files / 395; −4 test files, −51 tests)
-- `npm run lint` — unchanged from pre-existing baseline: 1 error (`e2e/print-qa.spec.ts:34` `any`) + 11 warnings, identical before/after (verified via `git stash` comparison)
+Designer's e2e runs used default 4 workers; intermittent failures (frame-selection, admin Open, D2) varied run-to-run. Verified NOT code regressions: clean tree (stash) passed the same specs; full suite with `--workers=1` passes 39/39 on the WIP tree. Root cause: 4 parallel workers against the single shared port-3000 dev server exceed 30s test timeouts on first-compile latency. AGENTS.md already mandates one lane at a time — serial (`--workers=1`) is the correct invocation.
 
-## Grep check
+## Deviations / risks
 
-`rg -i "guest[_\s\-]?message"` (excluding node_modules/.git/.opencode): **0 matches**.
-Including `.opencode`: only `task.md` (22) and `CURRENT.md` (2) — CURRENT.md refs will be cleared when orchestrator updates it post-reconciliation. PRD has zero `guest.?message` matches (its history text uses "pesan & kesan").
-
-## Issues / blockers
-
-- **Schema drift (accepted per task):** live Supabase retains `guest_messages` table + migration history 0001–0008; repo no longer documents or references it. Migrations 0005/0006 files removed from repo only — not re-run live.
-- **Task scope drift:** task.md listed 7 deletions / specific edit files; actual inventory (grep) required 10 deletions and 2 unlisted edit targets (`start-guest-session.ts/.test.ts` and `guest-submission-auth/pipeline.ts` were listed implicitly as consumers; `admin-media-repo.ts`, `admin-ui.tsx`, `rate-limit.ts`, session route+test, submissions route.test, `UI_DESIGN.md` were not). All cleaned to meet the acceptance grep. No SSOT conflict encountered.
-- **No blockers.** E2E Playwright run not performed (not in task validation scope); `e2e/mobile-media-qa.spec.ts` mock edits are shape-only and covered by typecheck.
+- None vs DESIGN.md. Owner-facing copy reviewed: panel/CTA copy is grounded Indonesian, consistent with existing tone ("Kirim semua", "Rekam ulang", "Lewati & kirim foto saja").
+- Pre-existing: admin (P3) and legacy `frame-selector.tsx` (P2) not yet restyled — later phases.
+- 4-worker e2e flakiness predates this work (dev-server contention); if it recurs, consider `workers: 1` in playwright.config or retries — owner decision, not made here.
 
 ## Next step
 
-Orchestrator: reconcile — update `CURRENT.md` to remove its 2 guest-message refs, review diff, run Playwright if desired before merge.
+Owner review/commit. Then Phase 3 candidates: admin dark-token restyle (P3), legacy frame-selector retirement (P2).
