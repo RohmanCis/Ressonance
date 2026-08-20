@@ -6,9 +6,8 @@ type EventData = { title: string; status: "ACTIVE" | "CLOSED" };
 /**
  * PHOTO_REVIEW — sequential guest flow. Grid of captured photos with
  * per-item delete/retry; the primary CTA synchronizes pending items first
- * and advances to Done only once every remaining item is server-confirmed
- * (backend-authoritative). Photos-only finish is valid — voice is available
- * inline on the Capture screen (DESIGN.md §5.3).
+ * and advances to the Voice Note screen only once every remaining item is
+ * server-confirmed (backend-authoritative, DESIGN.md §5.4–§5.5).
  */
 export function PhotoReview({
   event,
@@ -121,7 +120,7 @@ export function PhotoReview({
           disabled={ctaDisabled}
           className="min-h-12 w-full rounded-lg bg-accent px-4 font-semibold text-on-accent transition duration-fast ease-out hover:brightness-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-45"
         >
-          {syncing ? "Mengirim foto…" : "Kirim"}
+          {syncing ? "Mengirim foto…" : "Kirim & Lanjut"}
         </button>
       </div>
     </main>

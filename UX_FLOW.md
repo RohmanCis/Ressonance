@@ -4,7 +4,7 @@ QA companion to DESIGN.md (canonical design system) and docs/TECHNICAL_DESIGN.md
 
 ## Guest Flow
 
-**Overall sequence:** PRE_SESSION → FRAME_SELECT → CAPTURE (with audio slide-up panel) → PHOTO_REVIEW → DONE
+**Overall sequence:** PRE_SESSION → FRAME_SELECT → CAPTURE → PHOTO_REVIEW → VOICE_NOTE → DONE
 
 ### 1. PRE_SESSION (Landing)
 
@@ -19,21 +19,28 @@ QA companion to DESIGN.md (canonical design system) and docs/TECHNICAL_DESIGN.md
 - "No Frame" is never a grid card — only reachable via skip.
 - Session usage is confirmed after this step; then the camera opens.
 
-### 3. CAPTURE (fullscreen camera + audio panel)
+### 3. CAPTURE (fullscreen camera)
 
 - Viewfinder fills the viewport; the selected frame overlays it unmirrored.
 - Photo counter ("N / 5") reflects the local budget hint — the server limit is authoritative.
 - Shutter captures into a local pending buffer (thumbnail strip); no upload happens yet.
 - **Lanjut** appears once at least one photo is pending; capture auto-advances to review when the local budget hits zero.
-- **Audio:** the mic trigger (bottom-right) opens the voice recorder as a slide-up panel — recording, review, re-record, submit, or skip ("Lewati & kirim foto saja"). Submitting or skipping the voice note completes the flow to DONE.
 
 ### 4. PHOTO_REVIEW
 
 - Grid of captured photos with per-item delete and sync status.
-- The primary CTA syncs all pending photos (sequential uploads, per-item spinner → check/error), then advances. Advance is blocked while items are pending/uploading.
+- The primary CTA syncs all pending photos (sequential uploads, per-item spinner → check/error), then advances to VOICE_NOTE. Advance is blocked while items are pending/uploading.
 - Retry failed items or delete them; confirmed items cannot be deleted.
 
-### 5. DONE
+### 5. VOICE_NOTE (full-screen voice recording)
+
+- Full-screen dedicated state for optional voice note recording.
+- Center stage: gold mic button, DM Mono timer (00:00 / 00:30), recording status.
+- Review: playback preview, duration check (<5s warning), re-record option.
+- Primary CTA: "Kirim Pesan Suara" (submit) advances to DONE.
+- Skip action: "Lewati — Kirim Foto Saja" text link advances to DONE without voice upload.
+
+### 6. DONE
 
 - Quiet thank-you: event title, brief confirmation. No further actions. A new session requires Start again.
 

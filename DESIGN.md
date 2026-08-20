@@ -113,20 +113,33 @@ All state changes remain instant and announced; only the movement is removed.
 - **Primary action placement:** Full-width gold confirm ("Use Wedding Floral" / "Continue without frame") at the bottom; "Skip — no frame" as a quiet text link below it.
 - **Transition:** Confirm fades to a brief usage-confirmation state, then into the Camera screen (`--motion-base`).
 
-### 5.3 Camera + Audio inline
+### 5.3 Camera (Capture)
 
 - **Layout:** The viewfinder is the hero and fills the entire viewport (`100dvh`, minus safe areas). No page chrome — the event title and guest name sit in a compact translucent top bar (`--overlay` backdrop) that fades out after a few seconds of inactivity.
 - **Viewfinder:** Full viewport, `object-cover`, `playsInline`, `muted`, `autoPlay`.
 - **Frame overlay:** `absolute inset-0`, `object-contain`, `pointer-events-none`, never mirrored, never stretched — drawn above the live preview exactly as it will be composited (WYSIWYG, 1080×1920).
 - **Counter:** Top overlay (below the title bar), right-aligned, DM Mono, "N / M" format (e.g. `3 / 5`), `--text-primary` on a subtle `--overlay` pill. Reflects the local capture-budget hint; server limits remain authoritative.
 - **Shutter:** Bottom center, a 72px gold circle with a `--bg-base` ring, thumb-reachable, `env(safe-area-inset-bottom)` clearance. Press feedback: 150ms scale + flash overlay. Disabled state (limit reached) at reduced opacity with a text hint.
-- **Audio trigger:** Bottom-right corner icon button (mic glyph, 44px+ hit area) with a visible label ("Voice note"). Opens the recorder panel; never blocks capture while closed.
-- **Audio panel:** Slides up from the bottom, 350ms ease-out, `transform: translateY(100%) → 0`, covering the bottom ~60% of the screen with `--bg-elevated` and a `--overlay` scrim behind. Contains: header ("Voice note"), recording state (gold pulse-free "Recording" label + DM Mono elapsed timer + stop), review state (playback bar, duration, re-record / submit), and the skip link ("Lewati & kirim foto saja"). Panel dismisses by drag-down affordance or close button; no screen change ever occurs.
 - **Pending strip:** Horizontal scroll row of ~48px thumbnails sitting above the shutter, showing per-item status (pending / uploading spinner / confirmed check / error / expired). Tap opens the existing full-size review overlay (delete / retake).
-- **Photo review / sync:** The existing photo-review step (grid, per-item delete, sync-then-advance CTA) is retained as the state between camera and Done, restyled on dark tokens — sync entry point and behavior unchanged per UI_UX §4.4.
-- **Transition:** After voice submit/skip (or photo-only advance), the screen crossfades to Done (`--motion-base`).
+- **Transition:** Manual "Lanjut" CTA or auto-advance at budget zero transitions to Photo Review (`--motion-base`).
 
-### 5.4 Done (Completion)
+### 5.4 Photo Review
+
+- **Layout:** Full-screen `--bg-base`. Grid of captured photos with per-item delete and sync status.
+- **Key visual elements:** Photo tiles on `--bg-surface` with DM Mono timestamps; per-item status indicators (pending / uploading spinner / confirmed check / error).
+- **Primary action placement:** Full-width gold sync-then-advance CTA ("Kirim & Lanjut") at bottom; advance is blocked while items are pending/uploading.
+- **Transition:** After successful batch sync, advance to Voice Note screen (`--motion-base`).
+
+### 5.5 Voice Note (Full-Screen Recording)
+
+- **Layout:** Full-screen `--bg-base`, safe-area padded. Event title eyebrow (text-xs muted) + Cormorant Garamond 3xl/4xl heading ("Tinggalkan Pesan Suara").
+- **Center Stage:** Gold mic button (h-20 w-20), DM Mono timer (00:00 / 00:30), pulse-free recording status label.
+- **Recording state:** "Recording" label + elapsed timer + square stop button.
+- **Review state:** Audio player preview (playback bar, duration), duration check (<5s warning text), "Rekam Ulang" secondary action, primary gold CTA "Kirim Pesan Suara".
+- **Skip action:** "Lewati — Kirim Foto Saja" text link below primary CTA; advances to Done without voice upload.
+- **Transition:** Submit or skip advances to Done (`--motion-base`).
+
+### 5.6 Done (Completion)
 
 - **Layout:** Quiet, centered, full-screen `--bg-base`. One gold check mark (success glyph, not animated), event title in Cormorant Garamond 4xl, and two short lines of receipt copy ("Thank you — your photos and voice note have been added to {event}.").
 - **Key visual elements:** Nothing else. No actions, no navigation, no submission affordances.
@@ -146,12 +159,12 @@ Same dark tokens as guest (`--bg-base` page, `--bg-surface` cards, `--border` ha
 
 | Component | Scope | Description | Status | Priority |
 |---|---|---|---|---|
-| GuestEventEntry (state machine) | Guest | Screen router + session/expiry/carry-over/sync logic; audio becomes inline panel state instead of a screen | REDESIGN | P1 |
+| GuestEventEntry (state machine) | Guest | Screen router + session/expiry/carry-over/sync logic; 6-step sequential flow with voice-note as dedicated screen | REDESIGN | P1 |
 | PreSession | Guest | Landing: event title, optional name, Start | REDESIGN | P1 |
 | FrameSelection | Guest | 9:16 frame card grid, radio-group a11y, confirm/skip | REDESIGN | P1 |
-| Capture | Guest | Fullscreen camera hero: overlay frame, N/M counter, 72px shutter, audio trigger + slide-up panel, pending strip | REDESIGN | P1 |
-| AudioRecorderPanel (from VoiceAndMessage) | Guest | Voice recorder as bottom slide-up panel (350ms ease-out, bottom 60%); recording/review/submit/skip states | REDESIGN | P1 |
-| PhotoReview | Guest | Photo grid, per-item delete/retry, sync-then-advance CTA | REDESIGN | P1 |
+| Capture | Guest | Fullscreen camera hero: overlay frame, N/M counter, 72px shutter, pending strip, Lanjut CTA | REDESIGN | P1 |
+| PhotoReview | Guest | Photo grid, per-item delete/retry, sync-then-advance CTA to voice-note screen | REDESIGN | P1 |
+| VoiceRecordingScreen (refactored from AudioRecorderPanel) | Guest | Full-screen voice recording: gold mic, DM Mono timer, recording/review/submit/skip states | REDESIGN | P1 |
 | Done | Guest | Completion screen: gold check, event title, receipt copy | REDESIGN | P1 |
 | useCamera | Guest | getUserMedia lifecycle, 9:16 compositing, camera switch | KEEP | P1 |
 | lib/frames.ts | Guest | Frame registry + loader | KEEP | P1 |

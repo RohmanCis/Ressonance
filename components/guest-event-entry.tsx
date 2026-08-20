@@ -20,7 +20,7 @@ import { PreSession } from "@/components/guest/screens/PreSession";
 import { FrameSelection } from "@/components/guest/screens/FrameSelection";
 import { Capture } from "@/components/guest/screens/Capture";
 import { PhotoReview } from "@/components/guest/screens/PhotoReview";
-import { AudioRecorderPanel } from "@/components/guest/screens/AudioRecorderPanel";
+import { VoiceRecordingScreen } from "@/components/guest/screens/VoiceRecordingScreen";
 import { Done } from "@/components/guest/screens/Done";
 
 type EventData = { title: string; status: "ACTIVE" | "CLOSED" };
@@ -39,6 +39,7 @@ type ViewState =
   | "post-session-loading"
   | "post-session"
   | "photo-review"
+  | "voice-note"
   | "done";
 type VoiceState = "idle" | "recording" | "review" | "submitting" | "success" | "error" | "review-error" | "unsupported";
 
@@ -70,9 +71,8 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
   const sessionStartRef = useRef<number | null>(null);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
 
-  // Voice note state (unchanged from original) — presented as a slide-up
-  // panel on the Capture screen (DESIGN.md §5.3), never a separate screen.
-  const [voicePanelOpen, setVoicePanelOpen] = useState(false);
+  // Voice note state — presented as the dedicated full-screen VOICE_NOTE
+  // step after photo review (DESIGN.md §5.5).
   const [voice, setVoice] = useState<Blob | null>(null);
   const [voiceUrl, setVoiceUrl] = useState("");
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
@@ -231,7 +231,6 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
     syncAbortedRef.current = true;
     advancePendingRef.current = false;
     resetVoice();
-    setVoicePanelOpen(false);
     setState("ready");
     setCarryOverPrompt(unsaved.length > 0);
     setMessage(
@@ -378,8 +377,8 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, syncing, event, publicId]);
 
-  // --- Review → Done: sync first, advance only when everything is confirmed ---
-  // (photos-only finish is valid — voice is available inline on Capture).
+  // --- Review → Voice note: sync first, advance only when everything is
+  // confirmed (voice note is the dedicated next step, DESIGN.md §5.5).
   async function handleReviewNext() {
     if (syncing) return;
     if (pendingPhotosRef.current.some((p) => p.status === "pending")) {
@@ -392,7 +391,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
     }
     // Nothing left to sync — no in-flight state, so the ref is current.
     if (pendingPhotosRef.current.every((p) => p.status === "confirmed")) {
-      setState("done");
+      setState("voice-note");
     }
   }
 
@@ -406,7 +405,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
       pendingPhotosRef.current.every((p) => p.status === "confirmed")
     ) {
       advancePendingRef.current = false;
-      setState("done");
+      setState("voice-note");
     }
   }, [syncing, pendingPhotos]);
 
@@ -458,22 +457,6 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
     setState("done");
   }
 
-  // --- Close the recorder panel: discard any unsent take ---
-  function closeVoicePanel() {
-    if (voiceState === "submitting") return;
-    resetVoice();
-    setVoicePanelOpen(false);
-  }
-
-  // Leaving the Capture screen (auto-advance, expiry) closes the panel and
-  // discards any unsent take — the panel exists only on Capture (§5.3).
-  useEffect(() => {
-    if (state !== "post-session" && voicePanelOpen) {
-      closeVoicePanel();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, voicePanelOpen]);
-
   // --- Capture auto-advance: full local budget → photo review ---
   useEffect(() => {
     if (state !== "post-session" || !session) return;
@@ -506,7 +489,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
   }, []);
 
   // --- Render: pre-session states ---
-  if (state !== "frame-select" && state !== "post-session-loading" && state !== "post-session" && state !== "photo-review" && state !== "done") {
+  if (state !== "frame-select" && state !== "post-session-loading" && state !== "post-session" && state !== "photo-review" && state !== "voice-note" && state !== "done") {
     return (
       <PreSession
         event={event}
@@ -552,46 +535,27 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
     );
   }
 
-  // --- Render: capture (+ inline voice recorder panel, DESIGN.md §5.3) ---
+  // --- Render: capture (camera only — voice is a dedicated later step) ---
   if (state === "post-session" && session) {
     return (
-      <>
-        <Capture
-          event={event!}
-          session={session}
-          pendingPhotos={pendingPhotos}
-          secondsLeft={secondsLeft}
-          message={message}
-          reviewIndex={reviewIndex}
-          camera={camera}
-          selectedFrame={selectedFrame}
-          onShutter={handleCapture}
-          onFileSelect={handleFileSelect}
-          onAdvance={() => setState("photo-review")}
-          onDeletePhoto={deletePhoto}
-          onRetakePhoto={retakePhoto}
-          onRetryPhoto={retryPhoto}
-          onReviewPhoto={(i) => setReviewIndex(i)}
-          onCloseReview={() => setReviewIndex(null)}
-          onOpenVoicePanel={() => setVoicePanelOpen(true)}
-        />
-        {voicePanelOpen && (
-          <AudioRecorderPanel
-            event={event!}
-            session={session}
-            voiceState={voiceState}
-            voiceSeconds={voiceSeconds}
-            voiceUrl={voiceUrl}
-            voiceMessage={voiceMessage}
-            onRecord={recordVoice}
-            onStop={finishRecording}
-            onReset={resetVoice}
-            onSubmit={submitVoice}
-            onSkip={handleVoiceSkip}
-            onClose={closeVoicePanel}
-          />
-        )}
-      </>
+      <Capture
+        event={event!}
+        session={session}
+        pendingPhotos={pendingPhotos}
+        secondsLeft={secondsLeft}
+        message={message}
+        reviewIndex={reviewIndex}
+        camera={camera}
+        selectedFrame={selectedFrame}
+        onShutter={handleCapture}
+        onFileSelect={handleFileSelect}
+        onAdvance={() => setState("photo-review")}
+        onDeletePhoto={deletePhoto}
+        onRetakePhoto={retakePhoto}
+        onRetryPhoto={retryPhoto}
+        onReviewPhoto={(i) => setReviewIndex(i)}
+        onCloseReview={() => setReviewIndex(null)}
+      />
     );
   }
 
@@ -605,6 +569,25 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
         onDeletePhoto={deletePhoto}
         onRetryPhoto={retryPhoto}
         onNext={handleReviewNext}
+      />
+    );
+  }
+
+  // --- Render: voice note (dedicated full-screen step, DESIGN.md §5.5) ---
+  if (state === "voice-note" && session) {
+    return (
+      <VoiceRecordingScreen
+        event={event!}
+        session={session}
+        voiceState={voiceState}
+        voiceSeconds={voiceSeconds}
+        voiceUrl={voiceUrl}
+        voiceMessage={voiceMessage}
+        onRecord={recordVoice}
+        onStop={finishRecording}
+        onReset={resetVoice}
+        onSubmit={submitVoice}
+        onSkip={handleVoiceSkip}
       />
     );
   }

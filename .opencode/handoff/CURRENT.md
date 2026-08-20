@@ -1,29 +1,23 @@
 # Current Task Status
 
-**Status:** IDLE — DESIGN.md implementation complete
-**Last updated:** 2026-08-20
+**Status:** WAITING_FOR_AGENT — delegating guest flow 6-step refactor to @designer
+**Task ID:** voice-refactor-designer
+**Last updated:** 2026-08-21
 
 ---
 
-## Session summary: dark analog-film redesign (DESIGN.md implementation) — ALL PHASES DONE
+## Session summary: Owner-directed 6-step sequential voice refactor
 
-| Phase | Scope | Commit |
-|---|---|---|
-| 1 | Tokens/typography (§2–§4): fonts, CSS vars, motion, reduced-motion, @theme inline | `3a652cb` |
-| 2 | Guest flow redesign (§5): voice → inline slide-up AudioRecorderPanel on Capture, all guest screens on dark tokens | `3a652cb` |
-| 3 | Admin restyle (§6) + legacy frame-selector retirement (§7 P2) | `7ceb45d` |
-| — | Chore: playwright workers=1 (flakiness fix), legacy oklch token block removed | `bb4ae7c` |
+Owner resolution (2026-08-21): PRD.md §1.3 authority supersedes prior DESIGN.md panel constraint. DESIGN.md §5.3–5.5, §7, and UX_FLOW.md amended to match sequential full-screen flow: PRE_SESSION → FRAME_SELECT → CAPTURE → PHOTO_REVIEW → VOICE_NOTE → DONE.
 
-DESIGN.md §7 inventory status: all REDESIGN rows implemented (P1 guest, P3 admin); frame-selector.tsx retired (P2); all KEEP rows untouched (useCamera, lib/frames, lib/pending-photos, lib/usage).
+Canonical documents updated:
+- DESIGN.md: voice changed from slide-up panel (§5.3 old) to dedicated full-screen VOICE_NOTE screen (§5.5 new); component inventory updated (VoiceRecordingScreen replaces AudioRecorderPanel, P1)
+- UX_FLOW.md: sequence updated to 6 steps, voice note as dedicated full-screen state
 
-Validation at each phase: tsc PASS, vitest 344/344, Playwright serial 39/0/1-skipped, lint baseline, build PASS.
-
-## Outstanding (owner decisions pending, not blocking)
-
-- Architecture-review candidates #2 (apiError envelope) / #4 (predicate facade) — deferred per AGENTS.md §12 triggers.
-- Physical-device scanner QA, live authenticated-admin visual QA on dark UI — owner manual.
-- No unimplemented DESIGN.md phases remain.
+Now delegating bounded implementation to @designer.
 
 ## Next Actions
 
-None — idle.
+- Await designer completion
+- Reconcile result
+- Run validation gates (typecheck → vitest → playwright → lint → build)

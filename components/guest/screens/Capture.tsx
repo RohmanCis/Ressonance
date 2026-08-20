@@ -1,5 +1,4 @@
 import { ChangeEvent, useEffect, useRef, useState } from "react";
-import { Mic } from "lucide-react";
 import type { useCamera } from "@/hooks/use-camera";
 import {
   canDeletePhoto,
@@ -19,8 +18,8 @@ const PRE_EXPIRY_WARN_SECONDS = 300;
  * viewport (100dvh minus safe areas); the selected frame overlays it
  * unmirrored exactly as composited (WYSIWYG 1080×1920). Gold is reserved for
  * the shutter and the advance action; the DM Mono counter ticks like a film
- * frame counter. The mic trigger opens the voice recorder slide-up panel —
- * it never blocks capture while closed.
+ * frame counter. Voice recording is a dedicated later step (VOICE_NOTE,
+ * DESIGN.md §5.5) — this screen is camera-only.
  */
 export function Capture({
   event,
@@ -39,7 +38,6 @@ export function Capture({
   onRetryPhoto,
   onReviewPhoto,
   onCloseReview,
-  onOpenVoicePanel,
 }: {
   event: EventData;
   session: SessionData;
@@ -57,7 +55,6 @@ export function Capture({
   onRetryPhoto: (id: string) => void;
   onReviewPhoto: (index: number) => void;
   onCloseReview: () => void;
-  onOpenVoicePanel: () => void;
 }) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
@@ -198,7 +195,7 @@ export function Capture({
             </button>
           )}
 
-          {/* Shutter + voice-note trigger */}
+          {/* Shutter, centered (voice note is a dedicated later step, §5.5) */}
           <div className="flex items-end gap-3">
             <div className="min-w-16 flex-1" aria-hidden="true" />
             <div className="flex flex-col items-center gap-2">
@@ -215,19 +212,7 @@ export function Capture({
                 </p>
               )}
             </div>
-            <div className="min-w-16 flex-1">
-              {session.voice_note_available && (
-                <button
-                  type="button"
-                  onClick={onOpenVoicePanel}
-                  disabled={closed}
-                  className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 rounded-lg text-text-primary transition-opacity duration-fast hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-45"
-                >
-                  <Mic className="h-6 w-6" aria-hidden="true" />
-                  <span className="text-[0.625rem] font-medium tracking-[0.04em]">Voice note</span>
-                </button>
-              )}
-            </div>
+            <div className="min-w-16 flex-1" aria-hidden="true" />
           </div>
 
           {/* File picker fallback */}
