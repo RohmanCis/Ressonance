@@ -17,6 +17,9 @@ const webServer =
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
+  // All suites share one dev server on port 3000; parallel workers contend for
+  // it and false-fail on first-compile latency. Serial is the verified mode.
+  workers: 1,
   // Smoke suite is intentionally small; one project is enough.
   projects: [
     {

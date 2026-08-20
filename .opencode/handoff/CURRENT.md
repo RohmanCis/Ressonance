@@ -1,29 +1,23 @@
 # Current Task Status
 
-**Status:** IDLE — Phase 3 complete, awaiting owner review/commit
+**Status:** IDLE — all redesign phases committed
 **Last updated:** 2026-08-20
 
 ---
 
-## Last Task: Phase 3 — Admin UI dark-token restyle (DESIGN.md §6, P3) — COMPLETE
+## Session summary: dark analog-film redesign (DESIGN.md implementation)
 
-Implemented by @designer (des-3, clean run — all 5 gates green on first pass). Reconciled + independently verified by orchestrator (tsc, vitest 344/344 re-run on unchanged tree; diff spot-checks: ACTIVE gold left-edge marker, DM Mono tabular dates, gold focus rings, e2e-protected strings verbatim). Detail in `result.md`.
+- Phase 1 — tokens/typography: `app/layout.tsx`, `app/globals.css` → commit `3a652cb`
+- Phase 2 — guest flow redesign, voice as inline slide-up panel (§5): guest screens + e2e → commit `3a652cb`
+- Phase 3 — admin dark-token restyle (§6) + legacy frame-selector retirement (P2): `components/admin/**`, deletion → commit `7ceb45d`
+- All phases validated: tsc PASS, vitest 344/344, Playwright `--workers=1` 39/0/1-skipped, lint baseline, build PASS.
 
-### Summary
+## Outstanding (owner decisions pending)
 
-- All 5 admin components restyled on dark tokens. Gold = single primary per view (Sign in / Create new event / Close event / Copy link / Create event). Cormorant only on page/event titles. `Status` moved off legacy `destructive`/`success-surface` vars to `border-error`/`border-success` token classes.
-- Shadows dropped deliberately: depth via hairlines on `#0d0d0f` — add back if a dark `--shadow-color` is tokenized.
-- Also this session: legacy `components/frame-selector.tsx` deleted (P2; 0 imports verified, tsc PASS).
-
-### Validation
-
-tsc PASS; vitest 344/344; Playwright `--workers=1` 39 passed / 0 failed / 1 skipped (live); lint baseline-only; build PASS.
-
-### Session state
-
-Uncommitted: 5 admin component restyles + frame-selector.tsx deletion. Proposed commit: `feat: restyle admin UI on dark tokens; retire legacy frame-selector (DESIGN.md §6)`.
+- E2e worker flakiness: 4-worker runs false-fail on shared dev-server contention; serial works. Consider `workers: 1` in playwright.config.
+- Architecture-review candidates #2 (apiError envelope) / #4 (predicate facade) — deferred, discussion pending with owner.
+- Known pre-existing: physical-device QA, live authenticated-admin visual QA outstanding (AGENTS.md §12).
 
 ## Next Actions
 
-- Owner: review + commit.
-- DESIGN.md §7 inventory now fully resolved (P1/P2/P3 done). No remaining redesign rows.
+None — idle. Owner manually testing locally on port 3000.

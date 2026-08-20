@@ -4,7 +4,7 @@ export default function Home() {
       <h1 className="text-2xl font-semibold">
         QR Guest Photo & Voicebook
       </h1>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-text-muted">
         Foundation scaffold. No features implemented yet.
       </p>
     </main>
