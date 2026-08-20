@@ -1,53 +1,51 @@
-﻿# Task: Phase 2 — Guest Flow Redesign (DESIGN.md P1)
+﻿# Task: Phase 3 — Admin UI Dark-Token Restyle (DESIGN.md §6, P3)
 
 ## Authority
 
-- `DESIGN.md` (root) is CANONICAL — §2 tokens, §3 typography, §4 motion, §5 guest flow, §7 component inventory. Read it first.
-- `UX_FLOW.md` (root) is the flow reference (state behavior notes; visual authority is DESIGN.md).
-- Backend, API, migrations, `app/api/**`, `supabase/`, `docs/` are LOCKED — do not touch.
-- Phase 1 already landed (uncommitted): dark tokens + font variables in `app/globals.css`, `app/layout.tsx`. Tailwind v4 — tokens exposed via `@theme inline` (e.g. `bg-bg-base`, `text-text-primary`, `bg-accent`, `text-accent`, `border-border`, `bg-overlay`, `font-display` = Cormorant, `font-mono` = DM Mono, `duration-fast/base/slow`).
+- `DESIGN.md` (root) — CANONICAL. §2 tokens, §3 typography, §4 motion, §6 admin flow govern this task. Read it first.
+- `UX_FLOW.md` (root) — §Admin Flow: behavior/states reference (unchanged).
+- Backend, API, `app/api/**`, `supabase/**`, `docs/**`, guest components — LOCKED, do not touch.
+- Phase 1/2 already landed: dark tokens + Tailwind v4 utilities live in `app/globals.css` `@theme inline` (`bg-bg-base`, `bg-bg-surface`, `bg-bg-elevated`, `text-text-primary/secondary/muted`, `bg-accent`, `text-on-accent`, `bg-accent-soft`, `border-border`, `bg-overlay`, `text-error`, `text-success`, `font-display`=Cormorant, `font-mono`=DM Mono, `duration-fast/base/slow`). Reference guest usage: `components/guest/screens/*.tsx`.
 
 ## Objective
 
-Implement the guest-side redesign per DESIGN.md §5 and §7 (P1 rows only). Two parts:
+Restyle the admin UI on the dark tokens per DESIGN.md §6 + §7 (P3 rows). BEHAVIOR AND STATES UNCHANGED — visual only. DESIGN.md §6 rules:
 
-### Part A — Structural: voice becomes an inline panel (the known gap)
+- `--bg-base` page, `--bg-surface` cards, `--border` hairlines
+- Gold reserved for the single primary action per view; everything else quiet
+- Functional, data-dense: NO Cormorant beyond page/event titles; no decorative imagery; no motion beyond standard focus/hover tokens
+- Sign-in: narrow centered `--bg-surface` card, labelled fields, single gold sign-in button, status below form
+- Event Index: dense rows (title, status pill, DM Mono created date); ACTIVE prominent via gold left-edge marker; Open + Access/QR actions per row; create-new action
+- Dashboard: Cormorant 3xl event title header (status, close + access/QR actions); guest-name search above newest-first timeline; `lg`: 18rem context rail + timeline; submission groups by guest session; photo tiles on `--bg-surface` with DM Mono timestamps; voice notes as bordered playback rows (play/pause, duration, progress, download); skeletons/empty/error surfaces restyled
+- Creation / Access-QR: same field anatomy on `--bg-surface`; QR block bounded, copy/print actions
 
-DESIGN.md §5.3: audio recorder is a bottom slide-up panel ON the Capture screen — never a separate screen. Current code has a separate `"voice"` ViewState screen (`components/guest/screens/VoiceAndMessage.tsx`).
+## Files in scope (admin only)
 
-1. Remove the `"voice"` screen state from `components/guest-event-entry.tsx`. Voice state machine (record/review/submit/skip/error handlers) stays in `guest-event-entry.tsx`, unchanged semantically — reuse it.
-2. Rename `components/guest/screens/VoiceAndMessage.tsx` → `components/guest/screens/AudioRecorderPanel.tsx` (export `AudioRecorderPanel`). Redesign as bottom slide-up panel per DESIGN.md §5.3: 350ms ease-out `translateY(100%) → 0`, covers bottom ~60%, `bg-bg-elevated` surface, `--overlay` scrim behind, header "Voice note", recording state (label + DM Mono elapsed timer + stop), review state (playback bar `audio[aria-label="Voice note playback"]`, duration, re-record / submit), skip link "Lewati & kirim foto saja", close/dismiss affordance. No screen change ever occurs while it is open.
-3. Capture screen (`components/guest/screens/Capture.tsx`): add bottom-right mic icon trigger (44px+ hit area, visible label "Voice note") that opens the panel. Hide/disable trigger when `session.voice_note_available` is false. Panel never blocks capture while closed.
-4. Flow wiring: photo-review "sync-then-advance" now advances to `done` (photos-only finish is valid — voice was already available inline). Voice submit success or skip → `done`. Voice submit/skip is reachable ONLY from the panel on Capture. Keep the deferred-advance race fix (`advancePendingRef`) semantics — it now targets `done`.
-5. Session-expiry behavior: unsent voice takes discarded on expiry (unchanged). Expiry while panel open → panel resets, back to PreSession.
+- `components/admin/admin-ui.tsx` (Shell, Status, Busy, AuthGate, Button, AdminCreateEvent) — note: `Status` uses legacy `--success-surface`/`destructive` vars; move to `text-error`/`border-error`-family token classes; `Button` primary = gold fill + `text-on-accent`, secondary = quiet `--bg-surface` + border; Shell default copy "Memory table"/"Event archive" → grounded plain wording that fits the dark analog-film system (no "archive/memory-table" light-theme flavor) — keep it functional
+- `components/admin/admin-sign-in.tsx` (67 lines)
+- `components/admin/admin-event-index.tsx` (144 lines)
+- `components/admin/admin-dashboard.tsx` (658 lines — the big one; restyle only, do not refactor logic)
+- `components/admin/admin-access.tsx` (238 lines)
+- `components/admin/admin-create-event.tsx` (1-line re-export — no change needed)
 
-### Part B — Visual: restyle all guest screens on dark tokens
+## Hard constraints
 
-Per DESIGN.md §5.1–§5.4:
+1. **e2e selector stability:** `e2e/admin-index.spec.ts` and `e2e/smoke.spec.ts` rely on these accessible names/labels — DO NOT change them: "Email", "Password", "Sign in" (button), "Your events." (heading), "Active event" (region), "Past events" (region), "Active"/"Closed" (exact text), "Open" (link), "Access / QR" (link), "Create new event" (link), "Event title" (label), "Create event" (button), "Retry" (button), "The event list could not be loaded. Retry safely.", "No events yet" (heading), "Create event" (link, href /admin/events/new), "Find existing event" (link), "An active event already exists. Open it instead.", "Return to sign-in". Error/status message strings stay verbatim.
+2. No new files, no component splits, no logic refactors — className/markup-level restyle only (structural JSX tweaks allowed where DESIGN.md §6 requires, e.g. gold left-edge marker on ACTIVE row, DM Mono dates).
+3. A11y preserved: focus-visible gold rings, aria-live/status roles, 44px+ targets, tabular-nums on DM Mono numerals.
+4. No inline color literals except `#0d0d0f`-on-gold which is already tokenized as `text-on-accent`.
+5. Motion: none beyond `duration-fast` hover/focus (§6: no motion beyond standard tokens).
 
-- `PreSession.tsx` — §5.1: `--bg-surface` card max-w-30rem, Cormorant 4xl event title, DM Sans xs eyebrow, `--border` underline name field, 48px gold full-width Start, quiet bordered expiry/error blocks. Keep ALL existing states/messages/logic (closed, not-found, rate-limited, invalid, offline, carry-over).
-- `FrameSelection.tsx` — §5.2: full-screen, Cormorant 3xl heading, 2-col 9:16 card grid on `--bg-surface` with `--border` hairline, selected = gold 2px border + `--accent-soft` fill + gold check badge, bottom-pinned CTA + safe-area, "Skip — no frame" quiet link. PRESERVE radio-group a11y (arrow keys, roving tabindex, aria-checked) exactly.
-- `Capture.tsx` — §5.3: fullscreen viewfinder hero (100dvh minus safe areas), translucent top bar (`--overlay`) with event title + guest name, DM Mono "N / M" counter on overlay pill (right-aligned below top bar), 72px gold shutter with `--bg-base` ring + safe-area clearance, pending strip of ~48px thumbnails above shutter with per-item status, shutter press = 150ms scale 1→0.92→1 + brief flash overlay. Disabled shutter at limit (reduced opacity + text hint). Keep file-picker fallback and full-size review overlay (delete/retake).
-- `PhotoReview.tsx` — §5.3 last bullet: grid, per-item delete/retry, sync-then-advance CTA — restyled on dark tokens, behavior unchanged. CTA copy advances to done (e.g. "Kirim" — your call, keep Indonesian tone consistent with existing copy).
-- `Done.tsx` — §5.4: quiet centered, gold check glyph (not animated), Cormorant 4xl event title, two short receipt lines. No actions.
-- `post-session-loading` inline screen in `guest-event-entry.tsx` — restyle on dark tokens.
-- Motion: CSS transitions only, transform+opacity only, `--motion-*` durations, ease-out in / ease-in out. Nothing from §4 "never animates" list animates.
-- A11y is non-negotiable: focus-visible rings (gold), aria-live/status regions preserved, 48px guest primaries, 44px+ secondaries, safe-area insets, tabular figures on counters (DM Mono).
-- Text on gold fills is `#0d0d0f` (use `text-[#0d0d0f]` or a token if you add one — no other inline color literals; all other colors via tokens).
+## Validation (run serially, in this exact order — one lane at a time)
 
-## Also update
+1. `npx tsc --noEmit` — must pass
+2. `npx vitest run` — 344/344
+3. `npx playwright test --workers=1` — all pass (CRITICAL: `--workers=1`; 4-worker runs produce false failures from dev-server contention)
+4. `npm run lint` — no new errors/warnings beyond baseline (1 pre-existing `any` in `e2e/print-qa.spec.ts` + img-element/unused-var warnings)
+5. `npm run build` — pass
 
-- `e2e/mobile-media-qa.spec.ts` — rewrite selectors/flow for: voice panel on Capture (open panel → record → submit/skip), photo-review CTA now advances to done. Keep every test scenario's behavioral assertion (sync-then-advance, upload errors, re-record, auto-stop 30s, expiry, carry-over, session usage). Do not weaken coverage.
-- Do NOT touch `e2e/smoke.spec.ts`, `qr-qa.spec.ts`, `print-qa.spec.ts`, `admin-index.spec.ts`, `components/admin/**` (P3, later phase), `components/frame-selector.tsx` (legacy, later), `app/api/**`, `lib/**`, `hooks/**`, `supabase/**`, `docs/**`.
-- If you need an extra token/utility mapping in `app/globals.css` `@theme inline`, you may add it (no token value changes).
-
-## Validation (run all, in this order, serially — one lane)
-
-1. `npx tsc --noEmit` — must pass.
-2. `npx vitest run` — must stay 344/344.
-3. `npm run e2e` — all suites must pass (known acceptable: none; if a spec fails for a pre-existing reason, report it, do not mask it).
-4. `npm run lint` — no NEW errors (baseline: 1 pre-existing `any` in `e2e/print-qa.spec.ts`).
+If any gate fails: fix and re-run that gate and everything after it. Do not skip steps. Do not write `result.md` until all 5 gates have actual results.
 
 ## Report
 
-Write `result.md`: status, files changed, structural decisions (voice wiring), e2e changes summary, validation results (each command), deviations from DESIGN.md if any (should be none), unresolved risks.
+Write `.opencode/handoff/result.md`: status, files changed, per-gate validation results, copy changes made (Shell defaults etc.), deviations (should be none), unresolved risks.

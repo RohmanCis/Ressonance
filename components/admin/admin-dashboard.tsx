@@ -63,7 +63,8 @@ function groupByGuest(items: Submission[]): Group[] {
   return groups;
 }
 
-const focusRing = "focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring";
+const focusRing = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
+const quietButton = "border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated";
 
 const downloadFileName = (item: Submission) => {
   const m = item.mime_type.toLowerCase();
@@ -115,20 +116,20 @@ function DownloadButton({ item, name, className = "" }: { item: Submission; name
         aria-label={`Download ${typeLabel(item).toLowerCase()} from ${name}`}
         onClick={retry}
         disabled={busy}
-        className={`flex h-11 items-center gap-1.5 rounded-[10px] border border-border bg-card px-3 text-xs font-semibold text-muted-foreground transition duration-150 ease-out hover:text-foreground disabled:cursor-not-allowed disabled:opacity-45 ${focusRing} ${className}`}
+        className={`flex h-11 items-center gap-1.5 rounded-[10px] border border-border bg-bg-surface px-3 text-xs font-semibold text-text-secondary transition duration-fast ease-out hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-45 ${focusRing} ${className}`}
       >
         {busy ? <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Download className="h-4 w-4" aria-hidden="true" />}
         {busy ? "Downloading…" : "Download"}
       </button>
       {error && (
-        <span className="flex w-full flex-wrap items-center justify-between gap-2 rounded-[10px] border border-destructive/40 bg-destructive/10 p-2">
-          <span role="alert" className="text-xs text-muted-foreground">
-            <span className="font-semibold">
+        <span className="flex w-full flex-wrap items-center justify-between gap-2 rounded-[10px] border border-error/40 bg-error/10 p-2">
+          <span role="alert" className="text-xs text-text-secondary">
+            <span className="font-semibold text-text-primary">
               {typeLabel(item)} from {name}:{" "}
             </span>
             {error}
           </span>
-          <button type="button" onClick={retry} className={`min-h-11 rounded-md bg-secondary px-3 text-xs font-semibold text-secondary-foreground ${focusRing}`}>
+          <button type="button" onClick={retry} className={`min-h-11 rounded-md px-3 text-xs font-semibold transition duration-fast ${quietButton} ${focusRing}`}>
             Retry
           </button>
         </span>
@@ -158,13 +159,13 @@ function PhotoTile({ item, name, onPreview }: { item: Submission; name: string; 
   }, [load]);
 
   return (
-    <div className="relative overflow-hidden rounded-[14px] border border-border bg-card shadow-[var(--shadow-1)]">
+    <div className="relative overflow-hidden rounded-[14px] border border-border bg-bg-surface">
       {error ? (
-        <div className="flex aspect-square flex-col items-center justify-center gap-2 bg-muted p-3 text-center">
-          <p role="alert" className="text-xs text-muted-foreground">
+        <div className="flex aspect-square flex-col items-center justify-center gap-2 bg-bg-elevated p-3 text-center">
+          <p role="alert" className="text-xs text-text-muted">
             {errorText(error)}
           </p>
-          <button type="button" onClick={load} className={`min-h-11 rounded-md bg-secondary px-3 text-xs font-semibold text-secondary-foreground ${focusRing}`}>
+          <button type="button" onClick={load} className={`min-h-11 rounded-md px-3 text-xs font-semibold transition duration-fast ${quietButton} ${focusRing}`}>
             Retry
           </button>
         </div>
@@ -174,11 +175,11 @@ function PhotoTile({ item, name, onPreview }: { item: Submission; name: string; 
           onClick={onPreview}
           disabled={!url}
           aria-label={`Preview photo from ${name}, ${fmtFull(item.created_at)}`}
-          className={`block w-full text-left transition duration-150 ease-out enabled:hover:brightness-[.97] disabled:cursor-wait ${focusRing}`}
+          className={`block w-full text-left transition duration-fast ease-out enabled:hover:brightness-105 disabled:cursor-wait ${focusRing}`}
         >
-          <span className="block aspect-square w-full bg-muted">
+          <span className="block aspect-square w-full bg-bg-elevated">
             {loading && (
-              <span role="status" className="flex h-full w-full items-center justify-center text-muted-foreground">
+              <span role="status" className="flex h-full w-full items-center justify-center text-text-muted">
                 <Loader2 className="h-5 w-5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
                 <span className="sr-only">Loading photo…</span>
               </span>
@@ -186,11 +187,11 @@ function PhotoTile({ item, name, onPreview }: { item: Submission; name: string; 
             {url && <img src={url} alt="" loading="lazy" className="h-full w-full object-cover" />}
           </span>
           <span className="flex items-center justify-between gap-2 px-3 py-2 text-xs">
-            <span className="inline-flex items-center gap-1.5 font-semibold">
-              <ImageIcon className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
+            <span className="inline-flex items-center gap-1.5 font-semibold text-text-primary">
+              <ImageIcon className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
               Photo
             </span>
-            <time dateTime={item.created_at} className="tabular-nums text-muted-foreground">
+            <time dateTime={item.created_at} className="font-mono tabular-nums text-text-muted">
               {fmtShort(item.created_at)}
             </time>
           </span>
@@ -236,7 +237,7 @@ function VoiceTile({ item, name }: { item: Submission; name: string }) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[10px] border border-border bg-card p-3 shadow-[var(--shadow-1)]">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[10px] border border-border bg-bg-surface p-3">
       <audio
         ref={audioRef}
         preload="none"
@@ -257,7 +258,7 @@ function VoiceTile({ item, name }: { item: Submission; name: string }) {
         onClick={toggle}
         disabled={loading}
         aria-label={`${playing ? "Pause" : "Play"} voice note by ${name}${duration ? `, ${item.duration_seconds} seconds` : ""}`}
-        className={`flex min-h-11 items-center gap-2 rounded-[10px] bg-secondary px-3 text-sm font-semibold text-secondary-foreground transition duration-150 ease-out hover:brightness-95 disabled:opacity-60 ${focusRing}`}
+        className={`flex min-h-11 items-center gap-2 rounded-[10px] px-3 text-sm font-semibold transition duration-fast ease-out disabled:opacity-60 ${quietButton} ${focusRing}`}
       >
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
@@ -268,18 +269,18 @@ function VoiceTile({ item, name }: { item: Submission; name: string }) {
         )}
         {loading ? "Loading" : playing ? "Pause" : "Play"}
       </button>
-      <span className="inline-flex items-center gap-1.5 text-xs font-semibold">
-        <Mic className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
+      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-text-primary">
+        <Mic className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
         Voice note
-        {duration && <span className="tabular-nums text-muted-foreground">{duration}</span>}
+        {duration && <span className="font-mono tabular-nums text-text-muted">{duration}</span>}
       </span>
-      <span className="h-1 min-w-16 flex-1 rounded-full bg-muted" aria-hidden="true">
+      <span className="h-1 min-w-16 flex-1 rounded-full bg-bg-elevated" aria-hidden="true">
         <span
-          className="block h-1 rounded-full bg-primary transition-[width] duration-150 motion-reduce:transition-none"
+          className="block h-1 rounded-full bg-accent transition-[width] duration-fast motion-reduce:transition-none"
           style={{ width: `${Math.round(progress * 100)}%` }}
         />
       </span>
-      <time dateTime={item.created_at} className="text-xs tabular-nums text-muted-foreground">
+      <time dateTime={item.created_at} className="font-mono text-xs tabular-nums text-text-muted">
         {fmtShort(item.created_at)}
       </time>
       <DownloadButton item={item} name={name} />
@@ -289,7 +290,7 @@ function VoiceTile({ item, name }: { item: Submission; name: string }) {
         </p>
       )}
       {error && (
-        <p role="alert" className="w-full text-xs text-muted-foreground">
+        <p role="alert" className="w-full text-xs text-text-muted">
           {errorText(error)}
         </p>
       )}
@@ -322,19 +323,19 @@ function GuestGroup({ group, onPreview }: { group: Group; onPreview: (item: Subm
           className={`flex w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-md py-1 text-left ${focusRing}`}
         >
           {open ? (
-            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <ChevronDown className="h-4 w-4 shrink-0 text-text-muted" aria-hidden="true" />
           ) : (
-            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <ChevronRight className="h-4 w-4 shrink-0 text-text-muted" aria-hidden="true" />
           )}
-          <span className="font-display text-xl font-semibold tracking-tight">{group.name}</span>
+          <span className="text-lg font-semibold text-text-primary">{group.name}</span>
           {group.session !== null && (
-            <span className="text-xs font-medium text-muted-foreground">Session {group.session}</span>
+            <span className="text-xs font-medium text-text-muted">Session {group.session}</span>
           )}
-          <span className="rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold tabular-nums text-primary-foreground">
+          <span className="rounded-full border border-border px-2.5 py-0.5 font-mono text-xs font-medium tabular-nums text-text-secondary">
             {group.items.length} item{group.items.length === 1 ? "" : "s"}
           </span>
-          <span className="text-xs text-muted-foreground">{breakdown}</span>
-          <span className="ml-auto text-xs tabular-nums text-muted-foreground">
+          <span className="text-xs text-text-muted">{breakdown}</span>
+          <span className="ml-auto font-mono text-xs tabular-nums text-text-muted">
             {group.items.length > 1 ? fmtRange(oldest.created_at, newest.created_at) : fmtFull(newest.created_at)}
           </span>
         </button>
@@ -350,7 +351,7 @@ function GuestGroup({ group, onPreview }: { group: Group; onPreview: (item: Subm
           )}
           {voices.length > 0 && (
             <div className={photos.length > 0 ? "border-t border-border pt-4" : ""}>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[.08em] text-muted-foreground">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[.08em] text-text-muted">
                 Voice note{voices.length === 1 ? "" : "s"}
               </p>
               <div className="grid gap-2">
@@ -436,7 +437,7 @@ function PreviewDialog({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-scrim p-4 transition-opacity duration-200 ease-out motion-reduce:transition-none ${shown ? "opacity-100" : "opacity-0"}`}
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4 transition-opacity duration-base ease-out motion-reduce:transition-none ${shown ? "opacity-100" : "opacity-0"}`}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -448,15 +449,15 @@ function PreviewDialog({
         ref={panelRef}
         tabIndex={-1}
         onKeyDown={onKeyDown}
-        className={`max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-[14px] border border-border bg-popover shadow-[var(--shadow-3)] transition duration-200 ease-out motion-reduce:transition-none focus:outline-none ${shown ? "scale-100 opacity-100" : "scale-[0.98] opacity-0"}`}
+        className={`max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-[14px] border border-border bg-bg-elevated transition duration-base ease-out motion-reduce:transition-none focus:outline-none ${shown ? "scale-100 opacity-100" : "scale-[0.98] opacity-0"}`}
       >
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border px-4 py-3 sm:px-6">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[.08em] text-primary">
+            <p className="font-mono text-xs font-medium uppercase tracking-[.08em] text-accent">
               {typeLabel(item)} · {index + 1} of {count}
             </p>
-            <h3 className="truncate font-display text-lg font-semibold tracking-tight">{name}</h3>
-            <time dateTime={item.created_at} className="text-xs tabular-nums text-muted-foreground">
+            <h3 className="truncate text-lg font-semibold text-text-primary">{name}</h3>
+            <time dateTime={item.created_at} className="font-mono text-xs tabular-nums text-text-muted">
               {fmtFull(item.created_at)}
             </time>
           </div>
@@ -474,7 +475,7 @@ function PreviewDialog({
               type="button"
               aria-label="Close preview"
               onClick={onClose}
-              className={`flex h-11 items-center gap-1.5 rounded-[10px] border border-border px-3 text-sm font-semibold text-muted-foreground transition duration-150 ease-out hover:text-foreground ${focusRing}`}
+              className={`flex h-11 items-center gap-1.5 rounded-[10px] border border-border bg-bg-surface px-3 text-sm font-semibold text-text-secondary transition duration-fast ease-out hover:text-text-primary ${focusRing}`}
             >
               <X className="h-4 w-4" aria-hidden="true" />
               Close
@@ -486,14 +487,14 @@ function PreviewDialog({
             <Status error message={`${typeLabel(item)} from ${name}: ${downloadError}`} action={<Button secondary onClick={retryDownload}>Retry</Button>} />
           )}
           {loading ? (
-            <div role="status" className="flex h-64 items-center justify-center rounded-md bg-muted text-sm text-muted-foreground">
+            <div role="status" className="flex h-64 items-center justify-center rounded-md bg-bg-surface text-sm text-text-muted">
               <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
               Loading media…
             </div>
           ) : error ? (
             <Status error message={errorText(error)} action={<Button secondary onClick={load}>Retry</Button>} />
           ) : (
-            <img src={url} alt={`Photo from ${name}`} className="max-h-[70vh] w-full rounded-md bg-muted object-contain" />
+            <img src={url} alt={`Photo from ${name}`} className="max-h-[70vh] w-full rounded-md bg-bg-surface object-contain" />
           )}
         </div>
       </div>
@@ -507,13 +508,13 @@ function TimelineSkeleton() {
       {[0, 1].map((g) => (
         <div key={g} aria-hidden="true">
           <div className="flex items-center gap-3">
-            <div className="h-6 w-36 rounded bg-muted" />
-            <div className="h-5 w-16 rounded-full bg-muted" />
-            <div className="ml-auto h-4 w-28 rounded bg-muted" />
+            <div className="h-6 w-36 rounded bg-bg-elevated" />
+            <div className="h-5 w-16 rounded-full bg-bg-elevated" />
+            <div className="ml-auto h-4 w-28 rounded bg-bg-elevated" />
           </div>
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {[0, 1, 2, 3].map((t) => (
-              <div key={t} className="aspect-square rounded-[14px] bg-muted" />
+              <div key={t} className="aspect-square rounded-[14px] bg-bg-elevated" />
             ))}
           </div>
         </div>
@@ -581,7 +582,7 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
       <Shell>
         <div className="grid gap-8 lg:grid-cols-[18rem_1fr]">
           <aside className="lg:sticky lg:top-6 lg:self-start">
-            <p className="text-xs font-semibold uppercase tracking-[.12em] text-primary">Event desk</p>
+            <p className="text-xs font-semibold uppercase tracking-[.12em] text-accent">Event desk</p>
             {busy && !event ? (
               <Busy label="Loading event" />
             ) : error && !event ? (
@@ -589,13 +590,13 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
             ) : (
               event && (
                 <>
-                  <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight">{event.title}</h1>
-                  <p className="mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold">
+                  <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-text-primary">{event.title}</h1>
+                  <p className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${event.status === "ACTIVE" ? "border-accent/40 bg-accent-soft text-accent" : "border-border text-text-muted"}`}>
                     {event.status === "ACTIVE" ? "Active" : "Closed"}
                   </p>
                   <div className="mt-6 grid gap-2">
                     <Link
-                      className={`flex min-h-11 items-center rounded-md border px-3 text-sm font-semibold ${focusRing}`}
+                      className={`flex min-h-11 items-center rounded-[10px] px-3 text-sm font-semibold transition duration-fast ${quietButton} ${focusRing}`}
                       href={`/admin/events/${publicId}/access`}
                     >
                       Access / QR
@@ -613,8 +614,8 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
           <section className="max-w-4xl">
             <div className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[.12em] text-muted-foreground">Submissions</p>
-                <h2 className="mt-1 text-2xl font-semibold">Newest first</h2>
+                <p className="text-xs font-semibold uppercase tracking-[.12em] text-text-muted">Submissions</p>
+                <h2 className="mt-1 text-xl font-semibold text-text-primary">Newest first</h2>
               </div>
               <form
                 className="flex w-full gap-2 sm:max-w-sm"
@@ -631,9 +632,9 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search guest name"
-                  className={`h-11 min-w-0 flex-1 rounded-md border bg-card px-3 ${focusRing}`}
+                  className={`h-11 min-w-0 flex-1 rounded-md border border-border bg-bg-surface px-3 text-text-primary placeholder:text-text-muted ${focusRing}`}
                 />
-                <Button>Search</Button>
+                <Button secondary>Search</Button>
               </form>
             </div>
             {error && event && <Status error message={errorText(error)} action={<Button secondary onClick={() => load()}>Retry</Button>} />}
@@ -641,8 +642,8 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
               <TimelineSkeleton />
             ) : items.length === 0 ? (
               <div className="mt-6 rounded-[10px] border border-dashed border-border p-10 text-center">
-                <h3 className="font-semibold">{query ? "No matching submissions" : "No submissions yet"}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">
+                <h3 className="font-semibold text-text-primary">{query ? "No matching submissions" : "No submissions yet"}</h3>
+                <p className="mt-2 text-sm text-text-muted">
                   {query ? "Clear or edit the guest-name search." : "New photos and voice notes will appear here."}
                 </p>
                 {query && (

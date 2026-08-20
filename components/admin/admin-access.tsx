@@ -8,7 +8,7 @@ import { QRCodeSVG } from "qrcode.react";
 
 type PrintVariant = "qr" | "card";
 
-const focusRing = "focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring";
+const focusRing = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 
 const printOptions: { variant: PrintVariant; label: string }[] = [
   { variant: "qr", label: "Print QR only" },
@@ -138,16 +138,16 @@ export function AdminAccess({ publicId }: { publicId: string }) {
         <div className="mx-auto max-w-4xl print:hidden">
           <Link
             href={`/admin/events/${publicId}`}
-            className={`mb-6 inline-flex min-h-11 items-center gap-1.5 rounded-md text-sm font-medium text-muted-foreground transition duration-150 ease-out hover:text-foreground ${focusRing}`}
+            className={`mb-6 inline-flex min-h-11 items-center gap-1.5 rounded-md text-sm font-medium text-text-muted transition duration-fast ease-out hover:text-text-primary ${focusRing}`}
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             Back to event
           </Link>
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[.12em] text-primary">Share access</p>
-              <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight">Put the doorway on the table.</h1>
-              <p className="mt-3 text-muted-foreground">Guests can scan this access card or open the public link.</p>
+              <p className="text-xs font-semibold uppercase tracking-[.12em] text-accent">Share access</p>
+              <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-text-primary">Share event access.</h1>
+              <p className="mt-3 text-text-secondary">Guests can scan this access card or open the public link.</p>
             </div>
           </div>
           {error ? (
@@ -162,11 +162,11 @@ export function AdminAccess({ publicId }: { publicId: string }) {
             </div>
           ) : (
             <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_18rem]">
-              <section className="rounded-[10px] border border-border bg-card p-6 shadow-[var(--shadow-1)]">
-                <h2 className="text-xl font-semibold">Public URL</h2>
-                <label className="mt-4 block text-sm font-semibold" htmlFor="public-url">
+              <section className="rounded-[10px] border border-border bg-bg-surface p-6">
+                <h2 className="text-lg font-semibold text-text-primary">Public URL</h2>
+                <label className="mt-4 block text-sm font-semibold text-text-primary" htmlFor="public-url">
                   Share link
-                  <input id="public-url" readOnly value={url} className="mt-2 h-11 w-full rounded-md border bg-muted px-3 text-sm" />
+                  <input id="public-url" readOnly value={url} className="mt-2 h-11 w-full rounded-md border border-border bg-bg-elevated px-3 font-mono text-xs text-text-primary" />
                 </label>
                 <div className="mt-4 flex flex-wrap items-center gap-2">
                   <Button onClick={copy}>{copied ? "Copied" : "Copy link"}</Button>
@@ -194,7 +194,7 @@ export function AdminAccess({ publicId }: { publicId: string }) {
                           setMenuOpen(true);
                         }
                       }}
-                      className={`flex min-h-11 items-center gap-1.5 rounded-[10px] bg-secondary px-4 py-2 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-45 ${focusRing}`}
+                      className={`flex min-h-11 items-center gap-1.5 rounded-[10px] border border-border bg-bg-surface px-4 py-2 text-sm font-semibold text-text-primary transition duration-fast hover:bg-bg-elevated disabled:cursor-not-allowed disabled:opacity-45 ${focusRing}`}
                     >
                       <Printer className="h-4 w-4" aria-hidden="true" />
                       Print
@@ -206,7 +206,7 @@ export function AdminAccess({ publicId }: { publicId: string }) {
                         id="print-menu"
                         aria-label="Print options"
                         onKeyDown={onMenuKeyDown}
-                        className="absolute right-0 z-20 mt-2 w-56 rounded-[10px] border border-border bg-popover p-1 shadow-[var(--shadow-3)]"
+                        className="absolute right-0 z-20 mt-2 w-56 rounded-[10px] border border-border bg-bg-elevated p-1"
                       >
                         {printOptions.map((option, i) => (
                           <button
@@ -218,7 +218,7 @@ export function AdminAccess({ publicId }: { publicId: string }) {
                             }}
                             tabIndex={i === activeItem ? 0 : -1}
                             onClick={() => selectOption(option.variant)}
-                            className={`flex min-h-11 w-full items-center rounded-md px-3 text-left text-sm font-medium hover:bg-accent hover:text-accent-foreground ${focusRing}`}
+                            className={`flex min-h-11 w-full items-center rounded-md px-3 text-left text-sm font-medium text-text-primary transition duration-fast hover:bg-accent-soft ${focusRing}`}
                           >
                             {option.label}
                           </button>
@@ -228,18 +228,19 @@ export function AdminAccess({ publicId }: { publicId: string }) {
                   </div>
                 </div>
                 {printVariant && (
-                  <p role="status" className="mt-3 text-sm text-muted-foreground">
+                  <p role="status" className="mt-3 text-sm text-text-muted">
                     Preparing {printVariant === "qr" ? "QR code" : "access card"} for printing…
                   </p>
                 )}
                 {copied && <Status message="Link copied to your clipboard." />}
               </section>
-              <section className="rounded-[10px] border border-border bg-card p-6 text-center shadow-[var(--shadow-1)]">
-                <h2 className="text-xl font-semibold">QR access</h2>
-                <div className="mx-auto mt-5 aspect-square w-full max-w-52 rounded-md border-8 border-foreground bg-card p-2">
-                  <QRCodeSVG value={url} aria-label="QR code for event access" className="h-full w-full" />
+              <section className="rounded-[10px] border border-border bg-bg-surface p-6 text-center">
+                <h2 className="text-lg font-semibold text-text-primary">QR access</h2>
+                {/* QR keeps a white quiet zone (bgColor/includeMargin) for scannability on the dark surface. */}
+                <div className="mx-auto mt-5 aspect-square w-full max-w-52 rounded-md border border-border bg-bg-elevated p-3">
+                  <QRCodeSVG value={url} bgColor="#FFFFFF" fgColor="#000000" includeMargin aria-label="QR code for event access" className="h-full w-full" />
                 </div>
-                <p className="mt-4 text-xs text-muted-foreground">Scan with a phone camera to open the guest page, or share the public link.</p>
+                <p className="mt-4 text-xs text-text-muted">Scan with a phone camera to open the guest page, or share the public link.</p>
               </section>
             </div>
           )}

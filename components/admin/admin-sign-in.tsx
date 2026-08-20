@@ -31,13 +31,13 @@ export function AdminSignIn() {
   }
 
   return (
-    <Shell title="Memory table" eyebrow="Admin sign-in">
+    <Shell title="Admin" eyebrow="Admin sign-in">
       <div className="mx-auto max-w-md pt-8">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-[.12em] text-primary">A clear archive for a day worth keeping</p>
-        <h1 className="font-display text-4xl font-semibold tracking-tight">Open your event desk.</h1>
-        <p className="mt-3 text-muted-foreground">Sign in to create an event, share its access card, and review every submission.</p>
-        <form onSubmit={submit} className="mt-8 rounded-[10px] border border-border bg-card p-6 shadow-[var(--shadow-1)]">
-          <label className="block text-sm font-semibold" htmlFor="email">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-[.12em] text-accent">Admin access</p>
+        <h1 className="font-display text-3xl font-semibold tracking-tight text-text-primary">Open your event desk.</h1>
+        <p className="mt-3 text-text-secondary">Sign in to create an event, share its access card, and review every submission.</p>
+        <form onSubmit={submit} className="mt-8 rounded-[10px] border border-border bg-bg-surface p-6">
+          <label className="block text-sm font-semibold text-text-primary" htmlFor="email">
             Email
             <input
               id="email"
@@ -46,10 +46,10 @@ export function AdminSignIn() {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-2 h-11 w-full rounded-md border bg-background px-3 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              className="mt-2 h-11 w-full rounded-md border border-border bg-bg-base px-3 text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             />
           </label>
-          <label className="mt-4 block text-sm font-semibold" htmlFor="password">
+          <label className="mt-4 block text-sm font-semibold text-text-primary" htmlFor="password">
             Password
             <input
               id="password"
@@ -58,7 +58,7 @@ export function AdminSignIn() {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-2 h-11 w-full rounded-md border bg-background px-3 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              className="mt-2 h-11 w-full rounded-md border border-border bg-bg-base px-3 text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             />
           </label>
           {error && <Status error message={error} />}
