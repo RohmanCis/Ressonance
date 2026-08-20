@@ -1,5 +1,7 @@
 # Technical Design — QR Guest Photo & Voicebook
 
+UI/design system: see DESIGN.md in project root.
+
 Status: LOCKED  
 Scope: MVP  
 Sources: `docs/PRD.md` v1.3, `docs/db_scheme.md` v1.0, domain model in PRD §14

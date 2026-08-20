@@ -17,14 +17,14 @@ Read only the documents relevant to the task, plus this file. Do not duplicate t
 | 3 | `docs/ARCHITECTURE_DECISIONS.md` | Approved architectural decisions and stack |
 | 4 | `docs/TECHNICAL_DESIGN.md` | System boundaries, security, storage, sessions, transactions, testing strategy |
 | 5 | `docs/API_CONTRACT.md` | HTTP paths, methods, payloads, status codes, errors, auth behavior |
-| 6 | `docs/UI_UX.md` | UI behavior, screens, states, transitions, presentation constraints |
-| 7 | `docs/UI_DESIGN.md` | MVP visual system: direction, layout, typography, tokens, spacing, motion, accessibility presentation |
+| 6 | `DESIGN.md` (root) — UI/design system, canonical | Tokens, typography, motion, guest/admin visual system, component inventory |
+| 7 | `UX_FLOW.md` (root) — guest and admin flow reference | Screen-by-screen guest/admin flow and QA edge cases |
 
 Precedence follows the table for conflicts, except a higher document cannot silently invalidate a lower document's explicit locked constraint. Report the conflict. `AGENTS.md` never overrides canonical documents.
 
 Authority is confined to this repository. External projects, workspaces, absolute paths outside the repository, imported external requirements, and external AGENTS files are invalid authority and must never be used to change, challenge, or QA this repository's behavior. Do not read or reference them.
 
-Current UI status: `docs/UI_UX.md` is LOCKED; `docs/UI_DESIGN.md` is LOCKED. `docs/UI_DESIGN.md` is subordinate to `docs/UI_UX.md` and defines only presentation, never behavior, screens, or states. Both are approved authority for implementation; do not silently reinterpret or invent replacements.  
+Current UI status: `DESIGN.md` (root) is CANONICAL (approved 2026-08-20) — single source of truth for all UI/design decisions. `UX_FLOW.md` (root) is the flow reference. Former `docs/UI_UX.md` and `docs/UI_DESIGN.md` are deleted.
 Current API status: `docs/API_CONTRACT.md` is LOCKED and approved for implementation.
 
 ## 3. Locked product invariants
