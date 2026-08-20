@@ -51,7 +51,6 @@ The MVP intentionally excludes AI, photo curation, AI filtering, transcription, 
 - Automatic photo filtering.
 - Social login for guests.
 - Guest accounts.
-- Guest text messages ("pesan & kesan") — removed from MVP UI scope (2026-08-20); the API endpoint, schema, and migration remain in place but are not exposed in the guest UI.
 - Complex recommendation systems.
 - Advanced analytics.
 

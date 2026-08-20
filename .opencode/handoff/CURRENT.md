@@ -23,10 +23,10 @@ Guest message feature was already removed from code (prior session). This sessio
 ### Known Outstanding (unchanged)
 
 - Physical-device QA, live admin visual QA — owner confirmed done.
-- `smoke.spec.ts` live-backend test — deferred until after owner completes local UI/UX polish.
 - Architecture-review candidates #2 (shared `apiError` envelope) and #4 (pending-photos predicate facade) — discussion pending.
+- Supabase CLI relinked (2026-08-20): `supabase link --project-ref gwczcwlysvymuomsqhdc` — `.temp/` regenerated, local CLI access restored.
 - Uncommitted work in repo: `.gitignore` edit + deletions (0005/0006 migration files, supabase/.temp/*, e2e/*.png) + new 0009 file. Next: commit separately (repo cleanup vs migration).
 
 ## Next Actions
 
-None — idle. Pending: commit pending repo changes; discuss architecture-review candidates #2/#4 with owner.
+None — idle. Pending: discuss architecture-review candidates #2/#4 with owner.
