@@ -24,7 +24,7 @@ Precedence follows the table for conflicts, except a higher document cannot sile
 
 Authority is confined to this repository. External projects, workspaces, absolute paths outside the repository, imported external requirements, and external AGENTS files are invalid authority and must never be used to change, challenge, or QA this repository's behavior. Do not read or reference them.
 
-Current UI status: `DESIGN.md` (root) is CANONICAL (approved 2026-08-20) — single source of truth for all UI/design decisions. `UX_FLOW.md` (root) is the flow reference. Former `docs/UI_UX.md` and `docs/UI_DESIGN.md` are deleted.
+Current UI status: `DESIGN.md` (root) is CANONICAL (approved 2026-08-20) — single source of truth for all UI/design decisions. `UX_FLOW.md` (root) is the flow reference.
 Current API status: `docs/API_CONTRACT.md` is LOCKED and approved for implementation.
 
 ## 3. Locked product invariants
@@ -83,8 +83,8 @@ Environment: Supabase credentials and rate-limit/upload caps come from env (see 
 
 - TypeScript strict mode; no `any` in new code.
 - Next.js App Router: server-side API under `app/api/**/route.ts`; client components under `components/`.
-- Styling: Tailwind CSS v4 with the token variables from `docs/UI_DESIGN.md` §5 (`--background`, `--primary`, `--ring`, …); shadcn/ui primitives; no inline color literals that bypass tokens.
-- Accessibility is not optional: focus-visible rings, aria-live/status regions, 44px+ touch targets (48px guest primaries), safe-area insets — per `docs/UI_DESIGN.md` §13 and `docs/UI_UX.md` §2.
+- Styling: Tailwind CSS v4 with the token variables from DESIGN.md (root) (`--bg-base`, `--text-primary`, `--accent`, …); shadcn/ui primitives; no inline color literals that bypass tokens.
+- Accessibility is not optional: focus-visible rings, aria-live/status regions, 44px+ touch targets (48px guest primaries), safe-area insets — per DESIGN.md (root) §2 and §13.
 - Comments: sparse, only where a non-obvious invariant or canonical-doc cross-reference must be recorded (see existing `lib/*.ts` docblocks for the pattern).
 - Tests: Vitest co-located as `*.test.ts` next to the code under test; route tests live beside routes. Every non-trivial behavior change leaves a focused runnable test.
 - E2E specs live in `e2e/` (Playwright).
@@ -96,7 +96,7 @@ Environment: Supabase credentials and rate-limit/upload caps come from env (see 
 - **Product/domain task:** `docs/PRD.md` relevant sections; `docs/db_scheme.md` for data impact.
 - **Database/migration task:** `docs/db_scheme.md` + relevant `docs/TECHNICAL_DESIGN.md` sections.
 - **API/backend task:** `docs/API_CONTRACT.md` + relevant `docs/TECHNICAL_DESIGN.md` and `docs/ARCHITECTURE_DECISIONS.md` sections.
-- **UI task:** `docs/UI_UX.md` for behavior/states + `docs/UI_DESIGN.md` for visual system + relevant PRD/API sections; route visual work to Designer.
+- **UI task:** DESIGN.md (root) for the visual system + UX_FLOW.md (root) for flow + relevant PRD/API sections; route visual work to Designer.
 - **Cross-cutting/security task:** relevant sections of all affected canonical documents.
 
 Inspect existing code and conventions after loading context. Read the governing document before modifying code. Do not load every document by default.
