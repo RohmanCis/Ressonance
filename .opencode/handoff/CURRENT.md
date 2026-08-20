@@ -1,23 +1,29 @@
 # Current Task Status
 
-**Status:** IDLE — all redesign phases committed
+**Status:** IDLE — DESIGN.md implementation complete
 **Last updated:** 2026-08-20
 
 ---
 
-## Session summary: dark analog-film redesign (DESIGN.md implementation)
+## Session summary: dark analog-film redesign (DESIGN.md implementation) — ALL PHASES DONE
 
-- Phase 1 — tokens/typography: `app/layout.tsx`, `app/globals.css` → commit `3a652cb`
-- Phase 2 — guest flow redesign, voice as inline slide-up panel (§5): guest screens + e2e → commit `3a652cb`
-- Phase 3 — admin dark-token restyle (§6) + legacy frame-selector retirement (P2): `components/admin/**`, deletion → commit `7ceb45d`
-- All phases validated: tsc PASS, vitest 344/344, Playwright `--workers=1` 39/0/1-skipped, lint baseline, build PASS.
+| Phase | Scope | Commit |
+|---|---|---|
+| 1 | Tokens/typography (§2–§4): fonts, CSS vars, motion, reduced-motion, @theme inline | `3a652cb` |
+| 2 | Guest flow redesign (§5): voice → inline slide-up AudioRecorderPanel on Capture, all guest screens on dark tokens | `3a652cb` |
+| 3 | Admin restyle (§6) + legacy frame-selector retirement (§7 P2) | `7ceb45d` |
+| — | Chore: playwright workers=1 (flakiness fix), legacy oklch token block removed | `bb4ae7c` |
 
-## Outstanding (owner decisions pending)
+DESIGN.md §7 inventory status: all REDESIGN rows implemented (P1 guest, P3 admin); frame-selector.tsx retired (P2); all KEEP rows untouched (useCamera, lib/frames, lib/pending-photos, lib/usage).
 
-- E2e worker flakiness: 4-worker runs false-fail on shared dev-server contention; serial works. Consider `workers: 1` in playwright.config.
-- Architecture-review candidates #2 (apiError envelope) / #4 (predicate facade) — deferred, discussion pending with owner.
-- Known pre-existing: physical-device QA, live authenticated-admin visual QA outstanding (AGENTS.md §12).
+Validation at each phase: tsc PASS, vitest 344/344, Playwright serial 39/0/1-skipped, lint baseline, build PASS.
+
+## Outstanding (owner decisions pending, not blocking)
+
+- Architecture-review candidates #2 (apiError envelope) / #4 (predicate facade) — deferred per AGENTS.md §12 triggers.
+- Physical-device scanner QA, live authenticated-admin visual QA on dark UI — owner manual.
+- No unimplemented DESIGN.md phases remain.
 
 ## Next Actions
 
-None — idle. Owner manually testing locally on port 3000.
+None — idle.
