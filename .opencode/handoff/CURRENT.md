@@ -1,22 +1,25 @@
 # Current Task Status
 
-**Status:** DELEGATED
-**Task ID:** fix-mobile-media-qa
-**Agent:** @fixer
-**Started:** 2026-08-20
+**Status:** IDLE
+**Last updated:** 2026-08-20
 
 ---
 
-## Task: Rewrite `e2e/mobile-media-qa.spec.ts` for sequential flow
+## Last Session (closed, pushed)
 
-Recreate deleted spec with 18 tests adapted to sequential screens (capture → photo-review → voice → done). Preserve all assertions; update navigation/selectors only per UI_UX §4.3–§4.7 (2026-08-20 amendment).
+Push complete: `b3a7b6d..9beb875 main -> main`.
 
-**Acceptance:** 18 tests (3 frame, 8 photo, 7 voice, 1 usage) pass; `npm run e2e` baseline + 18 green.
+### Completed Work
 
-**Files in scope:** `e2e/mobile-media-qa.spec.ts` (created).
+1. **E2E mobile-media coverage restored:** `e2e/mobile-media-qa.spec.ts` recreated (18 tests) for sequential guest flow (capture → photo-review → voice → done, UI_UX §4.3–§4.7). Frame 3 / photo 8 / voice 6 / usage 1.
+2. **Photo-review advance race fixed:** `handleReviewNext()` in `components/guest-event-entry.tsx` — `advancePendingRef` + deferred-advance effect replacing stale-ref post-sync check. Single CTA click now syncs + advances.
+3. **Validation:** typecheck PASS; vitest 395/395; e2e 38 passed / 1 skipped / 0 failed; lint clean (pre-existing baseline only).
 
----
+### Known Outstanding (pre-existing, unchanged)
 
-## Previous Session (closed 2026-08-20)
+- Physical-device QA, live admin visual QA
+- `smoke.spec.ts` live-backend test (skipped; requires PLAYWRIGHT_LIVE=1)
 
-Architecture deepening #1 + #3 completed: `lib/guest-submission-auth.ts`, `lib/guest-submission-pipeline.ts`, `lib/usage.ts`; vitest 395/395.
+## Next Actions
+
+None — idle.

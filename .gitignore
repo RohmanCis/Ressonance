@@ -43,6 +43,7 @@ coverage/
 
 # supabase (Local CLI)
 supabase/.tmp/
+supabase/.temp/
 supabase/.output/
 test-results/
 playwright-report/
@@ -56,6 +57,7 @@ playwright-report/
 
 # playwright print-qa artifacts (generated, not source)
 e2e/*.pdf
+e2e/*.png
 
 # opencode local workspace (agent session handoffs, tooling, node_modules)
 .opencode/
