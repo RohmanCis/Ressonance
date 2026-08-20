@@ -86,7 +86,7 @@ export function FrameSelection({
                 className="text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               >
                 <span
-                  className={`relative block aspect-[9/16] overflow-hidden rounded-lg border-2 bg-bg-surface transition-transform duration-fast ${
+                  className={`relative block aspect-[9/16] overflow-hidden rounded-lg border-2 bg-bg-surface transition-transform duration-fast hover:scale-[1.02] ${
                     isSelected ? "scale-[1.02] border-accent bg-accent-soft" : "border-border"
                   }`}
                 >
@@ -117,7 +117,7 @@ export function FrameSelection({
         <button
           type="button"
           onClick={confirm}
-          className="min-h-12 w-full rounded-lg bg-accent px-4 font-semibold text-on-accent transition duration-fast ease-out hover:brightness-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          className="gold-foil-btn min-h-12 w-full rounded-lg px-4 font-semibold transition duration-fast ease-out"
         >
           {selected ? `Use ${selected.label}` : "Continue without frame"}
         </button>

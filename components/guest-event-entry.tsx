@@ -594,7 +594,10 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
 
   // --- Render: done ---
   if (state === "done" && event) {
-    return <Done eventTitle={event.title} />;
+    // Keepsake: last server-confirmed capture, still in client memory (§5.4).
+    const keepsakeUrl =
+      [...pendingPhotos].reverse().find((p) => p.status === "confirmed")?.previewUrl ?? null;
+    return <Done eventTitle={event.title} keepsakeUrl={keepsakeUrl} />;
   }
 
   return null;

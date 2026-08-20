@@ -87,7 +87,7 @@ export function PreSession({
     <Shell>
       <Card>
         <header>
-          <p className="text-xs font-medium tracking-[0.04em] text-text-muted">You&rsquo;re invited</p>
+          <p className="text-center font-script text-3xl text-text-muted">You&rsquo;re invited</p>
           <h1 className="mt-3 font-display text-4xl font-semibold leading-tight tracking-tight text-text-primary">
             {event.title}
           </h1>
@@ -162,7 +162,7 @@ export function PreSession({
           <button
             type="submit"
             disabled={blocked || state === "starting"}
-            className="h-12 w-full rounded-lg bg-accent px-4 font-semibold text-on-accent transition duration-fast ease-out hover:brightness-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-45"
+            className="gold-foil-btn h-12 w-full rounded-lg px-4 font-semibold transition duration-fast ease-out disabled:cursor-not-allowed disabled:opacity-45"
           >
             {state === "starting"
               ? "Starting…"

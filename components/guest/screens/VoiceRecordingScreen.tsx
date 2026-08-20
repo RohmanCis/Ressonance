@@ -21,6 +21,57 @@ function formatTimer(seconds: number): string {
 }
 
 /**
+ * Vintage cassette visual (Luxury Analog). Spools and level bars animate
+ * strictly during the `recording` state; idle/review render them static.
+ */
+function Cassette({ recording }: { recording: boolean }) {
+  return (
+    <div
+      aria-hidden="true"
+      className="w-full max-w-xs rounded-xl border border-border bg-bg-surface px-6 py-5 shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
+    >
+      <div className="flex items-center justify-between gap-4">
+        <Spool spinning={recording} />
+        {/* Level window */}
+        <div className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-md border border-border bg-bg-base px-3">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <span
+              key={i}
+              className={`h-8 w-1.5 origin-center rounded-full bg-accent ${
+                recording ? "animate-wave-pulse" : "scale-y-[0.3]"
+              }`}
+              style={recording ? { animationDelay: `${i * 120}ms` } : undefined}
+            />
+          ))}
+        </div>
+        <Spool spinning={recording} />
+      </div>
+      <div className="mt-3 flex items-center justify-between font-mono text-[0.6rem] tracking-[0.2em] text-text-muted">
+        <span>SIDE A</span>
+        <span>60</span>
+      </div>
+    </div>
+  );
+}
+
+function Spool({ spinning }: { spinning: boolean }) {
+  return (
+    <span
+      className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-border bg-bg-elevated ${
+        spinning ? "animate-spin-tape" : ""
+      }`}
+    >
+      {/* Spokes */}
+      <span className="relative block h-8 w-8 rounded-full border border-border bg-bg-base">
+        <span className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-border" />
+        <span className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-border" />
+        <span className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent" />
+      </span>
+    </span>
+  );
+}
+
+/**
  * VOICE_NOTE — dedicated full-screen voice recording step (DESIGN.md §5.5),
  * reached after PHOTO_REVIEW syncs. Gold mic button, DM Mono timer
  * (00:00 / 00:30), pulse-free recording status; review state with playback,
@@ -114,6 +165,7 @@ export function VoiceRecordingScreen({
           </div>
         ) : showMic ? (
           <>
+            <Cassette recording={recording} />
             <button
               type="button"
               onClick={recording ? onStop : onRecord}
@@ -177,7 +229,7 @@ export function VoiceRecordingScreen({
               type="button"
               onClick={onSubmit}
               disabled={submitting || closed || voiceState === "success"}
-              className="min-h-12 w-full rounded-lg bg-accent px-4 font-semibold text-on-accent transition duration-fast ease-out hover:brightness-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-45"
+              className="gold-foil-btn min-h-12 w-full rounded-lg px-4 font-semibold transition duration-fast ease-out disabled:cursor-not-allowed disabled:opacity-45"
             >
               {submitting ? "Mengirim…" : "Kirim Pesan Suara"}
             </button>

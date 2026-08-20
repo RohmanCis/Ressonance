@@ -203,7 +203,7 @@ export function Capture({
                 type="button"
                 onClick={handleShutter}
                 disabled={shutterDisabled}
-                className="h-18 w-18 shrink-0 rounded-full border-4 border-bg-base bg-accent transition-transform duration-fast ease-out active:scale-[0.92] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-45"
+                className="h-18 w-18 shrink-0 rounded-full border-4 border-bg-base bg-accent shadow-[0_0_18px_rgba(212,175,55,0.45),0_0_48px_rgba(212,175,55,0.18)] transition duration-fast ease-out hover:shadow-[0_0_26px_rgba(212,175,55,0.65),0_0_64px_rgba(212,175,55,0.28)] active:scale-[0.92] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-45"
                 aria-label="Take photo"
               />
               {budgetRemaining <= 0 && !closed && (
@@ -316,7 +316,7 @@ function PendingStrip({
   return (
     <div className="flex gap-2 overflow-x-auto pb-1" role="list" aria-label="Captured photos">
       {photos.map((photo, index) => (
-        <div key={photo.id} role="listitem" className="relative shrink-0">
+        <div key={photo.id} role="listitem" className="relative shrink-0 animate-develop">
           <button
             type="button"
             onClick={() => onReview(index)}

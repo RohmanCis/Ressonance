@@ -62,7 +62,11 @@ export function PhotoReview({
         ) : (
           <ul className="grid grid-cols-3 gap-2" aria-label="Captured photos">
             {photos.map((photo, index) => (
-              <li key={photo.id} className="relative">
+              <li
+                key={photo.id}
+                className="relative animate-develop"
+                style={{ animationDelay: `${index * 60}ms` }}
+              >
                 <div className="aspect-square overflow-hidden rounded-lg border border-border bg-bg-surface">
                   <img
                     src={photo.previewUrl}
@@ -118,7 +122,7 @@ export function PhotoReview({
           type="button"
           onClick={onNext}
           disabled={ctaDisabled}
-          className="min-h-12 w-full rounded-lg bg-accent px-4 font-semibold text-on-accent transition duration-fast ease-out hover:brightness-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-45"
+          className="gold-foil-btn min-h-12 w-full rounded-lg px-4 font-semibold transition duration-fast ease-out disabled:cursor-not-allowed disabled:opacity-45"
         >
           {syncing ? "Mengirim foto…" : "Kirim & Lanjut"}
         </button>
