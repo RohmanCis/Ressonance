@@ -8,6 +8,7 @@
  * local capture budget is a UX hint only (§4.4, §7).
  */
 
+// Server copies in lib/submit-photo.ts & lib/get-session-usage.ts (kept separate to avoid client deps in server bundle).
 export const PHOTO_LIMIT = 5;
 
 /** Per-item status in the pending buffer (UI_UX §4.4). */

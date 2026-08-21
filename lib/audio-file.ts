@@ -8,7 +8,7 @@
  * `format_name` to an approved MIME type. Size limit is configurable via env.
  */
 
-export const VOICE_NOTE_MIME_TYPES = [
+const VOICE_NOTE_MIME_TYPES = [
   "audio/webm",
   "audio/ogg",
   "audio/mp4",

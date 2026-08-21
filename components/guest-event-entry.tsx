@@ -504,7 +504,6 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
         expiredPending={expiredPending}
         onNameChange={setName}
         onStart={start}
-        onCarryOver={() => {}}
         onDeclineCarryOver={() => {
           setCarryOverPrompt(false);
           setExpiredPending([]);

@@ -34,7 +34,6 @@ export function PreSession({
   expiredPending: PendingPhoto[];
   onNameChange: (value: string) => void;
   onStart: (e: FormEvent<HTMLFormElement>) => void;
-  onCarryOver?: () => void;
   onDeclineCarryOver: () => void;
 }) {
   if (state === "loading") {

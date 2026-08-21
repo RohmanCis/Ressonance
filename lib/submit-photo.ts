@@ -23,6 +23,7 @@ import type { PhotoTxRepo } from "@/lib/photo-tx-repo";
  * (QA-3).
  */
 
+// Client copy in lib/pending-photos.ts (kept separate to avoid server deps in client bundle).
 export const PHOTO_LIMIT = 5;
 
 export interface Submission {

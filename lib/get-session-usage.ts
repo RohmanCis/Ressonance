@@ -41,6 +41,7 @@ export type GetUsageResult =
   | { kind: "session_expired" }
   | { kind: "ok"; body: UsageBody };
 
+// Client copy in lib/pending-photos.ts (kept separate to avoid server deps in client bundle).
 const PHOTO_LIMIT = 5;
 
 export async function getSessionUsage(

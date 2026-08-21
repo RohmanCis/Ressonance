@@ -1,22 +1,34 @@
-# Result — DESIGN.md §5.2 Canonical Frame Registry Sync
+# Result — Bounded cleanup post-audit (2026-08-21)
 
-**Status:** COMPLETE
-**Date:** 2026-08-21
-**Executor:** orchestrator (direct — single-doc bounded edit; delegation overhead exceeded execution)
-**Task contract:** `.opencode/handoff/task.md` (Canonical Docs Update — DESIGN.md §5.2 Frame Registry Sync)
+## Status
+COMPLETE — all 4 scoped items done, no out-of-scope changes.
 
-## Files Changed
-- `DESIGN.md` §5.2 only — two bullets inserted between "Primary action placement" and "Transition" (no other section touched):
-  1. **Canonical frame registry (Dynamic Frame Engine, owner-approved 2026-08-21)** — documents exactly three luxury templates plus `none` default: `royal-gold` ("Royal Gold Serif", double-hairline border + corner flourishes + center diamonds, Cormorant Garamond italic 96px gold), `botanical-romance` ("Botanical Romance", organic rails + botanical clusters + berry accents, Pinyon Script 124px ivory), `modern-editorial` ("Modern Editorial", editorial rules + crop marks + monogram + brackets, DM Mono 58px uppercase 16px tracking).
-  2. **Dynamic composition model (`FrameTextLayer`)** — assets are 1080×1920 true-alpha PNGs, never baked text; event title interpolates at shutter time from per-template text layers (font role, size, weight, tracking, color, `yRatio` anchor band 0.845–0.875); fonts resolve from next/font variables (`--font-cormorant`, `--font-pinyon`, `--font-dm-mono`); drawing gated on `document.fonts.ready`; output 1080×1920 JPEG q0.92; overlay + text never mirrored.
+## Files changed
+- `AGENTS.md` (§12): stale `VoiceAndMessage.tsx` → `VoiceRecordingScreen.tsx`; QA metrics refreshed — vitest 353/353 (43 files) PASS, Typecheck PASS, Playwright E2E 39 passed / 1 skipped / 0 failed (2026-08-21, post-redesign d313372). Lint claim untouched (baseline). All other §12 content intact.
+- `app/globals.css`: deleted unused `.bg-espresso-mesh` (incl. its comment header), `.gold-foil-text` (incl. comment header), `.vignette-overlay` (incl. comment header). Grep-verified zero usage outside globals.css. No keyframes affected (these classes used no keyframes).
+- `components/guest/screens/PreSession.tsx`: removed dead `onCarryOver?: () => void` prop (line 37).
+- `components/guest-event-entry.tsx`: removed no-op `onCarryOver={() => {}}` (line 507).
+- `lib/audio-file.ts`: removed `export` from `VOICE_NOTE_MIME_TYPES` (still used internally at `VoiceNoteMimeType` line 17). No external importers exist.
+- `package.json`: added `"frames:generate": "node scripts/generate-frames.mjs"` (script target `scripts/generate-frames.mjs` confirmed to exist).
+- `lib/submit-photo.ts`: added PHOTO_LIMIT comment (server → client copy note).
+- `lib/get-session-usage.ts`: added PHOTO_LIMIT comment (server → client copy note).
+- `lib/pending-photos.ts`: added PHOTO_LIMIT comment (client → server copies note).
 
-## Verification (vs implemented code — zero unratified drift)
-- All documented facts cross-checked 1:1 against `lib/frames.ts` (registry ids, labels, fonts, sizes, colors, yRatio band), `lib/frame-compositing.ts` (`compositeDynamicFrame`, `resolveFontFamily`, `document.fonts.ready` gating), `hooks/use-camera.ts` (JPEG 0.92, mirror rule), `app/layout.tsx` (font variables). No values invented; no behavior changes.
-- Markdown formatting verified — matches §5.2 bullet style; section structure unchanged.
-- `npm run typecheck` — PASS, 0 errors (docs-only change; gate re-run per task contract).
+## Validation
+- `npm run typecheck` — PASS (exit 0).
+- `npm test` — PASS: 43 files, 353/353 tests (matches expected).
+- E2E not re-run (read-only contract; no behavior change; metrics sourced from §12 baseline d313372).
 
-## SSOT Conflicts / Architecture Drift
-- None. Edit scoped to the owner-approved §5.2 sync; no other canonical doc modified.
+## Blockers
+None.
 
-## Next Step
-- Idle. Outstanding (pre-existing, owner-held): live physical-device visual QA of composited output.
+## Assumptions
+- Exact comment wording for the 3 PHOTO_LIMIT sites not prescribed by task; used the quoted phrase verbatim for server files and a mirrored reverse-phrase for the client file, matching one-line `//` style in lib/*.ts.
+- §12 QA paragraph rewrite: dropped stale parenthetical "(2026-08-20, post ADR-012 deepening; feature removal dropped 4 test files and 51 tests)" as it contradicts refreshed metrics; kept the lint baseline sentence verbatim.
+- `.gold-foil-btn` NOT removed — not in scope (still used by PreSession CTA).
+
+## SSOT conflict
+None observed. Task line references match actual file state (verified before editing).
+
+## Next step
+Orchestrator reconcile; no drift expected — typecheck + full vitest green.
