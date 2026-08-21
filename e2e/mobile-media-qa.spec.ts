@@ -200,7 +200,9 @@ test.describe("Frame selection (9:16 standard, DESIGN.md §5.2)", () => {
     // box must hold the single 9:16 standard (not the full viewport).
     const vbox = await video.boundingBox();
     expect(vbox!.width / vbox!.height).toBeCloseTo(9 / 16, 2);
-    await expect(page.locator("img[src='/frames/royal-gold.png']")).toBeVisible();
+    // Scoped to the 9:16 viewport box: the ambient blurred backdrop img also
+    // matches the raw src, but it lives outside the box (DESIGN.md §5.3).
+    await expect(page.locator("div.aspect-\\[9\\/16\\] img[src='/frames/royal-gold.png']")).toBeVisible();
   });
 
   test("keyboard navigation moves the selection with arrow keys", async ({ page }) => {

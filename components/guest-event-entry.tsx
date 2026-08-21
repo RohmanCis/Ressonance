@@ -67,6 +67,8 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
 
   // Expiry / carry-over
   const [expiredPending, setExpiredPending] = useState<PendingPhoto[]>([]);
+  const expiredPendingRef = useRef<PendingPhoto[]>([]);
+  expiredPendingRef.current = expiredPending;
   const [carryOverPrompt, setCarryOverPrompt] = useState(false);
   const sessionStartRef = useRef<number | null>(null);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
@@ -75,6 +77,8 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
   // step after photo review (DESIGN.md §5.5).
   const [voice, setVoice] = useState<Blob | null>(null);
   const [voiceUrl, setVoiceUrl] = useState("");
+  const voiceUrlRef = useRef("");
+  voiceUrlRef.current = voiceUrl;
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
   const [voiceMessage, setVoiceMessage] = useState("");
   const [voiceSeconds, setVoiceSeconds] = useState(0);
@@ -485,11 +489,10 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
   // --- Cleanup object URLs on unmount ---
   useEffect(() => {
     return () => {
-      pendingPhotos.forEach((p) => { if (p.previewUrl) URL.revokeObjectURL(p.previewUrl); });
-      expiredPending.forEach((p) => { if (p.previewUrl) URL.revokeObjectURL(p.previewUrl); });
-      if (voiceUrl) URL.revokeObjectURL(voiceUrl);
+      pendingPhotosRef.current.forEach((p) => { if (p.previewUrl) URL.revokeObjectURL(p.previewUrl); });
+      expiredPendingRef.current.forEach((p) => { if (p.previewUrl) URL.revokeObjectURL(p.previewUrl); });
+      if (voiceUrlRef.current) URL.revokeObjectURL(voiceUrlRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // --- Render: pre-session states ---

@@ -6,7 +6,7 @@ function slugify(value: string): string {
 }
 
 /**
- * DONE — terminal screen of the guest flow (DESIGN.md §5.4). Quiet, centered,
+ * DONE — terminal screen of the guest flow (DESIGN.md §5.6). Quiet, centered,
  * full-screen --bg-base: one gold check glyph (not animated), the event
  * title in Cormorant 4xl, two short receipt lines, the animated wax-seal
  * stamp (Luxury Analog), and an optional Digital Keepsake card offering a

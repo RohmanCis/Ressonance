@@ -75,23 +75,37 @@ export function PhotoReview({
                   />
                 </div>
                 <StatusBadge status={photo.status} />
+                {/* 44×44 hit area: invisible padded button, visual chip stays
+                    28px anchored at the tile corner (AGENTS.md §6). The extra
+                    16px extends into the tile's own non-interactive image and
+                    the grid gap — never onto neighboring controls. */}
                 <button
                   type="button"
                   onClick={() => onDeletePhoto(photo.id)}
                   disabled={!canDeletePhoto(photo.status)}
                   aria-label={`Delete photo ${index + 1}`}
-                  className="absolute -right-1 -top-1 flex h-7 w-7 items-center justify-center rounded-full bg-error text-sm font-bold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-45"
+                  className="group absolute -right-1 -top-1 flex h-11 w-11 items-start justify-end rounded-full focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-45"
                 >
-                  <span aria-hidden="true">✕</span>
+                  <span
+                    aria-hidden="true"
+                    className="flex h-7 w-7 items-center justify-center rounded-full bg-error text-sm font-bold text-text-primary group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-accent"
+                  >
+                    ✕
+                  </span>
                 </button>
                 {photo.status === "error" && (
                   <button
                     type="button"
                     onClick={() => onRetryPhoto(photo.id)}
                     aria-label={`Retry photo ${index + 1}: ${photo.errorMessage ?? "upload failed"}`}
-                    className="absolute -left-1 -top-1 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-bg-elevated text-sm font-bold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                    className="group absolute -left-1 -top-1 flex h-11 w-11 items-start justify-start rounded-full focus-visible:outline-none"
                   >
-                    <span aria-hidden="true">↻</span>
+                    <span
+                      aria-hidden="true"
+                      className="flex h-7 w-7 items-center justify-center rounded-full border border-border bg-bg-elevated text-sm font-bold text-text-primary group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-accent"
+                    >
+                      ↻
+                    </span>
                   </button>
                 )}
               </li>

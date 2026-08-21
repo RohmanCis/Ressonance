@@ -118,13 +118,13 @@ export function Capture({
               <button
                 type="button"
                 onClick={camera.switchCamera}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-bg-base/60 backdrop-blur-md border border-border/60 text-sm font-semibold text-text-primary shadow-lg transition active:scale-95 focus-visible:outline-2 focus-visible:outline-accent"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-bg-base/60 backdrop-blur-md border border-border/60 text-sm font-semibold text-text-primary shadow-lg transition active:scale-95 focus-visible:outline-2 focus-visible:outline-accent"
                 aria-label="Switch camera"
               >
                 ↻
               </button>
             ) : (
-              <div className="h-10 w-10" />
+              <div className="h-11 w-11" />
             )}
           </div>
 
@@ -351,7 +351,11 @@ function PendingStrip({
   onRetry: (id: string) => void;
 }) {
   return (
-    <div className="flex gap-2 overflow-x-auto pb-1 max-w-full px-2" role="list" aria-label="Captured photos">
+    // pt-7 + -mt-7: keeps the strip's layout position unchanged while giving
+    // the scrollport 28px of top room so the retry button's enlarged hit
+    // zone (which overhangs the thumbnail upward) is not clipped by
+    // overflow-x-auto (overflow-y computes to auto and clips top overhang).
+    <div className="-mt-7 flex gap-2 overflow-x-auto px-2 pt-7 pb-1 max-w-full" role="list" aria-label="Captured photos">
       {photos.map((photo, index) => (
         <div key={photo.id} role="listitem" className="relative shrink-0 animate-develop">
           <button
@@ -364,13 +368,23 @@ function PendingStrip({
           </button>
           <PendingStatusBadge status={photo.status} />
           {photo.status === "error" && (
+            // 44×44 hit area: invisible padded button; the 20px visual chip
+            // keeps its exact corner position (bottom-right of the box). The
+            // zone extends 24px up (free space) and 24px left over the top
+            // strip of THIS photo's own thumbnail only — never onto the
+            // neighboring item (gap is 8px; right overhang stays 4px).
             <button
               type="button"
               onClick={() => onRetry(photo.id)}
-              className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-error text-xs font-bold text-text-primary shadow-md focus-visible:outline-2 focus-visible:outline-accent"
+              className="group absolute -right-1 -top-7 flex h-11 w-11 items-end justify-end focus-visible:outline-none"
               aria-label="Retry upload"
             >
-              ↻
+              <span
+                aria-hidden="true"
+                className="flex h-5 w-5 items-center justify-center rounded-full bg-error text-xs font-bold text-text-primary shadow-md group-focus-visible:outline-2 group-focus-visible:outline-accent"
+              >
+                ↻
+              </span>
             </button>
           )}
         </div>
