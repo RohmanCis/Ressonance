@@ -4,15 +4,6 @@ import { KeyboardEvent, useRef, useState } from "react";
 import { Check } from "lucide-react";
 import { DEFAULT_FRAME_ID, FRAMES, type Frame } from "@/lib/frames";
 
-/**
- * FRAME_SELECTION — pre-camera frame picker (DESIGN.md §5.2). Full-screen
- * --bg-base, Cormorant heading, 2-column grid of 9:16 preview cards on
- * --bg-surface with --border hairlines; the selected card settles with a
- * gold 2px border + --accent-soft fill + gold check badge. "No Frame" is
- * never a grid card — reachable only via the skip link. Radio-group keyboard
- * behavior (arrow keys, roving tabindex, aria-checked) is preserved.
- */
-
 const OPTIONS: Frame[] = FRAMES.filter((frame) => frame.id !== DEFAULT_FRAME_ID);
 
 export function FrameSelection({
@@ -22,8 +13,9 @@ export function FrameSelection({
   eventTitle: string;
   onFrameConfirm: (frame: Frame) => void;
 }) {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(OPTIONS[0]?.id ?? null);
   const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const headingRef = useRef<HTMLHeadingElement | null>(null);
   const selected = OPTIONS.find((frame) => frame.id === selectedId) ?? null;
   const noneFrame = FRAMES.find((frame) => frame.id === DEFAULT_FRAME_ID);
 
@@ -32,6 +24,7 @@ export function FrameSelection({
     const next = (from + delta + OPTIONS.length) % OPTIONS.length;
     setSelectedId(OPTIONS[next].id);
     optionRefs.current[next]?.focus();
+    optionRefs.current[next]?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
@@ -50,25 +43,39 @@ export function FrameSelection({
   }
 
   return (
-    <main className="flex min-h-dvh flex-col bg-bg-base text-text-primary">
-      <header className="px-5 pt-[calc(2rem+env(safe-area-inset-top))] sm:px-8">
-        <p className="truncate text-xs font-medium tracking-[0.04em] text-text-muted">{eventTitle}</p>
+    <main className="relative flex h-dvh max-h-dvh w-full max-w-full flex-col justify-between overflow-hidden bg-bg-base text-text-primary select-none">
+      
+      {/* 1. AMBIENT GLOW & FILM GRAIN (ISOLATED INSIDE VIEWPORT) */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-20 -right-20 h-80 w-80 rounded-full bg-accent/15 blur-[90px]" />
+        <div className="absolute -bottom-20 -left-20 h-80 w-80 rounded-full bg-accent/10 blur-[100px]" />
+        <div className="absolute inset-0 film-grain" />
+      </div>
+
+      {/* 2. HEADER SECTION (COMPACT & CENTERED) */}
+      <header className="relative z-10 shrink-0 px-5 pt-[calc(1.25rem+env(safe-area-inset-top))] text-center w-full max-w-full">
+        <p className="font-script text-2xl text-accent drop-shadow-sm truncate">
+          {eventTitle || "Wedding Keepsake"}
+        </p>
         <h1
           id="frame-heading"
-          className="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight"
+          ref={headingRef}
+          tabIndex={-1}
+          className="mt-0.5 font-display text-3xl font-normal leading-tight tracking-tight text-text-primary outline-none sm:text-4xl"
         >
-          Choose a frame
+          Pilih Bingkai Foto
         </h1>
-        <p className="mt-2 text-sm text-text-secondary">
-          The frame is added to your photos when you take them. You can also continue without one.
+        <p className="mt-1 text-xs text-text-secondary">
+          Bingkai akan terpatri otomatis di setiap jepretan foto Anda.
         </p>
       </header>
 
-      <div className="flex-1 px-5 py-6 sm:px-8">
+      {/* 3. HERO HORIZONTAL CAROUSEL (DETERMINISTIC 9:16 SIZING) */}
+      <div className="relative z-10 flex flex-1 min-h-0 min-w-0 w-full max-w-full items-center justify-center py-2 overflow-hidden">
         <div
           role="radiogroup"
           aria-labelledby="frame-heading"
-          className="grid grid-cols-2 gap-3"
+          className="scrollbar-hide flex h-full max-h-[50dvh] w-full max-w-full snap-x snap-mandatory items-center justify-start gap-4 overflow-x-auto overscroll-x-contain px-8 py-3 touch-pan-x sm:justify-center"
         >
           {OPTIONS.map((frame, index) => {
             const isSelected = frame.id === selectedId;
@@ -81,56 +88,70 @@ export function FrameSelection({
                 aria-checked={isSelected}
                 aria-label={frame.label}
                 tabIndex={selectedId === null ? (index === 0 ? 0 : -1) : isSelected ? 0 : -1}
-                onClick={() => setSelectedId(frame.id)}
+                onClick={() => {
+                  setSelectedId(frame.id);
+                  optionRefs.current[index]?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+                }}
                 onKeyDown={(event) => handleKeyDown(event, index)}
-                className="text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                className="group relative flex h-full shrink-0 snap-center flex-col items-center justify-between outline-none"
               >
-                <span
-                  className={`relative block aspect-[9/16] overflow-hidden rounded-lg border-2 bg-bg-surface transition-transform duration-fast hover:scale-[1.02] ${
-                    isSelected ? "scale-[1.02] border-accent bg-accent-soft" : "border-border"
+                {/* 9:16 Card Container */}
+                <div
+                  className={`relative h-[calc(100%-1.75rem)] aspect-[9/16] overflow-hidden rounded-2xl border-2 bg-bg-surface/90 p-1.5 transition-all duration-fast group-focus-visible:ring-2 group-focus-visible:ring-accent group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-bg-base ${
+                    isSelected
+                      ? "border-accent bg-accent-soft shadow-[0_0_25px_color-mix(in_srgb,var(--accent)_35%,transparent)] ring-1 ring-accent"
+                      : "border-border/60 opacity-60 hover:opacity-100 hover:border-text-muted"
                   }`}
                 >
                   <img
                     src={frame.src}
                     alt=""
                     aria-hidden="true"
-                    className="pointer-events-none absolute inset-0 h-full w-full object-contain"
+                    className="pointer-events-none h-full w-full rounded-xl object-contain"
                   />
+
+                  {/* Active Gold Check Badge */}
                   {isSelected && (
                     <span
                       aria-hidden="true"
-                      className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-on-accent"
+                      className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-on-accent shadow-md"
                     >
-                      <Check className="h-4 w-4" aria-hidden="true" />
+                      <Check className="h-3 w-3 stroke-[3]" />
                     </span>
                   )}
+                </div>
+
+                {/* Frame Title Label */}
+                <span
+                  className={`h-5 flex items-center justify-center text-xs font-medium transition-colors ${
+                    isSelected ? "text-accent font-semibold" : "text-text-secondary"
+                  }`}
+                >
+                  {frame.label}
                 </span>
-                <span className="mt-2 block text-sm font-medium">{frame.label}</span>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Bottom action band, safe-area pinned */}
-      <div className="space-y-3 px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:px-8">
+      {/* 4. PINNED BOTTOM ACTION BAND */}
+      <div className="relative z-10 shrink-0 space-y-2.5 px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:px-8 max-w-md mx-auto w-full">
         <button
           type="button"
           onClick={confirm}
-          className="gold-foil-btn min-h-12 w-full rounded-lg px-4 font-semibold transition duration-fast ease-out"
+          className="gold-foil-btn h-12 w-full rounded-xl text-sm font-semibold transition duration-fast hover:brightness-105 active:scale-[0.98] shadow-lg"
         >
-          {selected ? `Use ${selected.label}` : "Continue without frame"}
+          {selected ? `Gunakan Bingkai ${selected.label}` : "Lanjut Tanpa Bingkai"}
         </button>
 
-        {selected && (
-          <button
-            type="button"
-            onClick={() => { if (noneFrame) onFrameConfirm(noneFrame); }}
-            className="block min-h-11 w-full text-center text-sm font-medium text-text-muted underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-          >
-            Skip — no frame
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => { if (noneFrame) onFrameConfirm(noneFrame); }}
+          className="block min-h-12 w-full text-center text-xs font-medium text-text-muted underline underline-offset-4 hover:text-text-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        >
+          Lewati — Tanpa Bingkai
+        </button>
       </div>
     </main>
   );

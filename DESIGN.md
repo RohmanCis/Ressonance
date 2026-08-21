@@ -2,7 +2,7 @@
 
 **Status:** CANONICAL — approved 2026-08-20. Single source of truth for all UI/design decisions. This document supersedes the former light "memory-table" system (docs/UI_DESIGN.md and docs/UI_UX.md, now deleted). No backend, API, schema, or flow-authority change is involved.
 
-Owner design decisions (2026-08-20, locked): frame picker as a separate screen before camera; a completion/Done screen after all submissions; admin full redesign on the same dark tokens; branding by event name only (no logo); Cormorant Garamond headings, DM Sans body, DM Mono for counters/timers; `#0d0d0f` background, warm off-white `#f0ebe0` text, warm gold `#c8a96e` as the only accent; camera fullscreen as hero; audio recorder as a slide-up panel (no screen change); mobile-first; CSS transitions only (transform + opacity); `prefers-reduced-motion` respected on all animations.
+Owner design decisions (2026-08-20, locked; token + copy update 2026-08-21, owner-ratified): frame picker as a separate screen before camera; a completion/Done screen after all submissions; admin full redesign on the same dark tokens; branding by event name only (no logo); Cormorant Garamond headings, DM Sans body, DM Mono for counters/timers; Deep Espresso palette — `#14110f` background, warm off-white `#f7f2ea` text, warm gold `#d4af37` as the only accent; camera fullscreen as hero; voice note as a dedicated full-screen step in the sequential flow (§5.5, no slide-up panel); mobile-first; CSS transitions only (transform + opacity); `prefers-reduced-motion` respected on all animations; guest-facing copy language is Bahasa Indonesia (santai dan ramah).
 
 ---
 
@@ -14,14 +14,14 @@ The experience should feel like handling a roll of film at a wedding table at ni
 
 ```css
 :root {
-  --bg-base: #0d0d0f;        /* page background — near-black, slightly cool */
-  --bg-surface: #151518;     /* cards, panels, review tiles */
-  --bg-elevated: #1c1c21;    /* slide-up audio panel, dialogs, popovers */
-  --text-primary: #f0ebe0;   /* warm off-white ink */
-  --text-secondary: #c9c2b4; /* supporting copy, labels */
-  --text-muted: #8a8478;     /* hints, timestamps, placeholders */
-  --accent: #c8a96e;         /* warm gold — actions, active states ONLY */
-  --accent-soft: rgba(200, 169, 110, 0.14); /* selected-frame glow, active fills */
+  --bg-base: #14110f;        /* page background — deep espresso, warm near-black */
+  --bg-surface: #1c1815;     /* cards, panels, review tiles */
+  --bg-elevated: #28221e;    /* dialogs, popovers, elevated widgets */
+  --text-primary: #f7f2ea;   /* warm off-white ink */
+  --text-secondary: #d4cec3; /* supporting copy, labels */
+  --text-muted: #9a8f82;     /* hints, timestamps, placeholders */
+  --accent: #d4af37;         /* warm gold — actions, active states ONLY */
+  --accent-soft: rgba(212, 175, 55, 0.14); /* selected-frame glow, active fills */
   --error: #c0564f;          /* destructive / upload failure */
   --success: #7da37a;        /* confirmed persistence */
   --border: rgba(240, 235, 224, 0.12); /* hairline dividers, field edges */
@@ -29,7 +29,7 @@ The experience should feel like handling a roll of film at a wedding table at ni
 }
 ```
 
-Rules: gold is the only accent and appears only on primary actions, focus rings, and confirmed/active states. Errors and successes never use gold. Text on `--accent` fills is `#0d0d0f`. All contrast pairs (primary text on base, secondary on surface, accent on base) target WCAG AA.
+Rules: gold is the only accent and appears only on primary actions, focus rings, and confirmed/active states. Errors and successes never use gold. Text on `--accent` fills is `#14110f`. All contrast pairs (primary text on base, secondary on surface, accent on base) target WCAG AA.
 
 ## 3. Typography
 
@@ -66,14 +66,14 @@ Counters and timers always use DM Mono with tabular figures. Sentence case every
 :root {
   --motion-fast: 150ms; /* presses, hovers, focus */
   --motion-base: 250ms; /* panel settle, thumbnail appear */
-  --motion-slow: 350ms; /* audio slide-up panel, screen transitions */
+  --motion-slow: 350ms; /* guest screen transitions */
 }
 ```
 
 Easing: `ease-out` for entering (panels rising, thumbnails fading in), `ease-in` for exiting. Only `transform` and `opacity` animate — never layout properties.
 
 **What animates:**
-- Audio recorder panel: slide-up from bottom, `--motion-slow` (350ms) ease-out, `translateY(100%) → translateY(0)`.
+- Guest screen transitions: sequential-flow states fade/slide (`--motion-slow`, 350ms) ease-out; only `transform` and `opacity`.
 - Shutter press: scale `1 → 0.92 → 1` over `--motion-fast`, plus a brief opacity flash overlay.
 - Frame selection: selected card settles with a `--motion-fast` scale/border crossfade; focus ring fades in.
 - Photo thumbnail appear: new pending-strip item fades and slides in (`--motion-base`).
@@ -102,15 +102,20 @@ All state changes remain instant and announced; only the movement is removed.
 ### 5.1 Landing (Pre-Session)
 
 - **Layout:** Mobile-first single column, content vertically centered with generous top space. `--bg-base` page; a `--bg-surface` card (max-width `30rem`) holds the session form. Event name set in Cormorant Garamond 4xl, no logo, no imagery.
-- **Key visual elements:** Eyebrow line ("You're invited" style context, DM Sans xs, `--text-muted`); event title; one-sentence helper on the optional name; name field with `--border` underline styling on `--bg-surface`; expiry/carry-over and error messages as quiet bordered blocks.
-- **Primary action placement:** Start button full-width at the bottom of the card, 48px high, gold fill (`--accent`) with `#0d0d0f` text. Single obvious action.
+- **Key visual elements:** Eyebrow line ("Kamu diundang" — Pinyon Script script-face eyebrow, `--accent`); event title; one-sentence helper on the optional name; name field with `--border` underline styling on `--bg-surface`; expiry/carry-over and error messages as quiet bordered blocks. Guest copy in Bahasa Indonesia, tone santai dan ramah.
+- **Primary action placement:** Start button ("Mulai Pengalaman") full-width at the bottom of the card, 48px high, gold fill (`--accent`) with `#14110f` text. Single obvious action.
 - **Transition:** On successful Start, screen fades/slides out (opacity + slight translateY, `--motion-base`) into Frame Selection.
 
 ### 5.2 Frame Selection
 
-- **Layout:** Full-screen `--bg-base`. Heading (Cormorant 3xl) + one helper line at top; 2-column card grid below; primary CTA pinned to the bottom action band with safe-area inset.
+- **Layout:** Full-screen `--bg-base`, viewport-locked (`h-dvh overflow-hidden`, no page scroll): header (shrink-0) + horizontal snap carousel (`flex-1 min-h-0`) + pinned bottom action band with safe-area inset. Heading (Cormorant 3xl, "Pilih Bingkai Foto") + one helper line at top.
 - **Key visual elements:** Each card is a 9:16 preview (`aspect-[9/16]`) on `--bg-surface` with `--border` hairline, frame artwork `object-contain`. Selected card: gold 2px border + `--accent-soft` fill + small gold check badge. Radio-group keyboard behavior (arrow keys, roving tabindex, `aria-checked`) is preserved from the current implementation.
-- **Primary action placement:** Full-width gold confirm ("Use Wedding Floral" / "Continue without frame") at the bottom; "Skip — no frame" as a quiet text link below it.
+- **Primary action placement:** Full-width gold confirm ("Gunakan Bingkai {Frame}" / "Lanjut Tanpa Bingkai") at the bottom; "Lewati — Tanpa Bingkai" as a quiet text link below it.
+- **Canonical frame registry (Dynamic Frame Engine, owner-approved 2026-08-21):** exactly three luxury wedding templates, plus "No Frame" (`none`, default):
+  1. `royal-gold` — "Royal Gold Serif": classic double-hairline border + quarter-arc corner flourishes + center diamonds; event title in Cormorant Garamond italic 96px `--accent` (gold).
+  2. `botanical-romance` — "Botanical Romance": organic wavy rails + corner botanical leaf clusters + berry accents; event title in Pinyon Script 124px `--text-primary` (ivory).
+  3. `modern-editorial` — "Modern Editorial": paired editorial rules + crop-mark ticks + monogram square + corner brackets; event title in DM Mono 58px `--text-primary`, uppercase, 16px letter tracking.
+- **Dynamic composition model (`FrameTextLayer`):** frame assets are 1080×1920 PNG overlays with true alpha and a transparent photo area — never any baked text. The event title (bride & groom names, e.g. "Rijal & Cindi") interpolates at shutter time: each template declares text layers (font role, size, weight, letter tracking, color, vertical anchor `yRatio` in the 0.845–0.875 band of the 1920px output) rendered onto the canvas after the photo and overlay, centered horizontally. Canvas fonts resolve from the next/font variables (`--font-cormorant`, `--font-pinyon`, `--font-dm-mono`) and drawing is gated on `document.fonts.ready` so the baked JPEG never falls back to a system font. Output stays the fixed 1080×1920 JPEG (quality 0.92); overlay and text are never mirrored — only the photo mirrors for the front camera.
 - **Transition:** Confirm fades to a brief usage-confirmation state, then into the Camera screen (`--motion-base`).
 
 ### 5.3 Camera (Capture)
@@ -164,7 +169,7 @@ Same dark tokens as guest (`--bg-base` page, `--bg-surface` cards, `--border` ha
 | FrameSelection | Guest | 9:16 frame card grid, radio-group a11y, confirm/skip | REDESIGN | P1 |
 | Capture | Guest | Fullscreen camera hero: overlay frame, N/M counter, 72px shutter, pending strip, Lanjut CTA | REDESIGN | P1 |
 | PhotoReview | Guest | Photo grid, per-item delete/retry, sync-then-advance CTA to voice-note screen | REDESIGN | P1 |
-| VoiceRecordingScreen (refactored from AudioRecorderPanel) | Guest | Full-screen voice recording: gold mic, DM Mono timer, recording/review/submit/skip states | REDESIGN | P1 |
+| VoiceRecordingScreen (refactored from VoiceAndMessage) | Guest | Full-screen voice recording: gold mic, DM Mono timer, recording/review/submit/skip states | REDESIGN | P1 |
 | Done | Guest | Completion screen: gold check, event title, receipt copy | REDESIGN | P1 |
 | useCamera | Guest | getUserMedia lifecycle, 9:16 compositing, camera switch | KEEP | P1 |
 | lib/frames.ts | Guest | Frame registry + loader | KEEP | P1 |
@@ -178,4 +183,4 @@ Same dark tokens as guest (`--bg-base` page, `--bg-surface` cards, `--border` ha
 | AdminCreateEvent | Admin | Title field + create flow | REDESIGN | P3 |
 | AdminAccess | Admin | URL + QR block, copy/print | REDESIGN | P3 |
 
-All rows map to existing files under `components/`, `hooks/`, and `lib/`. No new component has been invented; the single rename (VoiceAndMessage → AudioRecorderPanel) reflects the slide-up-panel decision applied to the existing file.
+All rows map to existing files under `components/`, `hooks/`, and `lib/`. No new component has been invented; the single rename (VoiceAndMessage → VoiceRecordingScreen) reflects the dedicated full-screen voice step (§5.5) applied to the existing file.

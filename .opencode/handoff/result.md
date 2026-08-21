@@ -1,26 +1,22 @@
-# Result
+# Result — DESIGN.md §5.2 Canonical Frame Registry Sync
 
-## Status
-COMPLETE — Phase 3: Analog Audio & Digital Keepsake.
+**Status:** COMPLETE
+**Date:** 2026-08-21
+**Executor:** orchestrator (direct — single-doc bounded edit; delegation overhead exceeded execution)
+**Task contract:** `.opencode/handoff/task.md` (Canonical Docs Update — DESIGN.md §5.2 Frame Registry Sync)
 
-## Files changed
-- `components/guest/screens/VoiceRecordingScreen.tsx` — added `Cassette` visual (bordered `--bg-surface` body, two `Spool` components, level window with 5 bars, "SIDE A / 60" DM Mono caption). Spools get `.animate-spin-tape` and bars `.animate-wave-pulse` (120ms stagger) **only when `recording === true`**; idle/review render static (`scale-y-[0.3]` bars, no spool animation). "Kirim Pesan Suara" CTA now `.gold-foil-btn`. MediaRecorder lifecycle, timer, review/re-record/skip logic untouched.
-- `components/guest/screens/Done.tsx` — added animated wax seal (`animate-stamp`, radial gold gradient, Pinyon "A & J" + "SEALED" microcopy) and Digital Keepsake card (`--bg-surface`, bordered): "Simpan Kenangan Digital" + quiet bordered "Simpan ke Galeri Saya" button triggering client-side `a[download]` from the composited capture's object URL; filename `keepsake-{slug}-{timestamp}.jpg`. Card renders only when a confirmed capture exists. Gold check, title, receipt copy preserved.
-- `components/guest-event-entry.tsx` — done-state render passes `keepsakeUrl` = last confirmed pending photo's `previewUrl` (composited 1080×1920 blob already in client memory; no fetch).
+## Files Changed
+- `DESIGN.md` §5.2 only — two bullets inserted between "Primary action placement" and "Transition" (no other section touched):
+  1. **Canonical frame registry (Dynamic Frame Engine, owner-approved 2026-08-21)** — documents exactly three luxury templates plus `none` default: `royal-gold` ("Royal Gold Serif", double-hairline border + corner flourishes + center diamonds, Cormorant Garamond italic 96px gold), `botanical-romance` ("Botanical Romance", organic rails + botanical clusters + berry accents, Pinyon Script 124px ivory), `modern-editorial` ("Modern Editorial", editorial rules + crop marks + monogram + brackets, DM Mono 58px uppercase 16px tracking).
+  2. **Dynamic composition model (`FrameTextLayer`)** — assets are 1080×1920 true-alpha PNGs, never baked text; event title interpolates at shutter time from per-template text layers (font role, size, weight, tracking, color, `yRatio` anchor band 0.845–0.875); fonts resolve from next/font variables (`--font-cormorant`, `--font-pinyon`, `--font-dm-mono`); drawing gated on `document.fonts.ready`; output 1080×1920 JPEG q0.92; overlay + text never mirrored.
 
-## Validation
-- `npm run typecheck` — PASS.
-- `npm run lint` — PASS at known baseline (1 pre-existing `any` in `e2e/print-qa.spec.ts`, warnings only, none new).
-- Visual dev-server check (cassette spin/pulse during recording only, wax seal entrance, keepsake download) — deferred to orchestrator.
+## Verification (vs implemented code — zero unratified drift)
+- All documented facts cross-checked 1:1 against `lib/frames.ts` (registry ids, labels, fonts, sizes, colors, yRatio band), `lib/frame-compositing.ts` (`compositeDynamicFrame`, `resolveFontFamily`, `document.fonts.ready` gating), `hooks/use-camera.ts` (JPEG 0.92, mirror rule), `app/layout.tsx` (font variables). No values invented; no behavior changes.
+- Markdown formatting verified — matches §5.2 bullet style; section structure unchanged.
+- `npm run typecheck` — PASS, 0 errors (docs-only change; gate re-run per task contract).
 
-## Blockers
-None.
+## SSOT Conflicts / Architecture Drift
+- None. Edit scoped to the owner-approved §5.2 sync; no other canonical doc modified.
 
-## SSOT conflict
-None.
-
-## Architecture drift
-None — client-side visual changes only; no API, storage, or dependency changes.
-
-## Next step
-All three phases of the Luxury Analog overhaul complete. Orchestrator visual QA of full guest flow recommended.
+## Next Step
+- Idle. Outstanding (pre-existing, owner-held): live physical-device visual QA of composited output.

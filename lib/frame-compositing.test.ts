@@ -1,6 +1,56 @@
 import { describe, expect, it } from "vitest";
-import { computeCoverCrop } from "@/lib/frame-compositing";
-import { FRAME_ASPECT_RATIO, FRAME_OUTPUT } from "@/lib/frames";
+import { computeCoverCrop, fontShorthand, resolveFontFamily } from "@/lib/frame-compositing";
+import { FRAMES, FRAME_ASPECT_RATIO, FRAME_OUTPUT } from "@/lib/frames";
+
+describe("resolveFontFamily — next/font variable → canvas family", () => {
+  const css = (value: string) => ({ getPropertyValue: () => value });
+
+  it("takes the last (public) family from the computed variable", () => {
+    const family = resolveFontFamily(
+      { fontVar: "--font-pinyon", fallback: "cursive" },
+      css(`"__Pinyon_Script_abc123", "Pinyon Script"`),
+    );
+    expect(family).toBe(`"Pinyon Script"`);
+  });
+
+  it("falls back to the generic family when the variable is empty", () => {
+    expect(resolveFontFamily({ fontVar: "--font-cormorant", fallback: "serif" }, css(""))).toBe("serif");
+    expect(resolveFontFamily({ fontVar: "--font-cormorant", fallback: "serif" }, css("  "))).toBe("serif");
+  });
+
+  it("falls back when the variable holds a single family (defensive)", () => {
+    expect(
+      resolveFontFamily({ fontVar: "--font-dm-mono", fallback: "monospace" }, css(`"DM Mono"`)),
+    ).toBe(`"DM Mono"`);
+  });
+});
+
+describe("fontShorthand — canvas ctx.font string", () => {
+  it("includes style, weight, size, resolved family, and generic fallback", () => {
+    const layer = { fontStyle: "italic", fontWeight: 500, sizePx: 96, fallback: "serif" } as const;
+    expect(fontShorthand(layer, `"Cormorant Garamond"`)).toBe(
+      `italic 500 96px "Cormorant Garamond", serif`,
+    );
+  });
+
+  it("defaults to normal/400 when style/weight are omitted", () => {
+    expect(fontShorthand({ sizePx: 58, fallback: "monospace" }, "monospace")).toBe(
+      "normal 400 58px monospace, monospace",
+    );
+  });
+});
+
+describe("registry layers produce valid shorthand for every template", () => {
+  it("builds a non-empty font string for all FRAMES text layers", () => {
+    for (const frame of FRAMES) {
+      for (const layer of frame.textLayers) {
+        const s = fontShorthand(layer, resolveFontFamily(layer, { getPropertyValue: () => "" }));
+        expect(s).toContain(`${layer.sizePx}px`);
+        expect(s).toContain(layer.fallback);
+      }
+    }
+  });
+});
 
 describe("computeCoverCrop — deterministic center cover-crop to 1080×1920", () => {
   it("is the identity for an already 9:16 source", () => {

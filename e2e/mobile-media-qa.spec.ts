@@ -108,12 +108,12 @@ function mockVoiceUploadSuccess(page: Page, session: ReturnType<typeof mockState
 async function startSession(page: Page) {
   await page.goto(`/e/${EVENT_ID}`, { waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { name: "QA Media Event" })).toBeVisible();
-  await page.getByLabel(/Your name/).fill("QA Tester");
-  await page.getByRole("button", { name: "Start" }).click();
+  await page.getByLabel(/Nama Anda/).fill("QA Tester");
+  await page.getByRole("button", { name: "Mulai Pengalaman" }).click();
   // Frame-selection step (DESIGN.md §5.2) sits between Start and the capture
   // screen. Default path through the suite: continue without a frame.
-  await expect(page.getByRole("heading", { name: "Choose a frame" })).toBeVisible({ timeout: 5000 });
-  await page.getByRole("button", { name: "Continue without frame" }).click();
+  await expect(page.getByRole("heading", { name: "Pilih Bingkai Foto" })).toBeVisible({ timeout: 5000 });
+  await page.getByRole("button", { name: "Lewati — Tanpa Bingkai" }).click();
   // Post-Start shows the fullscreen capture screen.
   await expect(page.getByRole("heading", { name: "Take photos" })).toBeVisible({ timeout: 5000 });
 }
@@ -167,9 +167,9 @@ test.describe("Frame selection (9:16 standard, DESIGN.md §5.2)", () => {
     await page.setViewportSize({ width: 375, height: 812 });
     mockStatefulSession(page);
     await page.goto(`/e/${EVENT_ID}`, { waitUntil: "networkidle" });
-    await page.getByRole("button", { name: "Start" }).click();
+    await page.getByRole("button", { name: "Mulai Pengalaman" }).click();
 
-    await expect(page.getByRole("heading", { name: "Choose a frame" })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole("heading", { name: "Pilih Bingkai Foto" })).toBeVisible({ timeout: 5000 });
     const group = page.getByRole("radiogroup");
     await expect(group).toBeVisible();
 
@@ -178,7 +178,7 @@ test.describe("Frame selection (9:16 standard, DESIGN.md §5.2)", () => {
     const cards = group.getByRole("radio");
     await expect(cards).toHaveCount(3);
     for (let i = 0; i < 3; i++) {
-      const box = await cards.nth(i).locator("span.aspect-\\[9\\/16\\]").boundingBox();
+      const box = await cards.nth(i).locator("div.aspect-\\[9\\/16\\]").boundingBox();
       expect(box).not.toBeNull();
       expect(box!.width / box!.height).toBeCloseTo(9 / 16, 2);
       await expect(cards.nth(i).locator("img[aria-hidden='true']")).toBeVisible();
@@ -187,11 +187,11 @@ test.describe("Frame selection (9:16 standard, DESIGN.md §5.2)", () => {
     // Selecting a frame flips aria-checked and the confirm button label.
     await cards.nth(0).click();
     await expect(cards.nth(0)).toHaveAttribute("aria-checked", "true");
-    await expect(page.getByRole("button", { name: "Use Wedding Floral" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Gunakan Bingkai Royal Gold Serif" })).toBeVisible();
 
     // The chosen frame is printed onto captures: the fullscreen viewfinder
     // shows the overlay and the confirm leads to the capture screen.
-    await page.getByRole("button", { name: "Use Wedding Floral" }).click();
+    await page.getByRole("button", { name: "Gunakan Bingkai Royal Gold Serif" }).click();
     await expect(page.getByRole("heading", { name: "Take photos" })).toBeVisible({ timeout: 5000 });
     const video = page.locator("video[aria-label='Camera preview']");
     await expect(video).toBeVisible({ timeout: 5000 });
@@ -199,15 +199,15 @@ test.describe("Frame selection (9:16 standard, DESIGN.md §5.2)", () => {
     const vbox = await video.boundingBox();
     expect(vbox!.width).toBe(375);
     expect(vbox!.height).toBe(812);
-    await expect(page.locator("img[src='/frames/wedding-floral.png']")).toBeVisible();
+    await expect(page.locator("img[src='/frames/royal-gold.png']")).toBeVisible();
   });
 
   test("keyboard navigation moves the selection with arrow keys", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     mockStatefulSession(page);
     await page.goto(`/e/${EVENT_ID}`, { waitUntil: "networkidle" });
-    await page.getByRole("button", { name: "Start" }).click();
-    await expect(page.getByRole("heading", { name: "Choose a frame" })).toBeVisible({ timeout: 5000 });
+    await page.getByRole("button", { name: "Mulai Pengalaman" }).click();
+    await expect(page.getByRole("heading", { name: "Pilih Bingkai Foto" })).toBeVisible({ timeout: 5000 });
 
     const cards = page.getByRole("radiogroup").getByRole("radio");
     // Roving tabindex: first card is in tab order, others are not.
@@ -233,12 +233,12 @@ test.describe("Frame selection (9:16 standard, DESIGN.md §5.2)", () => {
     await page.setViewportSize({ width: 375, height: 812 });
     mockStatefulSession(page);
     await page.goto(`/e/${EVENT_ID}`, { waitUntil: "networkidle" });
-    await page.getByRole("button", { name: "Start" }).click();
-    await expect(page.getByRole("heading", { name: "Choose a frame" })).toBeVisible({ timeout: 5000 });
+    await page.getByRole("button", { name: "Mulai Pengalaman" }).click();
+    await expect(page.getByRole("heading", { name: "Pilih Bingkai Foto" })).toBeVisible({ timeout: 5000 });
 
     // Select a real frame and enter the capture screen.
     await page.getByRole("radio").nth(0).click();
-    await page.getByRole("button", { name: "Use Wedding Floral" }).click();
+    await page.getByRole("button", { name: "Gunakan Bingkai Royal Gold Serif" }).click();
     await expect(page.getByRole("heading", { name: "Take photos" })).toBeVisible({ timeout: 5000 });
 
     // The fake media device provides a 1280×720 landscape feed: the capture
@@ -540,8 +540,8 @@ test.describe("Mobile-media QA", () => {
 
     await page.goto(`/e/${EVENT_ID}`, { waitUntil: "networkidle" });
 
-    await expect(page.getByText("This event remains viewable, but new submissions are not accepted.")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Start" })).toBeDisabled();
+    await expect(page.getByText("Acara ini telah selesai. Pengiriman foto dan pesan suara baru sudah ditutup.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Mulai Pengalaman" })).toBeDisabled();
   });
 
   // 9. SESSION USAGE: the capture counter reflects the local budget hint and

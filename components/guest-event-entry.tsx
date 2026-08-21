@@ -240,10 +240,14 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
     );
   }
 
-  // --- Camera capture ---
+  // --- Camera capture (dynamic frame: overlay asset + event-title layers) ---
   async function handleCapture() {
-    if (!session || event?.status === "CLOSED") return;
-    const blob = await camera.capture(frameImgRef.current);
+    if (!session || event?.status === "CLOSED" || !event) return;
+    const blob = await camera.capture({
+      frameImg: frameImgRef.current,
+      eventTitle: event.title,
+      layers: selectedFrame?.textLayers ?? [],
+    });
     if (!blob) return;
     const photo: PendingPhoto = {
       id: nextPendingId(),

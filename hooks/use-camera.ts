@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { FRAME_OUTPUT } from "@/lib/frames";
-import { computeCoverCrop } from "@/lib/frame-compositing";
+import { FRAME_OUTPUT, type FrameTextLayer } from "@/lib/frames";
+import { computeCoverCrop, compositeDynamicFrame } from "@/lib/frame-compositing";
 
 /**
  * useCamera — getUserMedia lifecycle, capture-to-blob, camera switch, cleanup.
@@ -27,7 +27,14 @@ export interface UseCameraResult {
   start: () => Promise<void>;
   stop: () => void;
   switchCamera: () => Promise<void>;
-  capture: (frameImg?: HTMLImageElement | null) => Promise<Blob | null>;
+  capture: (options?: CaptureOptions) => Promise<Blob | null>;
+}
+
+export interface CaptureOptions {
+  frameImg?: HTMLImageElement | null;
+  /** Dynamic text token — event title (bride & groom names). */
+  eventTitle: string;
+  layers: FrameTextLayer[];
 }
 
 export function useCamera(): UseCameraResult {
@@ -112,7 +119,7 @@ export function useCamera(): UseCameraResult {
     };
   }, []);
 
-  const capture = useCallback(async (frameImg?: HTMLImageElement | null): Promise<Blob | null> => {
+  const capture = useCallback(async (options?: CaptureOptions): Promise<Blob | null> => {
     const s = streamRef.current;
     if (!s) return null;
     const track = s.getVideoTracks()[0];
@@ -142,14 +149,25 @@ export function useCamera(): UseCameraResult {
     }
     ctx.drawImage(video, crop.sx, crop.sy, crop.sw, crop.sh, crop.dx, crop.dy, crop.dw, crop.dh);
 
-    // Step 2: reset transform so the frame overlay is never mirrored.
+    // Step 2: reset transform so frame overlay + dynamic text are never mirrored.
     ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-    // Step 3: composite the selected frame over the full photo. The frame is
-    // already 9:16, so it lands 1:1 — never stretched, never mirrored.
-    if (frameImg) {
-      ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
+    // Step 3: dynamic frame — overlay asset + event-title text layers.
+    // Fonts are gated before drawing so the baked JPEG never falls back to
+    // a system font (Hybrid Dynamic Frame Engine, 2026-08-21).
+    if (document.fonts?.ready) {
+      try {
+        await document.fonts.ready;
+      } catch {
+        // FontReady promise rejected — draw with whatever is loaded.
+      }
     }
+    compositeDynamicFrame({
+      ctx,
+      frameImg: options?.frameImg,
+      eventTitle: options?.eventTitle ?? "",
+      layers: options?.layers ?? [],
+    });
 
     return new Promise<Blob | null>((resolve) => {
       canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.92);

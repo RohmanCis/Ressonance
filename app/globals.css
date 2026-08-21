@@ -2,9 +2,9 @@
 
 /* DESIGN.md (root) §2 + §4 — canonical dark analog-film tokens. */
 :root {
-  /* Deep Espresso palette — Luxury Analog Keepsake Edition. */
-  --bg-base: #161311;
-  --bg-surface: #1f1a17;
+  /* Deep Espresso palette — Luxury Analog Keepsake Edition (owner-ratified 2026-08-21). */
+  --bg-base: #14110f;
+  --bg-surface: #1c1815;
   --bg-elevated: #28221e;
   --text-primary: #f7f2ea;
   --text-secondary: #d4cec3;
@@ -15,7 +15,7 @@
   --success: #7da37a;
   --border: rgba(247, 242, 234, 0.12);
   --overlay: rgba(0, 0, 0, 0.6);
-  --on-accent: #161311;       /* text on gold fills (DESIGN.md §2) */
+  --on-accent: #14110f;      /* text on gold fills (DESIGN.md §2) */
   --motion-fast: 150ms;
   --motion-base: 250ms;
   --motion-slow: 350ms;
@@ -70,6 +70,60 @@ body {
     transition-duration: 0ms !important;
     animation-duration: 0ms !important;
   }
+}
+
+/* Film Grain Overlay */
+.film-grain {
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.06'/%3E%3C/svg%3E");
+}
+
+/* Ambient Floating Lights (Candlelight effect) */
+@keyframes float-ambient-1 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.25;
+  }
+  50% {
+    transform: translate(30px, 40px) scale(1.15);
+    opacity: 0.4;
+  }
+}
+
+@keyframes float-ambient-2 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1.1);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translate(-35px, -30px) scale(0.95);
+    opacity: 0.35;
+  }
+}
+
+.animate-ambient-1 {
+  animation: float-ambient-1 12s ease-in-out infinite;
+}
+
+.animate-ambient-2 {
+  animation: float-ambient-2 15s ease-in-out infinite;
+}
+
+/* Ambient orbs go fully still under reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-ambient-1,
+  .animate-ambient-2 {
+    animation: none;
+  }
+}
+
+/* Horizontally scrolling carousels: hide the scrollbar, keep wheel/touch/keyboard scroll. */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
 /* --- Luxury Analog utilities ------------------------------------------- */

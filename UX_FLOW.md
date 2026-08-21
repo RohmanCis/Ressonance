@@ -9,13 +9,13 @@ QA companion to DESIGN.md (canonical design system) and docs/TECHNICAL_DESIGN.md
 ### 1. PRE_SESSION (Landing)
 
 - Open `/e/{public_id}`. Event loads; no session is created on page load.
-- Shows event title, optional guest-name field, and the Start action.
-- Enter optional name → press Start. A 30-minute guest session begins (HttpOnly cookie; never reused after expiry).
+- Shows event title, optional guest-name field ("Nama Anda"), and the Start action ("Mulai Pengalaman").
+- Enter optional name → press **Mulai Pengalaman**. A 30-minute guest session begins (HttpOnly cookie; never reused after expiry).
 
 ### 2. FRAME_SELECT
 
-- Grid of 9:16 frame cards. Selecting a card highlights it (gold border); exactly one frame — or none — is active.
-- Press **Use [Frame]** to confirm with a selection, or **Continue without frame** / **Skip — no frame** to proceed unframed.
+- Horizontal snap carousel of 9:16 frame cards (viewport-locked, no page scroll). Selecting a card highlights it (gold border); exactly one frame — or none — is active.
+- Press **Gunakan Bingkai {Frame}** to confirm with a selection, or **Lanjut Tanpa Bingkai** / **Lewati — Tanpa Bingkai** to proceed unframed.
 - "No Frame" is never a grid card — only reachable via skip.
 - Session usage is confirmed after this step; then the camera opens.
 
