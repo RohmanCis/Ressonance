@@ -145,7 +145,7 @@ export function AdminAccess({ publicId }: { publicId: string }) {
           </Link>
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[.12em] text-accent">Share access</p>
+              <p className="text-xs font-semibold uppercase tracking-[.12em] text-text-muted">Share access</p>
               <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-text-primary">Share event access.</h1>
               <p className="mt-3 text-text-secondary">Guests can scan this access card or open the public link.</p>
             </div>

@@ -188,7 +188,7 @@ function PhotoTile({ item, name, onPreview }: { item: Submission; name: string; 
           </span>
           <span className="flex items-center justify-between gap-2 px-3 py-2 text-xs">
             <span className="inline-flex items-center gap-1.5 font-semibold text-text-primary">
-              <ImageIcon className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
+              <ImageIcon className="h-3.5 w-3.5 text-text-muted" aria-hidden="true" />
               Photo
             </span>
             <time dateTime={item.created_at} className="font-mono tabular-nums text-text-muted">
@@ -270,7 +270,7 @@ function VoiceTile({ item, name }: { item: Submission; name: string }) {
         {loading ? "Loading" : playing ? "Pause" : "Play"}
       </button>
       <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-text-primary">
-        <Mic className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
+        <Mic className="h-3.5 w-3.5 text-text-muted" aria-hidden="true" />
         Voice note
         {duration && <span className="font-mono tabular-nums text-text-muted">{duration}</span>}
       </span>
@@ -453,7 +453,7 @@ function PreviewDialog({
       >
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border px-4 py-3 sm:px-6">
           <div className="min-w-0">
-            <p className="font-mono text-xs font-medium uppercase tracking-[.08em] text-accent">
+            <p className="font-mono text-xs font-medium uppercase tracking-[.08em] text-text-muted">
               {typeLabel(item)} · {index + 1} of {count}
             </p>
             <h3 className="truncate text-lg font-semibold text-text-primary">{name}</h3>
@@ -582,7 +582,7 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
       <Shell>
         <div className="grid gap-8 lg:grid-cols-[18rem_1fr]">
           <aside className="lg:sticky lg:top-6 lg:self-start">
-            <p className="text-xs font-semibold uppercase tracking-[.12em] text-accent">Event desk</p>
+            <p className="text-xs font-semibold uppercase tracking-[.12em] text-text-muted">Event desk</p>
             {busy && !event ? (
               <Busy label="Loading event" />
             ) : error && !event ? (

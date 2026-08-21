@@ -54,7 +54,7 @@ export function AdminEventIndex() {
     <Shell>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[.12em] text-accent">Event index</p>
+          <p className="text-xs font-semibold uppercase tracking-[.12em] text-text-muted">Event index</p>
           <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-text-primary">Your events.</h1>
         </div>
         <Link href="/admin/events/new" className={linkGold}>

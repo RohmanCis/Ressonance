@@ -1,64 +1,42 @@
-﻿# Task: Phase A1 Lane 2 — Object-URL Cleanup + E2E Locator Fix
+﻿# Task: Admin UI reconciliation vs DESIGN.md §6 (lane adm-des-1 — design inspection + implementation)
 
-Objective: (a) fix the stale-closure object-URL leak on unmount in
-`components/guest-event-entry.tsx`; (b) fix the pre-existing strict-mode e2e
-failure at `e2e/mobile-media-qa.spec.ts:203`; (c) fix two stale canonical-doc
-section references in comments.
+Read AGENTS.md constraints. This is a RECONCILIATION/POLISH pass on the existing dark-token Admin UI, NOT a redesign. Preserve all behavior, API usage, routes, copy semantics, aria/labels, and e2e assertions.
 
-## 1. Object-URL cleanup stale closure (verified bug)
+## Authority
+- DESIGN.md (root) §2 (gold rule), §3 (typography), §4 (motion), §6 (Admin Flow), §7.
+- UX_FLOW.md Admin Flow section.
+- AGENTS.md §6 code style (tokens only, no inline color literals, a11y non-negotiable).
 
-`components/guest-event-entry.tsx:486-493` — unmount cleanup effect has empty
-deps and closes over the FIRST render's `pendingPhotos`, `expiredPending`,
-`voiceUrl` (all initially empty). Photos deleted mid-flow or voice blobs
-discarded via state resets are revoked correctly elsewhere (lines 281, 292,
-436), but anything still live at unmount leaks.
+## Files in scope (write)
+- components/admin/admin-ui.tsx
+- components/admin/admin-sign-in.tsx
+- components/admin/admin-event-index.tsx
+- components/admin/admin-dashboard.tsx
+- components/admin/admin-create-event.tsx (re-export; implementation lives in admin-ui.tsx)
+- components/admin/admin-access.tsx
 
-Fix pattern (repo already uses it for `pendingPhotosRef`, lines 59-60):
-- Mirror `pendingPhotosRef` usage — add refs synced on each render for
-  `expiredPending` and `voiceUrl` (and use the existing `pendingPhotosRef`).
-- Cleanup effect reads the refs; keep the empty deps + eslint-disable as-is
-  (it is intentionally unmount-only).
-- Minimal diff; no behavior change other than actually revoking.
+Do NOT touch: app/api/**, docs/**, e2e/**, lib/**, guest components, globals.css (unless a token utility class is missing — prefer existing utilities).
 
-## 2. E2E strict-mode violation (pre-existing, proven by stash-rerun)
+## Audit deltas to address (orchestrator pre-audit; validate with your own design judgment, then implement)
+1. GOLD RULE (§2: gold ONLY on primary actions, focus rings, active/confirmed states) — currently drifted:
+   - Gold eyebrows (`text-accent` uppercase section labels) on every admin screen. Replace with `text-text-muted` or `text-text-secondary` (keep tracking).
+   - Dashboard PhotoTile `ImageIcon text-accent` and VoiceTile `Mic text-accent` → `text-text-muted` (or secondary).
+   - PreviewDialog header `text-accent` mono label → muted/secondary.
+   - Keep gold: primary buttons, ACTIVE status pill/left-edge marker, dashboard ACTIVE status badge, focus rings, progress bar fill (active state — acceptable, confirm).
+2. SIGN-IN (§6 "status region below the form"): error `Status` currently renders inside the form above the button. Move status region below the form while keeping `role="alert"` and instant appearance (§4). Keep gold full-width sign-in button as the single primary action.
+3. Density/hierarchy polish per §6 "dense rows": Event Index past-events rows and dashboard guest-group headers may be tightened ONLY if it does not change text content, link hrefs, roles, or e2e-visible structure. When in doubt, leave as-is.
+4. Motion (§6: "no motion beyond the standard focus/hover tokens"): verify no non-standard animations in admin components; keep existing spinners and dialog fade/scale as-is (functional, already motion-reduce guarded).
 
-`e2e/mobile-media-qa.spec.ts:203`:
-`page.locator("img[src='/frames/royal-gold.png']")` resolves to 2 elements on
-the capture screen — the ambient blurred backdrop img (Capture.tsx ~line 105)
-and the viewfinder overlay img (CameraViewfinder, ~line 333). Playwright
-strict mode fails.
+## Hard constraints
+- Do NOT add Access/QR links to CLOSED event rows. Known owner conflict: DESIGN.md §6 says "per row" but locked e2e (e2e/admin-index.spec.ts) and current behavior restrict Access/QR to the ACTIVE event. Preserve existing behavior. This is reported to the owner separately.
+- Do not rename/repurpose: "Your events.", "Create new event", "Open", "Access / QR", "Sign in", "Create event", "Find existing event", "No events yet" — e2e asserts these.
+- Preserve all aria-labels, roles, min-h-11 (44px) targets, focus-visible rings, DM Mono (`font-mono tabular-nums`) timestamps.
+- No new dependencies, no new components, no copy rewrites beyond what deltas above require.
 
-Fix: scope the locator to the isolated 9:16 viewport box so it matches only
-the overlay, e.g. `page.locator("div.aspect-\\[9\\/16\\] img[src='/frames/royal-gold.png']")`
-(the same `div.aspect-\\[9\\/16\\]` escape is already used at line 181; the
-backdrop img is NOT inside that box). Verify exactly one match before/while
-running. Keep the assertion intent (overlay visible on capture screen).
-
-## 3. Stale comment references
-
-- `components/guest/screens/Done.tsx:10`: comment says "(DESIGN.md §5.4)" —
-  Done is §5.6. Change to §5.6.
-- `components/guest-event-entry.tsx:599`: "still in client memory (§5.4)" —
-  refers to the keepsake from the last confirmed capture; leave the code and
-  this comment UNCHANGED (the keepsake feature itself is a pending owner
-  decision — out of scope).
-
-## Constraints
-
-- Modify ONLY: `components/guest-event-entry.tsx`,
-  `e2e/mobile-media-qa.spec.ts`, `components/guest/screens/Done.tsx` (comment
-  only).
-- Do NOT touch DESIGN.md, UX_FLOW.md, docs/, the Done.tsx keepsake/wax-seal
-  markup, or any screen component (touch-target fixes from lane 1 are already
-  applied — do not disturb them).
-- No new dependencies, no refactors beyond the minimal fix.
-
-## Validation
-
+## Validation (before writing result.md)
 - `npm run typecheck` clean.
-- `npx vitest run` — full suite green (354+ tests; serialized, single run).
-- `npx playwright test e2e/mobile-media-qa.spec.ts` — 19/19 PASS (dev server
-  handled by the shared Playwright config; do not run concurrently with
-  anything else).
-- Write `.opencode/handoff/result.md`: status, files changed, validation
-  output summary, risks.
+- `npx playwright test e2e/admin-index.spec.ts` green (19... use full file, serial mode).
+- Visual self-check: layout/spacing coherent at 375px and 1280px.
+
+## result.md
+Report: status, files changed, deltas implemented vs skipped (with reason), gold-rule audit table (element → verdict), validation output, any SSOT conflict or drift found.

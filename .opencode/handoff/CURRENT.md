@@ -1,6 +1,8 @@
 # Current Task Status
 
-**Status:** COMPLETE — Phase A1 correctness & contract closure finished 2026-08-22
+**Status:** COMPLETE — Admin UI reconciliation vs DESIGN.md §6 finished 2026-08-22
 **Last updated:** 2026-08-22
-**Task:** Phase A1 (see result.md for full PASS/FAIL/SKIPPED table). Lanes: des-1 (touch targets) + fix-1 (object-URL cleanup, e2e:203 locator, §5.6 comment) both terminal and reconciled. Validation: typecheck clean, vitest 354/354, lint baseline-only, build PASS, mobile-media-qa e2e 19/19. No commit (boundary).
-**Next:** Owner decisions: (1) DESIGN.md §5.6 vs Done.tsx wax-seal/keepsake conflict — ratify amendment or remove extras; (2) set TRUSTED_PROXY=1 + CRON_SECRET in Vercel before deploy. Then UI freeze. Non-blocking debt list in result.md.
+**Task:** Admin UI reconciliation (lane adm-des-1, designer session reuse). Audit → bounded implementation → regression gates, all terminal. See result.md for the full reconciliation record.
+**Validation:** typecheck clean; vitest 354/354; build PASS; e2e/admin-index.spec.ts 9/9; visual QA (sign-in status placement, 375/1280 overflow) verified; lint task-clean (12 pre-existing warnings + 1 pre-existing error; AGENTS.md baseline tally off by one — reported, not edited).
+**Owner decisions pending:** (1) DESIGN.md §6 "Access/QR per row" vs ACTIVE-only behavior/e2e; (2) DESIGN.md §5.6 vs Done.tsx keepsake extras (prior); (3) Vercel env TRUSTED_PROXY=1 + CRON_SECRET before deploy. Minor: progress-bar transition-[width] vs §4; print-menu accent-soft hover; AGENTS.md lint-baseline tally + §2/§13 dead references.
+**Next:** Owner decisions, then UI freeze. No commit/push.
