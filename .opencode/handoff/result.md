@@ -1,34 +1,24 @@
-# Result — Bounded cleanup post-audit (2026-08-21)
+# Session Close Summary (2026-08-21)
 
-## Status
-COMPLETE — all 4 scoped items done, no out-of-scope changes.
+**Status:** session closed. All work committed and pushed.
 
-## Files changed
-- `AGENTS.md` (§12): stale `VoiceAndMessage.tsx` → `VoiceRecordingScreen.tsx`; QA metrics refreshed — vitest 353/353 (43 files) PASS, Typecheck PASS, Playwright E2E 39 passed / 1 skipped / 0 failed (2026-08-21, post-redesign d313372). Lint claim untouched (baseline). All other §12 content intact.
-- `app/globals.css`: deleted unused `.bg-espresso-mesh` (incl. its comment header), `.gold-foil-text` (incl. comment header), `.vignette-overlay` (incl. comment header). Grep-verified zero usage outside globals.css. No keyframes affected (these classes used no keyframes).
-- `components/guest/screens/PreSession.tsx`: removed dead `onCarryOver?: () => void` prop (line 37).
-- `components/guest-event-entry.tsx`: removed no-op `onCarryOver={() => {}}` (line 507).
-- `lib/audio-file.ts`: removed `export` from `VOICE_NOTE_MIME_TYPES` (still used internally at `VoiceNoteMimeType` line 17). No external importers exist.
-- `package.json`: added `"frames:generate": "node scripts/generate-frames.mjs"` (script target `scripts/generate-frames.mjs` confirmed to exist).
-- `lib/submit-photo.ts`: added PHOTO_LIMIT comment (server → client copy note).
-- `lib/get-session-usage.ts`: added PHOTO_LIMIT comment (server → client copy note).
-- `lib/pending-photos.ts`: added PHOTO_LIMIT comment (client → server copies note).
+## Completed this session
 
-## Validation
-- `npm run typecheck` — PASS (exit 0).
-- `npm test` — PASS: 43 files, 353/353 tests (matches expected).
-- E2E not re-run (read-only contract; no behavior change; metrics sourced from §12 baseline d313372).
+1. **wedding-crimson frame integration** (owner-ratified): inspection report → asset re-verify (2160×3840) → HQ downscale to 1080×1920 → registered in `lib/frames.ts` as sole baked-typography exception (`textLayers: []`) → `frames.test.ts` 4-template registry + baked-text set → e2e card count 4 + wrap-around index → DESIGN.md §5.2 amended.
+2. **Capture 3-zone photobooth redesign** (owner-ratified): read-only inspection (selector map, compositor immunity, blueprint, risks) → Capture.tsx restructured (minimal top bar / container-query 9:16 viewport / bottom dock; capsule + "Session ready" removed; overlay `object-cover`) → e2e bbox→9:16 aspect assertion → DESIGN.md §5.3/§7 amended.
+3. **Ambient frame backdrop**: blurred active-frame clone behind zones + dark wash; clean card border/shadow.
 
-## Blockers
-None.
+## Validation (final state)
 
-## Assumptions
-- Exact comment wording for the 3 PHOTO_LIMIT sites not prescribed by task; used the quoted phrase verbatim for server files and a mirrored reverse-phrase for the client file, matching one-line `//` style in lib/*.ts.
-- §12 QA paragraph rewrite: dropped stale parenthetical "(2026-08-20, post ADR-012 deepening; feature removal dropped 4 test files and 51 tests)" as it contradicts refreshed metrics; kept the lint baseline sentence verbatim.
-- `.gold-foil-btn` NOT removed — not in scope (still used by PreSession CTA).
+- typecheck 0 errors; vitest 354/354 (43 files); Playwright mobile-media-qa 19/19; lint pre-existing baseline only.
+- AGENTS.md §12 synced; handoff files reconciled; `git diff --check` clean (CRLF warnings only).
 
-## SSOT conflict
-None observed. Task line references match actual file state (verified before editing).
+## Deferred / outstanding
 
-## Next step
-Orchestrator reconcile; no drift expected — typecheck + full vitest green.
+- Visual QA on dev server (capture screen, wedding-crimson + royal-gold, 375×812 & 375×667).
+- Full `npm run e2e` suite run before merge recommended (only mobile-media-qa re-run this session).
+- Pre-existing: live device scanner verification, live admin visual QA, lint baseline drift.
+
+## Next task
+
+None — idle. See CURRENT.md.

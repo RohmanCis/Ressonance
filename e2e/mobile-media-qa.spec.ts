@@ -176,8 +176,8 @@ test.describe("Frame selection (9:16 standard, DESIGN.md §5.2)", () => {
     // Every real frame card shows its preview image (9:16 container,
     // object-contain so the art is never distorted).
     const cards = group.getByRole("radio");
-    await expect(cards).toHaveCount(3);
-    for (let i = 0; i < 3; i++) {
+    await expect(cards).toHaveCount(4);
+    for (let i = 0; i < 4; i++) {
       const box = await cards.nth(i).locator("div.aspect-\\[9\\/16\\]").boundingBox();
       expect(box).not.toBeNull();
       expect(box!.width / box!.height).toBeCloseTo(9 / 16, 2);
@@ -195,10 +195,11 @@ test.describe("Frame selection (9:16 standard, DESIGN.md §5.2)", () => {
     await expect(page.getByRole("heading", { name: "Take photos" })).toBeVisible({ timeout: 5000 });
     const video = page.locator("video[aria-label='Camera preview']");
     await expect(video).toBeVisible({ timeout: 5000 });
-    // The viewfinder is the hero and fills the viewport (DESIGN.md §5.3).
+    // The camera viewport is the bounded 9:16 photobooth box (DESIGN.md §5.3,
+    // owner-ratified 2026-08-21): the video fills the box, so its bounding
+    // box must hold the single 9:16 standard (not the full viewport).
     const vbox = await video.boundingBox();
-    expect(vbox!.width).toBe(375);
-    expect(vbox!.height).toBe(812);
+    expect(vbox!.width / vbox!.height).toBeCloseTo(9 / 16, 2);
     await expect(page.locator("img[src='/frames/royal-gold.png']")).toBeVisible();
   });
 
@@ -223,10 +224,10 @@ test.describe("Frame selection (9:16 standard, DESIGN.md §5.2)", () => {
     await expect(cards.nth(2)).toBeFocused();
     await page.keyboard.press("ArrowLeft");
     await expect(cards.nth(1)).toBeFocused();
-    // Wrap-around.
+    // Wrap-around (now 4 cards: index 3 is last).
     await cards.nth(0).focus();
     await page.keyboard.press("ArrowUp");
-    await expect(cards.nth(2)).toBeFocused();
+    await expect(cards.nth(3)).toBeFocused();
   });
 
   test("capture with a frame produces a 1080×1920 JPEG", async ({ page }) => {

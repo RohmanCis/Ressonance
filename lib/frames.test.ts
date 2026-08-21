@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_FRAME_ID, FRAMES, FRAME_OUTPUT, FRAME_ASPECT_RATIO } from "@/lib/frames";
 
 const REAL_FRAMES = FRAMES.filter((f) => f.id !== DEFAULT_FRAME_ID);
-const EXPECTED_IDS = ["royal-gold", "botanical-romance", "modern-editorial"];
+const EXPECTED_IDS = ["royal-gold", "botanical-romance", "modern-editorial", "wedding-crimson"];
+// Frames whose typography is baked into the asset (owner-approved exception,
+// 2026-08-21): no dynamic event-title layer, everything else is dynamic.
+const BAKED_TEXT_FRAMES = new Set(["wedding-crimson"]);
 
 describe("frame registry invariants", () => {
   it("enforces a single 9:16 standard", () => {
@@ -35,18 +38,20 @@ describe("frame registry invariants", () => {
 });
 
 describe("curated wedding template registry (Dynamic Frame Engine)", () => {
-  it("registers exactly the 3 luxury templates in curated order", () => {
+  it("registers exactly the 4 templates in curated order", () => {
     expect(REAL_FRAMES.map((f) => f.id)).toEqual(EXPECTED_IDS);
     expect(REAL_FRAMES.map((f) => f.label)).toEqual([
       "Royal Gold Serif",
       "Botanical Romance",
       "Modern Editorial",
+      "Wedding Crimson",
     ]);
   });
 
-  it("gives every template an event-title text layer with a valid schema", () => {
+  it("gives every dynamic template an event-title text layer with a valid schema", () => {
     for (const frame of REAL_FRAMES) {
-      expect(frame.textLayers.length).toBeGreaterThanOrEqual(1);
+      const dynamic = !BAKED_TEXT_FRAMES.has(frame.id);
+      expect(frame.textLayers.length).toBe(dynamic ? 1 : 0);
       for (const layer of frame.textLayers) {
         expect(layer.text).toBe("eventTitle");
         expect(["--font-pinyon", "--font-cormorant", "--font-dm-mono"]).toContain(layer.fontVar);

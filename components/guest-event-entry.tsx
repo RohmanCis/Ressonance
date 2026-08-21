@@ -546,7 +546,6 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
         session={session}
         pendingPhotos={pendingPhotos}
         secondsLeft={secondsLeft}
-        message={message}
         reviewIndex={reviewIndex}
         camera={camera}
         selectedFrame={selectedFrame}

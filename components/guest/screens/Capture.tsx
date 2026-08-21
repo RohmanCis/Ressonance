@@ -14,19 +14,20 @@ type SessionData = Usage & { guest_name: string | null };
 const PRE_EXPIRY_WARN_SECONDS = 300;
 
 /**
- * CAPTURE — fullscreen camera hero (DESIGN.md §5.3). The viewfinder fills the
- * viewport (100dvh minus safe areas); the selected frame overlays it
- * unmirrored exactly as composited (WYSIWYG 1080×1920). Gold is reserved for
- * the shutter and the advance action; the DM Mono counter ticks like a film
- * frame counter. Voice recording is a dedicated later step (VOICE_NOTE,
- * DESIGN.md §5.5) — this screen is camera-only.
+ * CAPTURE — 3-zone photobooth studio (DESIGN.md §5.3, owner-ratified
+ * 2026-08-21): minimal top bar (camera switch + DM Mono counter), isolated
+ * 9:16 frame viewport, dedicated bottom control dock (pending strip, file
+ * picker, shutter, advance). The bounded viewport keeps the frame art clear
+ * of all controls and matches the compositor's cover-crop exactly (WYSIWYG
+ * 1080×1920). Gold is reserved for the shutter and the advance action.
+ * Voice recording is a dedicated later step (VOICE_NOTE, DESIGN.md §5.5) —
+ * this screen is camera-only.
  */
 export function Capture({
   event,
   session,
   pendingPhotos,
   secondsLeft,
-  message,
   reviewIndex,
   camera,
   selectedFrame,
@@ -43,7 +44,6 @@ export function Capture({
   session: SessionData;
   pendingPhotos: PendingPhoto[];
   secondsLeft: number | null;
-  message: string;
   reviewIndex: number | null;
   camera: ReturnType<typeof useCamera>;
   selectedFrame: { src?: string } | null;
@@ -61,8 +61,7 @@ export function Capture({
     headingRef.current?.focus();
   }, []);
 
-  // Shutter press flash (§4: 150ms scale handled by active:, plus a brief
-  // opacity flash overlay).
+  // Shutter press flash (150ms scale handled by active:, plus a brief opacity flash overlay)
   const [flash, setFlash] = useState(false);
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
@@ -78,8 +77,6 @@ export function Capture({
   const shutterDisabled = closed || budgetRemaining <= 0 || camera.permission !== "granted";
   const showPreExpiryWarning =
     secondsLeft !== null && secondsLeft <= PRE_EXPIRY_WARN_SECONDS && secondsLeft > 0;
-  // Manual advance: something captured locally, or the budget is already
-  // consumed by server-confirmed photos from this session.
   const canAdvance = pendingPhotos.length > 0 || budgetRemaining === 0;
 
   function handleShutter() {
@@ -91,67 +88,66 @@ export function Capture({
   }
 
   return (
-    <main className="bg-bg-base text-text-primary">
-      {/* Fullscreen camera layer (minus safe areas) */}
+    <main className="bg-bg-base text-text-primary select-none">
+      {/* 3-zone photobooth studio — column flex, no floating HUD bands */}
       <section
         aria-labelledby="capture-heading"
-        className="relative h-dvh overflow-hidden"
+        className="flex h-dvh max-h-dvh w-full flex-col overflow-hidden"
       >
         <h2 id="capture-heading" ref={headingRef} tabIndex={-1} className="sr-only outline-none">
           Take photos
         </h2>
 
-        {/* Viewfinder hero — full viewport */}
-        <CameraViewfinder camera={camera} frameOverlaySrc={selectedFrame?.src} />
-
-        {/* Shutter flash overlay (opacity only, --motion-fast) */}
-        <div
-          aria-hidden="true"
-          className={`pointer-events-none absolute inset-0 bg-text-primary transition-opacity duration-fast ${
-            flash ? "opacity-40" : "opacity-0"
-          }`}
-        />
-
-        {/* Translucent top bar: event title + guest name + counter/camera row */}
-        <div className="absolute inset-x-0 top-0 bg-overlay px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))]">
-          <p className="truncate font-display text-lg font-semibold leading-snug">{event.title}</p>
-          <p className="truncate text-xs text-text-secondary">
-            Guest: <span className="font-medium text-text-primary">{session.guest_name || "Anonymous Guest"}</span>
-          </p>
-          <div className="mt-2 flex items-center justify-between gap-3">
-            <div className="min-h-11 min-w-11">
-              {camera.cameraCount >= 2 && (
-                <button
-                  type="button"
-                  onClick={camera.switchCamera}
-                  className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-overlay px-3 font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-                  aria-label="Switch camera"
-                >
-                  ↻
-                </button>
-              )}
-            </div>
-            {/* DM Mono frame counter (local budget hint; server is authoritative) */}
-            <p
-              className="rounded-full bg-overlay px-3 py-1.5 font-mono text-xs tabular-nums text-text-primary"
-              aria-live="polite"
-              aria-label={`${budgetRemaining} of ${totalBudget} photos remaining`}
-            >
-              {budgetRemaining} / {totalBudget}
-            </p>
+        {/* Ambient backdrop — blurred clone of the active frame art behind all
+            zones, with a dark wash so dock controls stay legible. */}
+        {selectedFrame?.src && (
+          <div aria-hidden="true" className="absolute inset-0 z-0 pointer-events-none">
+            <img
+              src={selectedFrame.src}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover blur-[80px] opacity-35 scale-125"
+            />
+            <div className="absolute inset-0 bg-bg-base/40" />
           </div>
+        )}
+
+        {/* ZONE 1 — minimal top bar: camera switch (left) + DM Mono counter (right) */}
+        <div className="relative z-10 flex shrink-0 items-center justify-between gap-2 px-4 pb-2 pt-[calc(0.75rem+env(safe-area-inset-top))]">
+          <div className="flex items-center">
+            {camera.cameraCount >= 2 ? (
+              <button
+                type="button"
+                onClick={camera.switchCamera}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-bg-base/60 backdrop-blur-md border border-border/60 text-sm font-semibold text-text-primary shadow-lg transition active:scale-95 focus-visible:outline-2 focus-visible:outline-accent"
+                aria-label="Switch camera"
+              >
+                ↻
+              </button>
+            ) : (
+              <div className="h-10 w-10" />
+            )}
+          </div>
+
+          {/* DM Mono photo counter */}
+          <p
+            className="flex h-10 min-w-10 items-center justify-center rounded-full bg-bg-base/60 backdrop-blur-md border border-border/60 px-3 font-mono text-xs tabular-nums text-text-primary shadow-lg"
+            aria-live="polite"
+            aria-label={`${budgetRemaining} of ${totalBudget} photos remaining`}
+          >
+            {budgetRemaining} / {totalBudget}
+          </p>
         </div>
 
-        {/* Status banners */}
+        {/* Status banners (Closed / Session Expiring) — in flow under the top bar */}
         {(closed || showPreExpiryWarning) && (
-          <div className="absolute inset-x-4 top-[calc(7.5rem+env(safe-area-inset-top))] space-y-2">
+          <div className="relative z-10 shrink-0 space-y-2 px-4 pb-2">
             {closed && (
               <div
                 role="alert"
-                className="rounded-lg border border-border bg-bg-elevated p-3"
+                className="rounded-xl border border-border bg-bg-elevated/95 backdrop-blur-md p-3 shadow-xl"
               >
-                <p className="text-sm font-medium">Event closed</p>
-                <p className="text-sm text-text-secondary">
+                <p className="text-sm font-semibold text-accent">Event closed</p>
+                <p className="text-xs text-text-secondary">
                   Your session remains viewable, but new submissions are not accepted.
                 </p>
               </div>
@@ -159,77 +155,116 @@ export function Capture({
             {showPreExpiryWarning && (
               <div
                 role="status"
-                className="rounded-lg border border-border bg-bg-elevated p-3"
+                className="rounded-xl border border-border bg-bg-elevated/95 backdrop-blur-md p-3 shadow-xl"
               >
-                <p className="text-sm font-medium">
-                  Your session ends in {Math.ceil(secondsLeft! / 60)} minute
-                  {Math.ceil(secondsLeft! / 60) > 1 ? "s" : ""}. Send your photos to save them.
+                <p className="text-xs font-medium text-text-primary">
+                  Your session ends in {Math.ceil(secondsLeft! / 60)} min. Send your photos to save them.
                 </p>
               </div>
             )}
           </div>
         )}
 
-        {/* Bottom action band (thumb zone, safe-area clearance) */}
-        <div className="absolute inset-x-0 bottom-0 space-y-3 px-4 pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-          {message && !closed && (
-            <p role="status" className="text-center text-xs text-text-secondary">
-              {message}
-            </p>
-          )}
+        {/* ZONE 2 — isolated 9:16 frame viewport (frame art breathes, no UI on top).
+            Container queries size the box to the largest exact 9:16 rectangle
+            that fits: min(content width, content height × 9/16). */}
+        <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center px-2 pb-2 [container-type:size]">
+          <div className="relative aspect-[9/16] w-[min(100cqw,calc(100cqh*9/16))] overflow-hidden rounded-2xl shadow-[0_10px_50px_rgba(0,0,0,0.85)]">
+            <CameraViewfinder camera={camera} frameOverlaySrc={selectedFrame?.src} />
 
-          {/* Pending photo strip (~48px thumbnails above the shutter) */}
+            {/* Shutter flash overlay — scoped to the viewport box */}
+            <div
+              aria-hidden="true"
+              className={`pointer-events-none absolute inset-0 bg-text-primary transition-opacity duration-fast z-20 ${
+                flash ? "opacity-40" : "opacity-0"
+              }`}
+            />
+          </div>
+        </div>
+
+        {/* ZONE 3 — dedicated bottom control dock (thumb zone, document flow) */}
+        <div className="relative z-10 shrink-0 space-y-2.5 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-2">
+          {/* Pending Photo Thumbnails Strip */}
           {pendingPhotos.length > 0 && (
-            <PendingStrip photos={pendingPhotos} onReview={onReviewPhoto} onRetry={onRetryPhoto} />
+            <div className="flex justify-center">
+              <PendingStrip photos={pendingPhotos} onReview={onReviewPhoto} onRetry={onRetryPhoto} />
+            </div>
           )}
 
-          {/* Manual advance to photo review */}
-          {canAdvance && (
-            <button
-              type="button"
-              onClick={onAdvance}
-              disabled={closed}
-              className="min-h-12 w-full rounded-lg bg-accent px-4 font-semibold text-on-accent transition duration-fast ease-out hover:brightness-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-45"
-            >
-              Lanjut →
-            </button>
-          )}
+          {/* Primary Action Row: [File Upload] - [Gold Shutter] - [Advance Button] */}
+          <div className="flex items-center justify-between gap-3 max-w-sm mx-auto w-full">
 
-          {/* Shutter, centered (voice note is a dedicated later step, §5.5) */}
-          <div className="flex items-end gap-3">
-            <div className="min-w-16 flex-1" aria-hidden="true" />
-            <div className="flex flex-col items-center gap-2">
+            {/* Left Slot: Icon File Picker Button */}
+            <div className="flex-1 flex justify-start">
+              <label
+                aria-label="Choose a photo"
+                className="flex h-11 w-11 items-center justify-center rounded-xl bg-bg-base/70 backdrop-blur-md border border-border/70 text-text-secondary transition active:scale-95 cursor-pointer hover:text-text-primary focus-within:outline-2 focus-within:outline-accent shadow-lg"
+              >
+                <span className="sr-only">Choose a photo</span>
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <rect x="3" y="5" width="18" height="14" rx="2" />
+                  <circle cx="9" cy="10" r="1.5" />
+                  <path d="m5 17 4-4 3 3 3-3 4 4" />
+                </svg>
+                <input
+                  className="sr-only"
+                  type="file"
+                  accept="image/*"
+                  onChange={onFileSelect}
+                  disabled={closed || budgetRemaining <= 0}
+                />
+              </label>
+            </div>
+
+            {/* Center Slot: Luxury Gold Shutter Button */}
+            <div className="flex flex-col items-center justify-center shrink-0">
               <button
                 type="button"
                 onClick={handleShutter}
                 disabled={shutterDisabled}
-                className="h-18 w-18 shrink-0 rounded-full border-4 border-bg-base bg-accent shadow-[0_0_18px_rgba(212,175,55,0.45),0_0_48px_rgba(212,175,55,0.18)] transition duration-fast ease-out hover:shadow-[0_0_26px_rgba(212,175,55,0.65),0_0_64px_rgba(212,175,55,0.28)] active:scale-[0.92] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-45"
+                className="h-16 w-16 shrink-0 rounded-full border-4 border-bg-base bg-accent shadow-[0_0_20px_rgba(212,175,55,0.45),0_0_40px_rgba(212,175,55,0.2)] transition duration-fast ease-out hover:shadow-[0_0_28px_rgba(212,175,55,0.65)] active:scale-[0.92] focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Take photo"
               />
-              {budgetRemaining <= 0 && !closed && (
-                <p className="max-w-40 text-center text-xs text-text-secondary">
-                  Photo limit reached for this guest session.
-                </p>
+            </div>
+
+            {/* Right Slot: Advance "Lanjut →" or Spacer */}
+            <div className="flex-1 flex justify-end">
+              {canAdvance ? (
+                <button
+                  type="button"
+                  onClick={onAdvance}
+                  disabled={closed}
+                  className="flex h-11 items-center justify-center rounded-xl bg-accent px-4 text-xs font-bold text-on-accent transition duration-fast hover:brightness-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-45 shadow-lg"
+                >
+                  Lanjut →
+                </button>
+              ) : (
+                <div className="h-11 w-full" />
               )}
             </div>
-            <div className="min-w-16 flex-1" aria-hidden="true" />
+
           </div>
 
-          {/* File picker fallback */}
-          <label className="flex min-h-11 cursor-pointer items-center justify-center rounded-lg border border-border px-4 text-sm font-semibold text-text-secondary focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent">
-            <span>Choose a photo</span>
-            <input
-              className="sr-only"
-              type="file"
-              accept="image/*"
-              onChange={onFileSelect}
-              disabled={closed || budgetRemaining <= 0}
-            />
-          </label>
+          {/* Budget Limit Warning Notice */}
+          {budgetRemaining <= 0 && !closed && (
+            <p className="text-center text-[11px] text-accent font-medium drop-shadow-sm">
+              Photo limit reached for this guest session.
+            </p>
+          )}
+
         </div>
       </section>
 
-      {/* Review overlay */}
+      {/* Review Overlay Dialog */}
       {reviewIndex !== null && reviewIndex < pendingPhotos.length && (
         <ReviewOverlay
           photo={pendingPhotos[reviewIndex]}
@@ -271,8 +306,8 @@ function CameraViewfinder({
   if (permission === "denied" || permission === "unsupported") {
     return (
       <div className="absolute inset-0 flex items-center justify-center bg-bg-base px-4">
-        <div className="max-w-sm rounded-lg border border-border bg-bg-elevated p-4">
-          <p className="text-sm text-text-secondary">
+        <div className="max-w-sm rounded-xl border border-border bg-bg-elevated p-4 shadow-2xl">
+          <p className="text-sm text-text-secondary leading-relaxed">
             {permission === "denied"
               ? "Camera access was not granted. You can still choose a photo below."
               : "Camera is not available in this browser. You can still choose a photo below."}
@@ -283,7 +318,7 @@ function CameraViewfinder({
   }
 
   return (
-    <div className="absolute inset-0 bg-bg-base">
+    <div className="absolute inset-0 bg-bg-base overflow-hidden">
       <video
         ref={videoRef}
         autoPlay
@@ -292,11 +327,13 @@ function CameraViewfinder({
         className="absolute inset-0 h-full w-full object-cover"
         aria-label="Camera preview"
       />
+      {/* object-cover on the 9:16 asset inside the 9:16 viewport box matches the
+          compositor's full-canvas draw exactly (WYSIWYG, DESIGN.md §5.3). */}
       {frameOverlaySrc && (
         <img
           src={frameOverlaySrc}
           alt=""
-          className="pointer-events-none absolute inset-0 h-full w-full object-contain"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover"
           aria-hidden="true"
         />
       )}
@@ -314,13 +351,13 @@ function PendingStrip({
   onRetry: (id: string) => void;
 }) {
   return (
-    <div className="flex gap-2 overflow-x-auto pb-1" role="list" aria-label="Captured photos">
+    <div className="flex gap-2 overflow-x-auto pb-1 max-w-full px-2" role="list" aria-label="Captured photos">
       {photos.map((photo, index) => (
         <div key={photo.id} role="listitem" className="relative shrink-0 animate-develop">
           <button
             type="button"
             onClick={() => onReview(index)}
-            className="block h-12 w-12 overflow-hidden rounded-md border border-border bg-bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className="block h-12 w-12 overflow-hidden rounded-lg border-2 border-border/80 bg-bg-surface shadow-md focus-visible:outline-2 focus-visible:outline-accent"
             aria-label={`Photo ${index + 1}, ${photo.status}`}
           >
             <img src={photo.previewUrl} alt="" className="h-full w-full object-cover" />
@@ -330,7 +367,7 @@ function PendingStrip({
             <button
               type="button"
               onClick={() => onRetry(photo.id)}
-              className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-error text-xs font-bold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-error text-xs font-bold text-text-primary shadow-md focus-visible:outline-2 focus-visible:outline-accent"
               aria-label="Retry upload"
             >
               ↻
@@ -366,7 +403,7 @@ function PendingStatusBadge({ status }: { status: PendingPhoto["status"] }) {
             : "bg-bg-surface";
   return (
     <span
-      className={`absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full ${bg} text-xs font-bold text-bg-base`}
+      className={`absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full ${bg} text-xs font-bold text-bg-base shadow-sm`}
       aria-hidden="true"
     >
       {label}
@@ -391,38 +428,40 @@ function ReviewOverlay({
 }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-bg-base/80 backdrop-blur-md p-4"
       role="dialog"
       aria-label="Photo review"
     >
-      <div className="relative w-full max-w-md rounded-xl border border-border bg-bg-elevated p-4">
-        <div className="aspect-square overflow-hidden rounded-lg bg-bg-surface">
-          <img src={photo.previewUrl} alt="Photo review" className="h-full w-full object-cover" />
+      <div className="relative w-full max-w-md rounded-2xl border border-border bg-bg-elevated p-4 shadow-2xl">
+        <div className="aspect-[9/16] max-h-[60dvh] mx-auto overflow-hidden rounded-xl bg-bg-surface border border-border/60 shadow-inner">
+          <img src={photo.previewUrl} alt="Photo review" className="h-full w-full object-contain" />
         </div>
         {photo.errorMessage && (
-          <p role="alert" className="mt-3 text-sm text-text-secondary">
+          <p role="alert" className="mt-3 text-sm text-error">
             {photo.errorMessage}
           </p>
         )}
-        <p className="mt-3 text-sm text-text-muted">
+        <p className="mt-3 text-xs text-text-muted text-center">
           Status:{" "}
-          {photo.status === "pending"
-            ? "Not sent yet"
-            : photo.status === "uploading"
-              ? "Sending…"
-              : photo.status === "confirmed"
-                ? "Saved"
-                : photo.status === "error"
-                  ? "Not saved"
-                  : photo.status === "expired"
-                    ? "Not saved — session expired"
-                    : photo.status}
+          <span className="text-text-primary font-medium">
+            {photo.status === "pending"
+              ? "Not sent yet"
+              : photo.status === "uploading"
+                ? "Sending…"
+                : photo.status === "confirmed"
+                  ? "Saved"
+                  : photo.status === "error"
+                    ? "Not saved"
+                    : photo.status === "expired"
+                      ? "Not saved — session expired"
+                      : photo.status}
+          </span>
         </p>
         <div className="mt-4 flex gap-2">
           <button
             type="button"
             onClick={onClose}
-            className="min-h-12 flex-1 rounded-lg border border-border px-4 font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className="min-h-11 flex-1 rounded-xl border border-border px-4 text-xs font-semibold text-text-primary transition active:scale-95 focus-visible:outline-2 focus-visible:outline-accent"
           >
             Back
           </button>
@@ -430,7 +469,7 @@ function ReviewOverlay({
             <button
               type="button"
               onClick={onRetake}
-              className="min-h-12 flex-1 rounded-lg bg-accent px-4 font-semibold text-on-accent transition duration-fast ease-out hover:brightness-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              className="min-h-11 flex-1 rounded-xl bg-accent px-4 text-xs font-bold text-on-accent transition duration-fast hover:brightness-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-accent"
             >
               Retake
             </button>
@@ -439,7 +478,7 @@ function ReviewOverlay({
             <button
               type="button"
               onClick={onDelete}
-              className="min-h-12 flex-1 rounded-lg bg-error px-4 font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              className="min-h-11 flex-1 rounded-xl bg-error px-4 text-xs font-bold text-text-primary transition active:scale-95 focus-visible:outline-2 focus-visible:outline-accent"
             >
               Delete
             </button>

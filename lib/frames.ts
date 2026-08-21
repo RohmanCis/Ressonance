@@ -113,6 +113,14 @@ export const FRAMES: Frame[] = [
       },
     ],
   },
+  // Owner-approved exception (2026-08-21): baked-in typography asset —
+  // no dynamic text layers, otherwise the event title renders twice.
+  {
+    id: "wedding-crimson",
+    label: "Wedding Crimson",
+    src: "/frames/wedding-crimson.png",
+    textLayers: [],
+  },
 ];
 
 export const DEFAULT_FRAME_ID = "none";
