@@ -1,5 +1,7 @@
 import { ChangeEvent, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { RotateCcw } from "lucide-react";
 import type { useCamera } from "@/hooks/use-camera";
+import { PendingStatusBadge } from "@/components/guest/pending-status-badge";
 import {
   canDeletePhoto,
   canRetakePhoto,
@@ -121,7 +123,7 @@ export function Capture({
                 className="flex h-11 w-11 items-center justify-center rounded-full bg-bg-base/60 backdrop-blur-md border border-border/60 text-sm font-semibold text-text-primary shadow-lg transition active:scale-95 focus-visible:outline-2 focus-visible:outline-accent"
                 aria-label="Switch camera"
               >
-                ↻
+                <RotateCcw className="h-5 w-5" aria-hidden="true" />
               </button>
             ) : (
               <div className="h-11 w-11" />
@@ -390,38 +392,6 @@ function PendingStrip({
         </div>
       ))}
     </div>
-  );
-}
-
-function PendingStatusBadge({ status }: { status: PendingPhoto["status"] }) {
-  if (status === "pending") return null;
-  const label =
-    status === "uploading"
-      ? "…"
-      : status === "confirmed"
-        ? "✓"
-        : status === "error"
-          ? "!"
-          : status === "expired"
-            ? "✕"
-            : "";
-  const bg =
-    status === "uploading"
-      ? "bg-text-muted"
-      : status === "confirmed"
-        ? "bg-success"
-        : status === "error"
-          ? "bg-error"
-          : status === "expired"
-            ? "bg-text-muted"
-            : "bg-bg-surface";
-  return (
-    <span
-      className={`absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full ${bg} text-xs font-bold text-bg-base shadow-sm`}
-      aria-hidden="true"
-    >
-      {label}
-    </span>
   );
 }
 

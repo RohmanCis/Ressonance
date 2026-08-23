@@ -54,10 +54,10 @@ export function Done({
       {/* Digital Keepsake — client-side download of the composited capture */}
       {keepsakeUrl && (
         <section className="mt-8 w-full max-w-sm rounded-xl border border-border bg-bg-surface p-6">
-          <h2 className="font-display text-xl font-semibold text-text-primary">
+          <h2 className="font-display text-xl font-semibold text-text-secondary">
             Simpan Kenangan Digital
           </h2>
-          <p className="mt-2 text-sm text-text-secondary">
+          <p className="mt-2 text-sm text-text-muted">
             Unduh foto kenangan berbingkai dari acara ini ke galeri Anda.
           </p>
           <button

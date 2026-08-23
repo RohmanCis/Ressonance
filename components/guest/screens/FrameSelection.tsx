@@ -97,10 +97,10 @@ export function FrameSelection({
               >
                 {/* 9:16 Card Container */}
                 <div
-                  className={`relative h-[calc(100%-1.75rem)] aspect-[9/16] overflow-hidden rounded-2xl border-2 bg-bg-surface/90 p-1.5 transition-all duration-fast group-focus-visible:ring-2 group-focus-visible:ring-accent group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-bg-base ${
+                  className={`relative h-[calc(100%-1.75rem)] aspect-[9/16] overflow-hidden rounded-2xl border-2 bg-bg-surface/90 p-1.5 transition-[transform,opacity,border-color,box-shadow] duration-fast group-focus-visible:ring-2 group-focus-visible:ring-accent group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-bg-base ${
                     isSelected
                       ? "border-accent bg-accent-soft shadow-[0_0_25px_color-mix(in_srgb,var(--accent)_35%,transparent)] ring-1 ring-accent"
-                      : "border-border/60 opacity-60 hover:opacity-100 hover:border-text-muted"
+                      : "border-border/60 opacity-60 hover:opacity-100 hover:border-text-secondary"
                   }`}
                 >
                   <img

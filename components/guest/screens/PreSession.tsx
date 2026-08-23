@@ -160,7 +160,7 @@ export function PreSession({
               value={name}
               onChange={(e) => onNameChange(e.target.value)}
               disabled={blocked || state === "starting"}
-              className="h-12 w-full rounded-xl border border-border/80 bg-bg-elevated/60 px-4 text-sm text-text-primary placeholder:text-text-muted/50 transition focus:border-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              className="h-12 w-full rounded-none border-0 border-b border-border bg-transparent px-0 pb-2 text-sm text-text-primary placeholder:text-text-muted/50 transition focus:border-accent focus:outline-none"
               aria-describedby="name-help"
             />
             <p id="name-help" className="text-[11px] text-text-muted pt-0.5">
@@ -222,7 +222,7 @@ function Shell({ children }: { children: React.ReactNode }) {
 
 function Card({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative w-full max-w-[28rem] rounded-2xl border border-accent/20 bg-bg-surface/85 p-6 sm:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_40px_color-mix(in_srgb,var(--accent)_8%,transparent)] backdrop-blur-xl">
+    <div className="relative w-full max-w-[30rem] rounded-2xl border border-accent/20 bg-bg-surface/85 p-6 sm:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_40px_color-mix(in_srgb,var(--accent)_8%,transparent)] backdrop-blur-xl">
       {children}
     </div>
   );

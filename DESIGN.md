@@ -152,7 +152,7 @@ All state changes remain instant and announced; only the movement is removed.
 ### 5.6 Done (Completion)
 
 - **Layout:** Quiet, centered, full-screen `--bg-base`. One gold check mark (success glyph, not animated), event title in Cormorant Garamond 4xl, and two short lines of receipt copy ("Thank you — your photos and voice note have been added to {event}.").
-- **Key visual elements:** Nothing else. No actions, no navigation, no submission affordances.
+- **Key visual elements:** Nothing else. No actions, no navigation, no submission affordances. Exception: a keepsake download card is permitted as the sole optional action on the Done screen. It must use bg-bg-surface, border-border, no gold accent, and subdued text-text-secondary styling.
 - **Primary action placement:** None — the session is closed from the guest perspective.
 - **Transition:** None out. A new session requires Start again.
 

@@ -190,8 +190,10 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
       }
       if (!response.ok || typeof body.photos_submitted !== "number" || typeof body.photos_remaining !== "number" || typeof body.voice_note_submitted !== "boolean" || typeof body.voice_note_available !== "boolean") throw new Error("usage");
       setSession({ guest_name: body.guest_name ?? null, photos_submitted: body.photos_submitted, photos_remaining: body.photos_remaining, voice_note_submitted: body.voice_note_submitted, voice_note_available: body.voice_note_available });
-      if (body.event?.status === "CLOSED") setEvent((current) => current ? { ...current, status: "CLOSED" } : current);
-      setMessage(body.event?.status === "CLOSED" ? "Acara ini sudah selesai. Kiriman baru nggak diterima lagi." : "Session ready.");
+      if (body.event?.status === "CLOSED") {
+        setEvent((current) => current ? { ...current, status: "CLOSED" } : current);
+        setMessage("Acara ini sudah selesai. Kiriman baru nggak diterima lagi.");
+      }
       return true;
     } catch {
       setMessage("Sesi belum bisa dicek. Cek koneksimu, lalu coba lagi.");

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { canDeletePhoto, type PendingPhoto } from "@/lib/pending-photos";
+import { PendingStatusBadge } from "@/components/guest/pending-status-badge";
 
 type EventData = { title: string; status: "ACTIVE" | "CLOSED" };
 
@@ -40,7 +41,7 @@ export function PhotoReview({
 
   return (
     <main className="flex min-h-dvh flex-col bg-bg-base text-text-primary">
-      <header className="px-5 pt-[calc(2rem+env(safe-area-inset-top))] sm:px-8">
+      <header className="border-b border-border px-5 pb-5 pt-[calc(2rem+env(safe-area-inset-top))] sm:px-8">
         <p className="truncate text-xs font-medium tracking-[0.04em] text-text-muted">{event.title}</p>
         <h1
           ref={headingRef}
@@ -60,7 +61,10 @@ export function PhotoReview({
             Tidak ada foto baru. Foto yang sudah terkirim tersimpan.
           </p>
         ) : (
-          <ul className="grid grid-cols-3 gap-2" aria-label="Captured photos">
+          <section className="relative overflow-hidden rounded-2xl bg-bg-surface">
+            <div className="relative p-4">
+              <p className="font-mono text-xs tracking-widest text-text-muted">HASIL JEPRETAN</p>
+              <ul className="mt-3 grid grid-cols-3 gap-2" aria-label="Captured photos">
             {photos.map((photo, index) => (
               <li
                 key={photo.id}
@@ -77,7 +81,7 @@ export function PhotoReview({
                 <p className="mt-1 text-center font-mono text-xs tabular-nums text-text-muted">
                   Foto {index + 1}
                 </p>
-                <StatusBadge status={photo.status} />
+                <PendingStatusBadge status={photo.status} />
                 {/* 44×44 hit area: invisible padded button, visual chip stays
                     28px anchored at the tile corner (AGENTS.md §6). The extra
                     16px extends into the tile's own non-interactive image and
@@ -113,7 +117,11 @@ export function PhotoReview({
                 )}
               </li>
             ))}
-          </ul>
+              </ul>
+            </div>
+            {/* Analog grain over the review surface (texture only) */}
+            <div aria-hidden="true" className="pointer-events-none absolute inset-0 film-grain" />
+          </section>
         )}
 
         {hasErrors && (
@@ -144,37 +152,5 @@ export function PhotoReview({
         </button>
       </div>
     </main>
-  );
-}
-
-function StatusBadge({ status }: { status: PendingPhoto["status"] }) {
-  if (status === "pending") return null;
-  const label =
-    status === "uploading"
-      ? "…"
-      : status === "confirmed"
-        ? "✓"
-        : status === "error"
-          ? "!"
-          : status === "expired"
-            ? "✕"
-            : "";
-  const bg =
-    status === "uploading"
-      ? "bg-text-muted"
-      : status === "confirmed"
-        ? "bg-success"
-        : status === "error"
-          ? "bg-error"
-          : status === "expired"
-            ? "bg-text-muted"
-            : "bg-bg-surface";
-  return (
-    <span
-      className={`absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full ${bg} text-xs font-bold text-bg-base`}
-      aria-hidden="true"
-    >
-      {label}
-    </span>
   );
 }
