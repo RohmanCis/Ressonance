@@ -36,7 +36,7 @@ export function AdminSignIn() {
         <p className="mb-3 text-xs font-medium tracking-[0.04em] text-text-muted">Admin access</p>
         <h1 className="font-display text-3xl font-semibold tracking-tight text-text-primary">Open your event desk.</h1>
         <p className="mt-3 text-text-secondary">Sign in to create an event, share its access card, and review every submission.</p>
-        <form onSubmit={submit} className="mt-8 rounded-[10px] border border-border bg-bg-surface p-6">
+        <form onSubmit={submit} className="mt-8 rounded-2xl border border-border bg-bg-surface p-6">
           <label className="block text-xs font-medium text-text-secondary" htmlFor="email">
             Email
             <input

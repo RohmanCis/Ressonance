@@ -116,20 +116,20 @@ function DownloadButton({ item, name, className = "" }: { item: Submission; name
         aria-label={`Download ${typeLabel(item).toLowerCase()} from ${name}`}
         onClick={retry}
         disabled={busy}
-        className={`flex h-11 items-center gap-1.5 rounded-[10px] border border-border bg-bg-surface px-3 text-xs font-semibold text-text-secondary transition duration-fast ease-out hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-45 ${focusRing} ${className}`}
+        className={`flex h-12 items-center gap-1.5 rounded-lg border border-border bg-bg-surface px-3 text-xs font-semibold text-text-secondary transition duration-fast ease-out hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-45 ${focusRing} ${className}`}
       >
         {busy ? <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Download className="h-4 w-4" aria-hidden="true" />}
         {busy ? "Downloading…" : "Download"}
       </button>
       {error && (
-        <span className="flex w-full flex-wrap items-center justify-between gap-2 rounded-[10px] border border-error/40 bg-error/10 p-2">
-          <span role="alert" className="text-xs text-text-secondary">
+        <span className="flex w-full flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-bg-elevated/90 p-2">
+          <span role="alert" className="text-xs text-error">
             <span className="font-semibold text-text-primary">
               {typeLabel(item)} from {name}:{" "}
             </span>
             {error}
           </span>
-          <button type="button" onClick={retry} className={`min-h-11 rounded-md px-3 text-xs font-semibold transition duration-fast ${quietButton} ${focusRing}`}>
+          <button type="button" onClick={retry} className={`min-h-12 rounded-md px-3 text-xs font-semibold transition duration-fast ${quietButton} ${focusRing}`}>
             Retry
           </button>
         </span>
@@ -159,13 +159,13 @@ function PhotoTile({ item, name, onPreview }: { item: Submission; name: string; 
   }, [load]);
 
   return (
-    <div className="relative overflow-hidden rounded-[14px] border border-border bg-bg-surface">
+    <div className="relative overflow-hidden rounded-lg border border-border bg-bg-surface">
       {error ? (
         <div className="flex aspect-square flex-col items-center justify-center gap-2 bg-bg-elevated p-3 text-center">
           <p role="alert" className="text-xs text-text-muted">
             {errorText(error)}
           </p>
-          <button type="button" onClick={load} className={`min-h-11 rounded-md px-3 text-xs font-semibold transition duration-fast ${quietButton} ${focusRing}`}>
+          <button type="button" onClick={load} className={`min-h-12 rounded-md px-3 text-xs font-semibold transition duration-fast ${quietButton} ${focusRing}`}>
             Retry
           </button>
         </div>
@@ -237,7 +237,7 @@ function VoiceTile({ item, name }: { item: Submission; name: string }) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[10px] border border-border bg-bg-surface p-3">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-border bg-bg-surface p-3">
       <audio
         ref={audioRef}
         preload="none"
@@ -258,7 +258,7 @@ function VoiceTile({ item, name }: { item: Submission; name: string }) {
         onClick={toggle}
         disabled={loading}
         aria-label={`${playing ? "Pause" : "Play"} voice note by ${name}${duration ? `, ${item.duration_seconds} seconds` : ""}`}
-        className={`flex min-h-11 items-center gap-2 rounded-[10px] px-3 text-sm font-semibold transition duration-fast ease-out disabled:opacity-60 ${quietButton} ${focusRing}`}
+        className={`flex min-h-12 items-center gap-2 rounded-lg px-3 text-sm font-semibold transition duration-fast ease-out disabled:opacity-60 ${quietButton} ${focusRing}`}
       >
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
@@ -449,7 +449,7 @@ function PreviewDialog({
         ref={panelRef}
         tabIndex={-1}
         onKeyDown={onKeyDown}
-        className={`max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-[14px] border border-border bg-bg-elevated transition duration-base ease-out motion-reduce:transition-none focus:outline-none ${shown ? "scale-100 opacity-100" : "scale-[0.98] opacity-0"}`}
+        className={`max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-border bg-bg-elevated transition duration-base ease-out motion-reduce:transition-none focus:outline-none ${shown ? "scale-100 opacity-100" : "scale-[0.98] opacity-0"}`}
       >
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border px-4 py-3 sm:px-6">
           <div className="min-w-0">
@@ -475,7 +475,7 @@ function PreviewDialog({
               type="button"
               aria-label="Close preview"
               onClick={onClose}
-              className={`flex h-11 items-center gap-1.5 rounded-[10px] border border-border bg-bg-surface px-3 text-sm font-semibold text-text-secondary transition duration-fast ease-out hover:text-text-primary ${focusRing}`}
+              className={`flex h-12 items-center gap-1.5 rounded-lg border border-border bg-bg-surface px-3 text-sm font-semibold text-text-secondary transition duration-fast ease-out hover:text-text-primary ${focusRing}`}
             >
               <X className="h-4 w-4" aria-hidden="true" />
               Close
@@ -514,7 +514,7 @@ function TimelineSkeleton() {
           </div>
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {[0, 1, 2, 3].map((t) => (
-              <div key={t} className="aspect-square rounded-[14px] bg-bg-elevated" />
+              <div key={t} className="aspect-square rounded-lg bg-bg-elevated" />
             ))}
           </div>
         </div>
@@ -596,7 +596,7 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
                   </p>
                   <div className="mt-6 grid gap-2">
                     <Link
-                      className={`flex min-h-11 items-center rounded-[10px] px-3 text-sm font-semibold transition duration-fast ${quietButton} ${focusRing}`}
+                      className={`flex min-h-12 items-center rounded-lg px-3 text-sm font-semibold transition duration-fast ${quietButton} ${focusRing}`}
                       href={`/admin/events/${publicId}/access`}
                     >
                       Access / QR
@@ -641,24 +641,9 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
             {busy ? (
               <TimelineSkeleton />
             ) : items.length === 0 ? (
-              <div className="mt-6 rounded-[10px] border border-dashed border-border p-10 text-center">
-                <h3 className="font-semibold text-text-primary">{query ? "No matching submissions" : "No submissions yet"}</h3>
-                <p className="mt-2 text-sm text-text-muted">
-                  {query ? "Clear or edit the guest-name search." : "New photos and voice notes will appear here."}
-                </p>
-                {query && (
-                  <Button
-                    secondary
-                    className="mt-4"
-                    onClick={() => {
-                      setQuery("");
-                      load("");
-                    }}
-                  >
-                    Clear search
-                  </Button>
-                )}
-              </div>
+              <p className="mt-6 text-center text-sm text-text-muted">
+                {query ? "No matching submissions. Clear or edit the guest-name search." : "New photos and voice notes will appear here."}
+              </p>
             ) : (
               <div className="mt-6 grid gap-8">
                 {groups.map((group) => (

@@ -138,7 +138,7 @@ export function AdminAccess({ publicId }: { publicId: string }) {
         <div className="mx-auto max-w-4xl print:hidden">
           <Link
             href={`/admin/events/${publicId}`}
-            className={`mb-6 inline-flex min-h-11 items-center gap-1.5 rounded-md text-sm font-medium text-text-muted transition duration-fast ease-out hover:text-text-primary ${focusRing}`}
+            className={`mb-6 inline-flex min-h-12 items-center gap-1.5 rounded-md text-sm font-medium text-text-muted transition duration-fast ease-out hover:text-text-primary ${focusRing}`}
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             Back to event
@@ -162,7 +162,7 @@ export function AdminAccess({ publicId }: { publicId: string }) {
             </div>
           ) : (
             <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_18rem]">
-              <section className="rounded-[10px] border border-border bg-bg-surface p-6">
+              <section className="rounded-2xl border border-border bg-bg-surface p-6">
                 <h2 className="text-lg font-semibold text-text-primary">Public URL</h2>
                 <label className="mt-4 block text-sm font-semibold text-text-primary" htmlFor="public-url">
                   Share link
@@ -194,7 +194,7 @@ export function AdminAccess({ publicId }: { publicId: string }) {
                           setMenuOpen(true);
                         }
                       }}
-                      className={`flex min-h-11 items-center gap-1.5 rounded-[10px] border border-border bg-bg-surface px-4 py-2 text-sm font-semibold text-text-primary transition duration-fast hover:bg-bg-elevated disabled:cursor-not-allowed disabled:opacity-45 ${focusRing}`}
+                      className={`flex min-h-12 items-center gap-1.5 rounded-lg border border-border bg-bg-surface px-4 py-2 text-sm font-semibold text-text-primary transition duration-fast hover:bg-bg-elevated disabled:cursor-not-allowed disabled:opacity-45 ${focusRing}`}
                     >
                       <Printer className="h-4 w-4" aria-hidden="true" />
                       Print
@@ -206,7 +206,7 @@ export function AdminAccess({ publicId }: { publicId: string }) {
                         id="print-menu"
                         aria-label="Print options"
                         onKeyDown={onMenuKeyDown}
-                        className="absolute right-0 z-20 mt-2 w-56 rounded-[10px] border border-border bg-bg-elevated p-1"
+                        className="absolute right-0 z-20 mt-2 w-56 rounded-lg border border-border bg-bg-elevated p-1"
                       >
                         {printOptions.map((option, i) => (
                           <button
@@ -218,7 +218,7 @@ export function AdminAccess({ publicId }: { publicId: string }) {
                             }}
                             tabIndex={i === activeItem ? 0 : -1}
                             onClick={() => selectOption(option.variant)}
-                            className={`flex min-h-11 w-full items-center rounded-md px-3 text-left text-sm font-medium text-text-primary transition duration-fast hover:bg-accent-soft ${focusRing}`}
+                            className={`flex min-h-12 w-full items-center rounded-md px-3 text-left text-sm font-medium text-text-primary transition duration-fast hover:bg-accent-soft ${focusRing}`}
                           >
                             {option.label}
                           </button>
@@ -234,7 +234,7 @@ export function AdminAccess({ publicId }: { publicId: string }) {
                 )}
                 {copied && <Status message="Link copied to your clipboard." />}
               </section>
-              <section className="rounded-[10px] border border-border bg-bg-surface p-6 text-center">
+              <section className="rounded-2xl border border-border bg-bg-surface p-6 text-center">
                 <h2 className="text-lg font-semibold text-text-primary">QR access</h2>
                 {/* QR keeps a white quiet zone (bgColor/includeMargin) for scannability on the dark surface. */}
                 <div className="mx-auto mt-5 aspect-square w-full max-w-52 rounded-md border border-border bg-bg-elevated p-3">
