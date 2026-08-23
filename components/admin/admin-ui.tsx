@@ -22,7 +22,24 @@ export async function api<T>(url: string, init?: RequestInit): Promise<T> {
 
 // DESIGN.md §6: admin chrome on dark tokens — bg-base page, hairline header, gold only on primary actions.
 export function Shell({ children, title = "Admin", eyebrow = "Event desk" }: { children: ReactNode; title?: string; eyebrow?: string }) {
-  return <main className="min-h-screen bg-bg-base px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-[calc(1.5rem+env(safe-area-inset-bottom))] text-text-primary sm:px-8"><div className="mx-auto max-w-[90rem]"> <header className="mb-10 flex items-center justify-between border-b border-border pb-5"><Link href="/admin" className="font-display text-xl font-semibold tracking-tight text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">{title}</Link><span className="text-xs font-medium tracking-[0.04em] text-text-muted">{eyebrow}</span></header>{children}</div></main>;
+  return (
+    <main className="relative flex min-h-dvh flex-col overflow-hidden bg-bg-base px-5 pt-[calc(2rem+env(safe-area-inset-top))] pb-[calc(2rem+env(safe-area-inset-bottom))] text-text-primary sm:px-8">
+      {/* 1. AMBIENT GLOW LAYER 1 (Top-Right Amber Orb) — PreSession baseline */}
+      <div aria-hidden="true" className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent/20 blur-[100px] animate-ambient-1" />
+      {/* 2. AMBIENT GLOW LAYER 2 (Bottom-Left Warm Bronze Orb) */}
+      <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 -left-24 h-[420px] w-[420px] rounded-full bg-accent/15 blur-[110px] animate-ambient-2" />
+      {/* 3. FILM GRAIN OVERLAY */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 film-grain" />
+      {/* 4. CONTENT WRAPPER */}
+      <div className="relative z-10 mx-auto w-full max-w-[90rem]">
+        <header className="mb-10 flex items-center justify-between border-b border-border pb-5">
+          <Link href="/admin" className="font-display text-xl font-semibold tracking-tight text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">{title}</Link>
+          <span className="text-xs font-medium tracking-[0.04em] text-text-muted">{eyebrow}</span>
+        </header>
+        {children}
+      </div>
+    </main>
+  );
 }
 
 export function Status({ message, error = false, action }: { message: string; error?: boolean; action?: ReactNode }) {
