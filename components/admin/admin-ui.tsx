@@ -27,7 +27,14 @@ export function Status({ message, error = false, action }: { message: string; er
   return <div role={error ? "alert" : "status"} className={`mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-bg-elevated/90 p-4 text-sm ${error ? "text-error" : "text-success"}`}><span>{message}</span>{action}</div>;
 }
 
-export function Busy({ label = "Loading" }) { return <div role="status" className="rounded-lg border border-border bg-bg-surface p-8 text-sm text-text-muted">{label}…</div>; }
+export function Busy({ label = "Loading" }) {
+  return (
+    <div role="status" aria-label={label} className="flex animate-pulse gap-2">
+      <div className="h-4 w-32 bg-bg-surface/60" />
+      <div className="h-3 w-48 bg-bg-surface/60" />
+    </div>
+  );
+}
 export function AuthGate({ children }: { children: ReactNode }) {
   const [state, setState] = useState<"loading" | "ok" | "no">("loading");
   useEffect(() => { api("/api/admin/me").then(() => setState("ok")).catch(() => setState("no")); }, []);
@@ -43,5 +50,5 @@ export function Button({ children, secondary = false, ...props }: React.ButtonHT
 export function AdminCreateEvent() {
   const [title, setTitle] = useState(""); const [busy, setBusy] = useState(false); const [message, setMessage] = useState(""); const [error, setError] = useState("");
   async function submit(event: FormEvent) { event.preventDefault(); setBusy(true); setError(""); setMessage(""); try { const body = await api<{ event: Event; public_url: string }>("/api/admin/events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title }) }); setMessage(`Created “${body.event.title}”.`); window.location.href = `/admin/events/${body.event.public_id}`; } catch (e) { setError(errorText[(e as Error).message] ?? ((e as Error).message === "OFFLINE" ? "You appear offline. Retry when connected." : "Could not create the event. Retry safely.")); setBusy(false); } }
-  return <AuthGate><Shell><div className="mx-auto max-w-2xl"><p className="text-xs font-medium tracking-[0.04em] text-text-muted">New event</p><h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-text-primary">Create a new event.</h1><p className="mt-3 text-text-secondary">Create one active event. You can close it when the day is complete.</p><form onSubmit={submit} className="mt-8 rounded-2xl border border-border bg-bg-surface p-6"><label className="block text-xs font-medium text-text-secondary" htmlFor="event-title">Event title<input id="event-title" required value={title} onChange={e => setTitle(e.target.value)} className="mt-2 h-11 w-full rounded-md border border-border bg-bg-base px-3 text-text-primary placeholder:text-text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" placeholder="Summer party" /></label>{error && <Status error message={error} action={error.includes("already") ? <Link href="/admin" className="underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Find existing event</Link> : undefined} />}{message && <Status message={message} />}<Button disabled={busy} className="mt-6">{busy ? "Creating…" : "Create event"}</Button></form></div></Shell></AuthGate>;
+  return <AuthGate><Shell><div className="mx-auto max-w-2xl"><p className="text-xs font-medium tracking-[0.04em] text-text-muted">New event</p><h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-text-primary">Create a new event.</h1><p className="mt-3 text-text-secondary">Create one active event. You can close it when the day is complete.</p><form onSubmit={submit} className="mt-8 rounded-2xl border border-border bg-bg-surface p-6"><label className="block text-xs font-medium text-text-secondary" htmlFor="event-title">Event title<input id="event-title" required value={title} onChange={e => setTitle(e.target.value)} className="mt-2 w-full border-0 border-b border-border bg-transparent rounded-none px-0 pb-2 h-12 text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none transition-colors" placeholder="Summer party" /></label>{error && <Status error message={error} action={error.includes("already") ? <Link href="/admin" className="underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Find existing event</Link> : undefined} />}{message && <Status message={message} />}<Button disabled={busy} className="mt-6">{busy ? "Creating…" : "Create event"}</Button></form></div></Shell></AuthGate>;
 }

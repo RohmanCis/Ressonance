@@ -166,7 +166,7 @@ export function AdminAccess({ publicId }: { publicId: string }) {
                 <h2 className="text-lg font-semibold text-text-primary">Public URL</h2>
                 <label className="mt-4 block text-sm font-semibold text-text-primary" htmlFor="public-url">
                   Share link
-                  <input id="public-url" readOnly value={url} className="mt-2 h-11 w-full rounded-md border border-border bg-bg-elevated px-3 font-mono text-xs text-text-primary" />
+                  <input id="public-url" readOnly value={url} className="mt-2 w-full border-0 border-b border-border bg-transparent rounded-none px-0 pb-2 h-12 font-mono text-xs text-text-muted pointer-events-none select-all focus:border-accent focus:outline-none transition-colors" />
                 </label>
                 <div className="mt-4 flex flex-wrap items-center gap-2">
                   <Button onClick={copy}>{copied ? "Copied" : "Copy link"}</Button>
@@ -218,7 +218,7 @@ export function AdminAccess({ publicId }: { publicId: string }) {
                             }}
                             tabIndex={i === activeItem ? 0 : -1}
                             onClick={() => selectOption(option.variant)}
-                            className={`flex min-h-12 w-full items-center rounded-md px-3 text-left text-sm font-medium text-text-primary transition duration-fast hover:bg-accent-soft ${focusRing}`}
+                            className={`flex min-h-12 w-full items-center rounded-md px-3 text-left text-sm font-medium text-text-primary transition duration-fast hover:bg-bg-elevated ${focusRing}`}
                           >
                             {option.label}
                           </button>

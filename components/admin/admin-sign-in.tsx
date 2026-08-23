@@ -46,7 +46,7 @@ export function AdminSignIn() {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-2 h-11 w-full rounded-md border border-border bg-bg-base px-3 text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              className="mt-2 w-full border-0 border-b border-border bg-transparent rounded-none px-0 pb-2 h-12 text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none transition-colors"
             />
           </label>
           <label className="mt-4 block text-xs font-medium text-text-secondary" htmlFor="password">
@@ -58,7 +58,7 @@ export function AdminSignIn() {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-2 h-11 w-full rounded-md border border-border bg-bg-base px-3 text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              className="mt-2 w-full border-0 border-b border-border bg-transparent rounded-none px-0 pb-2 h-12 text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none transition-colors"
             />
           </label>
           <Button disabled={busy} className="mt-6 w-full">

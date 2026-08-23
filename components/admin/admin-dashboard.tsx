@@ -274,10 +274,10 @@ function VoiceTile({ item, name }: { item: Submission; name: string }) {
         Voice note
         {duration && <span className="font-mono tabular-nums text-text-muted">{duration}</span>}
       </span>
-      <span className="h-1 min-w-16 flex-1 rounded-full bg-bg-elevated" aria-hidden="true">
+      <span className="relative h-1 min-w-16 flex-1 overflow-hidden rounded-full bg-border" aria-hidden="true">
         <span
-          className="block h-1 rounded-full bg-accent transition-[width] duration-fast motion-reduce:transition-none"
-          style={{ width: `${Math.round(progress * 100)}%` }}
+          className="absolute inset-y-0 left-0 h-full w-full origin-left rounded-full bg-accent transition-transform duration-[var(--motion-base)]"
+          style={{ transform: `scaleX(${progress})` }}
         />
       </span>
       <time dateTime={item.created_at} className="font-mono text-xs tabular-nums text-text-muted">
@@ -629,10 +629,11 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
                 </label>
                 <input
                   id="guest-search"
+                  type="search"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search guest name"
-                  className={`h-11 min-w-0 flex-1 rounded-md border border-border bg-bg-surface px-3 text-text-primary placeholder:text-text-muted ${focusRing}`}
+                  className="min-w-0 flex-1 border-0 border-b border-border bg-transparent rounded-none px-0 pb-2 h-12 text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none transition-colors"
                 />
                 <Button secondary>Search</Button>
               </form>
