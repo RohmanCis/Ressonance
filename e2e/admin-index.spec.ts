@@ -69,7 +69,8 @@ test("ACTIVE event is prominent; CLOSED event stays accessible", async ({ page }
 
   const activeSection = page.getByRole("region", { name: "Active event" });
   await expect(activeSection.getByRole("heading", { name: "Summer Party" })).toBeVisible();
-  await expect(activeSection.getByText("Active", { exact: true })).toBeVisible();
+  // FIX-9: ACTIVE is marked solely by the gold left-edge border (DESIGN.md §6).
+  await expect(activeSection.locator(".border-l-accent")).toBeVisible();
 
   const pastSection = page.getByRole("region", { name: "Past events" });
   await expect(pastSection.getByText("Winter Dinner")).toBeVisible();
@@ -132,8 +133,9 @@ test("failure state offers deliberate retry and recovers", async ({ page }) => {
 test("empty state points to creation", async ({ page }) => {
   await mockEvents(page, []);
   await page.goto("/admin");
-  await expect(page.getByRole("heading", { name: "No events yet" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Create event" })).toHaveAttribute("href", "/admin/events/new");
+  // FIX-8: quiet one-line empty state; creation entry is the header link.
+  await expect(page.getByText("No events yet. Create an event to start collecting photos and voice notes.")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Create new event" })).toHaveAttribute("href", "/admin/events/new");
 });
 
 test("ACTIVE_EVENT_EXISTS recovery resolves to the index, not sign-in", async ({ page }) => {
