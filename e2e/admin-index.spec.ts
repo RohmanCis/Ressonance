@@ -71,6 +71,9 @@ test("ACTIVE event is prominent; CLOSED event stays accessible", async ({ page }
   await expect(activeSection.getByRole("heading", { name: "Summer Party" })).toBeVisible();
   // FIX-9: ACTIVE is marked solely by the gold left-edge border (DESIGN.md §6).
   await expect(activeSection.locator(".border-l-accent")).toBeVisible();
+  // FIX-7: hairline-row anatomy — gold status dot + English "Active" label.
+  await expect(activeSection.locator(".rounded-full.bg-accent")).toBeVisible();
+  await expect(activeSection.getByText("Active", { exact: true })).toBeVisible();
 
   const pastSection = page.getByRole("region", { name: "Past events" });
   await expect(pastSection.getByText("Winter Dinner")).toBeVisible();
