@@ -54,7 +54,7 @@ export function AdminEventIndex() {
     <Shell>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[.12em] text-text-muted">Event index</p>
+          <p className="text-xs font-medium tracking-[0.04em] text-text-muted">Event index</p>
           <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-text-primary">Your events.</h1>
         </div>
         <Link href="/admin/events/new" className={linkGold}>
@@ -80,7 +80,7 @@ export function AdminEventIndex() {
         <div className="mt-8 grid gap-10">
           {active && (
             <section aria-labelledby="active-event-heading">
-              <h2 id="active-event-heading" className="text-xs font-semibold uppercase tracking-[.08em] text-text-muted">
+              <h2 id="active-event-heading" className="text-xs font-medium tracking-[0.04em] text-text-muted">
                 Active event
               </h2>
               {/* DESIGN.md §6: ACTIVE prominent via gold left-edge marker. */}
@@ -110,7 +110,7 @@ export function AdminEventIndex() {
           )}
           {history.length > 0 && (
             <section aria-labelledby="past-events-heading">
-              <h2 id="past-events-heading" className="text-xs font-semibold uppercase tracking-[.08em] text-text-muted">
+              <h2 id="past-events-heading" className="text-xs font-medium tracking-[0.04em] text-text-muted">
                 Past events
               </h2>
               <ul className="mt-3 grid gap-3">

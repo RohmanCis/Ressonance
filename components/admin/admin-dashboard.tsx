@@ -351,7 +351,7 @@ function GuestGroup({ group, onPreview }: { group: Group; onPreview: (item: Subm
           )}
           {voices.length > 0 && (
             <div className={photos.length > 0 ? "border-t border-border pt-4" : ""}>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[.08em] text-text-muted">
+              <p className="mb-2 text-xs font-medium tracking-[0.04em] text-text-muted">
                 Voice note{voices.length === 1 ? "" : "s"}
               </p>
               <div className="grid gap-2">
@@ -453,7 +453,7 @@ function PreviewDialog({
       >
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border px-4 py-3 sm:px-6">
           <div className="min-w-0">
-            <p className="font-mono text-xs font-medium uppercase tracking-[.08em] text-text-muted">
+            <p className="font-mono text-xs font-medium tracking-[0.04em] text-text-muted">
               {typeLabel(item)} · {index + 1} of {count}
             </p>
             <h3 className="truncate text-lg font-semibold text-text-primary">{name}</h3>
@@ -582,7 +582,7 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
       <Shell>
         <div className="grid gap-8 lg:grid-cols-[18rem_1fr]">
           <aside className="lg:sticky lg:top-6 lg:self-start">
-            <p className="text-xs font-semibold uppercase tracking-[.12em] text-text-muted">Event desk</p>
+            <p className="text-xs font-medium tracking-[0.04em] text-text-muted">Event desk</p>
             {busy && !event ? (
               <Busy label="Loading event" />
             ) : error && !event ? (
@@ -614,7 +614,7 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
           <section className="max-w-4xl">
             <div className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[.12em] text-text-muted">Submissions</p>
+                <p className="text-xs font-medium tracking-[0.04em] text-text-muted">Submissions</p>
                 <h2 className="mt-1 text-xl font-semibold text-text-primary">Newest first</h2>
               </div>
               <form

@@ -33,11 +33,11 @@ export function AdminSignIn() {
   return (
     <Shell title="Admin" eyebrow="Admin sign-in">
       <div className="mx-auto max-w-md pt-8">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-[.12em] text-text-muted">Admin access</p>
+        <p className="mb-3 text-xs font-medium tracking-[0.04em] text-text-muted">Admin access</p>
         <h1 className="font-display text-3xl font-semibold tracking-tight text-text-primary">Open your event desk.</h1>
         <p className="mt-3 text-text-secondary">Sign in to create an event, share its access card, and review every submission.</p>
         <form onSubmit={submit} className="mt-8 rounded-[10px] border border-border bg-bg-surface p-6">
-          <label className="block text-sm font-semibold text-text-primary" htmlFor="email">
+          <label className="block text-xs font-medium text-text-secondary" htmlFor="email">
             Email
             <input
               id="email"
@@ -49,7 +49,7 @@ export function AdminSignIn() {
               className="mt-2 h-11 w-full rounded-md border border-border bg-bg-base px-3 text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             />
           </label>
-          <label className="mt-4 block text-sm font-semibold text-text-primary" htmlFor="password">
+          <label className="mt-4 block text-xs font-medium text-text-secondary" htmlFor="password">
             Password
             <input
               id="password"
