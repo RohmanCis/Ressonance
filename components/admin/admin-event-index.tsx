@@ -16,6 +16,7 @@ const fmtFull = (iso: string) => {
 const focusRing = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 const linkButton = `inline-flex min-h-12 items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast ${focusRing}`;
 const linkGold = `${linkButton} gold-foil-btn h-12 active:scale-[0.98]`;
+const linkSecondary = `${linkButton} border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated`;
 const rowLink = `inline-flex min-h-12 items-center text-xs font-medium text-text-secondary underline-offset-4 transition duration-fast hover:text-text-primary hover:underline ${focusRing}`;
 
 function errorText(code: string) {
@@ -75,13 +76,19 @@ export function AdminEventIndex() {
               <h2 id="active-event-heading" className="text-xs font-medium tracking-[0.04em] text-text-muted">
                 Active event
               </h2>
-              {/* DESIGN.md §6: ACTIVE prominent via gold left-edge marker + surface wash. */}
-              <div className="mt-3 divide-y divide-border">
-                <div className="-mx-4 flex items-center justify-between gap-3 rounded-xl border-l-2 border-l-accent bg-bg-surface/40 px-4 py-4">
+              {/* DESIGN.md §6/§2: ACTIVE hero command card — ambient gold glow behind,
+                  gold left-edge marker + live dot retained (e2e-locked visual). */}
+              <div className="relative mt-4">
+                <div aria-hidden="true" className="pointer-events-none absolute -inset-6 rounded-[2.5rem] bg-accent/10 blur-3xl" />
+                <div className="relative flex flex-wrap items-center justify-between gap-x-6 gap-y-4 rounded-2xl border border-border border-l-2 border-l-accent bg-bg-surface p-5 sm:p-6">
                   <div className="min-w-0">
-                    <h3 className="truncate font-display text-lg font-semibold text-text-primary">{active.title}</h3>
+                    <p className="inline-flex items-center gap-1.5 text-xs font-medium text-text-muted">
+                      <span aria-hidden="true" className="inline-block h-2 w-2 rounded-full bg-accent motion-safe:animate-pulse" />
+                      Active
+                    </p>
+                    <h3 className="mt-1.5 truncate font-display text-2xl font-semibold leading-tight tracking-tight text-text-primary">{active.title}</h3>
                     {active.created_at && (
-                      <p className="mt-0.5 font-mono text-xs text-text-muted">
+                      <p className="mt-1.5 font-mono text-xs text-text-muted">
                         Opened{" "}
                         <time dateTime={active.created_at} className="tabular-nums">
                           {fmtFull(active.created_at)}
@@ -89,15 +96,11 @@ export function AdminEventIndex() {
                       </p>
                     )}
                   </div>
-                  <div className="flex shrink-0 items-center gap-3">
-                    <span className="inline-flex items-center">
-                      <span aria-hidden="true" className="inline-block h-2 w-2 rounded-full bg-accent" />
-                      <span className="ml-1.5 text-xs text-text-muted">Active</span>
-                    </span>
-                    <Link href={`/admin/events/${active.public_id}`} className={rowLink}>
+                  <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                    <Link href={`/admin/events/${active.public_id}`} className={linkGold}>
                       Open
                     </Link>
-                    <Link href={`/admin/events/${active.public_id}/access`} className={rowLink}>
+                    <Link href={`/admin/events/${active.public_id}/access`} className={linkSecondary}>
                       Access / QR
                     </Link>
                   </div>
@@ -110,9 +113,9 @@ export function AdminEventIndex() {
               <h2 id="past-events-heading" className="text-xs font-medium tracking-[0.04em] text-text-muted">
                 Past events
               </h2>
-              <ul className="mt-3 divide-y divide-border">
+              <ul className="mt-3 grid gap-3">
                 {history.map((event) => (
-                  <li key={event.public_id} className="flex items-center justify-between gap-3 py-4">
+                  <li key={event.public_id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-bg-surface/60 px-4 py-4">
                     <div className="min-w-0">
                       <p className="truncate font-display text-lg font-semibold text-text-primary">{event.title}</p>
                       <p className="mt-0.5 font-mono text-xs text-text-muted">
