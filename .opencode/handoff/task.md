@@ -1,42 +1,31 @@
-﻿# Task: Admin UI reconciliation vs DESIGN.md §6 (lane adm-des-1 — design inspection + implementation)
+﻿# Task: Admin ambient + access/index/dashboard redesign — 5 commits
 
-Read AGENTS.md constraints. This is a RECONCILIATION/POLISH pass on the existing dark-token Admin UI, NOT a redesign. Preserve all behavior, API usage, routes, copy semantics, aria/labels, and e2e assertions.
+Baseline: PreSession.tsx Shell function (READ-ONLY — never modify guest files). Scope: components/admin/** only (+ globals.css ONLY if utilities missing). No docs/, no backend/API/migration, no npm runs (npx tsc --noEmit allowed as sole check). TypeScript strict.
 
-## Authority
-- DESIGN.md (root) §2 (gold rule), §3 (typography), §4 (motion), §6 (Admin Flow), §7.
-- UX_FLOW.md Admin Flow section.
-- AGENTS.md §6 code style (tokens only, no inline color literals, a11y non-negotiable).
+Read AGENTS.md, DESIGN.md, then all listed files IN FULL before editing. Several spec items overlap prior remediation (commits f501bf8–f7bc6e5) — verify current state first, apply only what's missing, don't regress.
 
-## Files in scope (write)
-- components/admin/admin-ui.tsx
-- components/admin/admin-sign-in.tsx
-- components/admin/admin-event-index.tsx
-- components/admin/admin-dashboard.tsx
-- components/admin/admin-create-event.tsx (re-export; implementation lives in admin-ui.tsx)
-- components/admin/admin-access.tsx
+## COMMIT 1 — Shared background system
+FIX-1 Shell (admin-ui.tsx): match PreSession Shell exactly — main `relative flex min-h-dvh flex-col overflow-hidden bg-bg-base text-text-primary px-5 sm:px-8 pt-[calc(2rem+env(safe-area-inset-top))] pb-[calc(2rem+env(safe-area-inset-bottom))]`; Layer 1 `pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent/20 blur-[100px] animate-ambient-1`; Layer 2 `pointer-events-none absolute -bottom-24 -left-24 h-[420px] w-[420px] rounded-full bg-accent/15 blur-[110px] animate-ambient-2`; Layer 3 `pointer-events-none absolute inset-0 film-grain`; Layer 4 `relative z-10 w-full` content wrapper. All admin pages via this Shell. Verify `animate-ambient-1/2`, `film-grain` exist in globals.css (audit says they do — reference only, add only if missing).
 
-Do NOT touch: app/api/**, docs/**, e2e/**, lib/**, guest components, globals.css (unless a token utility class is missing — prefer existing utilities).
+## COMMIT 2 — Typography
+FIX-2 AdminPageShell h1 += `leading-tight tracking-tight`; eyebrow `text-xs font-medium tracking-[0.04em] text-text-muted` sentence case. Sign-in double eyebrow: drop Shell's, keep page's.
+FIX-3 Intro copy → `text-sm text-text-secondary leading-relaxed` (admin-sign-in, admin-ui, admin-access).
+FIX-4 Field labels → `text-xs font-medium text-text-secondary` (VERIFY: largely done in f501bf8 — sweep for stragglers only).
+FIX-5 URL value (admin-access) → `font-mono tabular-nums text-sm text-text-muted`.
 
-## Audit deltas to address (orchestrator pre-audit; validate with your own design judgment, then implement)
-1. GOLD RULE (§2: gold ONLY on primary actions, focus rings, active/confirmed states) — currently drifted:
-   - Gold eyebrows (`text-accent` uppercase section labels) on every admin screen. Replace with `text-text-muted` or `text-text-secondary` (keep tracking).
-   - Dashboard PhotoTile `ImageIcon text-accent` and VoiceTile `Mic text-accent` → `text-text-muted` (or secondary).
-   - PreviewDialog header `text-accent` mono label → muted/secondary.
-   - Keep gold: primary buttons, ACTIVE status pill/left-edge marker, dashboard ACTIVE status badge, focus rings, progress bar fill (active state — acceptable, confirm).
-2. SIGN-IN (§6 "status region below the form"): error `Status` currently renders inside the form above the button. Move status region below the form while keeping `role="alert"` and instant appearance (§4). Keep gold full-width sign-in button as the single primary action.
-3. Density/hierarchy polish per §6 "dense rows": Event Index past-events rows and dashboard guest-group headers may be tightened ONLY if it does not change text content, link hrefs, roles, or e2e-visible structure. When in doubt, leave as-is.
-4. Motion (§6: "no motion beyond the standard focus/hover tokens"): verify no non-standard animations in admin components; keep existing spinners and dialog fade/scale as-is (functional, already motion-reduce guarded).
+## COMMIT 3 — admin-access.tsx no-scroll redesign (390×844)
+FIX-6: remove `lg:grid`; single surface card `rounded-2xl border-border bg-bg-surface/85 backdrop-blur-xl p-5`: Row 1 QR centered max 160px (bgColor #FFFFFF fgColor #000000); Row 2 URL `font-mono text-xs text-text-muted truncate w-full border-b border-border pb-1` read-only pointer-events-none select-all; Row 3 actions: Copy link `gold-foil-btn flex-1 h-12 rounded-xl` + Print QR secondary `flex-1 h-12 rounded-lg border-border bg-bg-surface` — single button, no dropdown/menu/chevron. Print: `window.print()` direct; print-only section (`hidden print:block`) with ONLY QRCodeSVG 80mm×80mm, `@page { margin: 0 }`, QR fills page — no title/URL/font. REMOVE all PrintVariant logic, printOptions, dropdown, ChevronDown/Printer menu icons. Remove Back-to-event link. Keep "Scan with a phone camera…" helper as `text-xs text-text-muted` below QR. Copied status: inline `text-xs text-text-muted text-center` below action row, auto-clear 2s.
 
-## Hard constraints
-- Do NOT add Access/QR links to CLOSED event rows. Known owner conflict: DESIGN.md §6 says "per row" but locked e2e (e2e/admin-index.spec.ts) and current behavior restrict Access/QR to the ACTIVE event. Preserve existing behavior. This is reported to the owner separately.
-- Do not rename/repurpose: "Your events.", "Create new event", "Open", "Access / QR", "Sign in", "Create event", "Find existing event", "No events yet" — e2e asserts these.
-- Preserve all aria-labels, roles, min-h-11 (44px) targets, focus-visible rings, DM Mono (`font-mono tabular-nums`) timestamps.
-- No new dependencies, no new components, no copy rewrites beyond what deltas above require.
+## COMMIT 4 — admin-event-index.tsx hairline rows
+FIX-7: remove per-row boxed anatomy. Container `divide-y divide-border`; rows `flex items-center justify-between py-4 px-0 gap-3`; left: title `font-display text-lg font-semibold text-text-primary` + date `font-mono text-xs text-text-muted`; right: Open / Access-QR as quiet text buttons `text-xs font-medium text-text-secondary hover:text-text-primary underline-offset-4 hover:underline`. ACTIVE row (Opsi 2): `bg-bg-surface/40` wash with `-mx-4 px-4 rounded-xl` keeping hairlines flush, `border-l-2 border-l-accent`, status = dot `h-2 w-2 rounded-full bg-accent inline-block` + label `text-xs text-text-muted ml-1.5`. CLOSED rows: no bg, no dot, label `text-xs text-text-muted`. Empty state: one line `text-sm text-text-muted text-center py-8`. Create CTA: gold-foil-btn or quiet top-right link — whichever fits no-scroll mobile.
+⚠ COPY DECISION (orchestrator): spec says labels "Aktif"/"Selesai" but admin surface is English and e2e asserts "Closed" — use **"Active" / "Closed"** English, flag deviation in result.md for owner.
 
-## Validation (before writing result.md)
-- `npm run typecheck` clean.
-- `npx playwright test e2e/admin-index.spec.ts` green (19... use full file, serial mode).
-- Visual self-check: layout/spacing coherent at 375px and 1280px.
+## COMMIT 5 — Dashboard refinements
+FIX-8: GuestGroup → `divide-y divide-border` (remove per-group box if present); PhotoTile `rounded-lg` (verify — done in 5248bd4); PreviewDialog `rounded-2xl shadow-2xl` (verify shadow); VoiceTile progress → scaleX (outer `relative w-full h-1 bg-border rounded-full overflow-hidden`, inner `absolute inset-y-0 left-0 w-full h-full bg-accent rounded-full origin-left transition-transform duration-[var(--motion-base)]` + `style={{ transform: scaleX(progress) }}`) — verify done in 1c4e799, don't regress; error rows `bg-error/10` → `bg-bg-elevated/90` + `text-error` only (verify done); empty state quiet line (verify done); TimelineSkeleton += `animate-pulse`.
+FIX-9: sweep both files — any `hover:bg-accent-soft` on non-primary → `hover:bg-bg-elevated`; confirm no orphan print-menu code after FIX-6.
 
-## result.md
-Report: status, files changed, deltas implemented vs skipped (with reason), gold-rule audit table (element → verdict), validation output, any SSOT conflict or drift found.
+## E2E assertions
+UI text/structure changes break specs. Update assertions in same commit (precedent: f7bc6e5): admin-index.spec.ts (row anatomy, "Closed", Access/QR link name — KEEP accessible name "Access / QR"), any admin-access/dashboard spec touching print menu or removed elements. Do NOT run Playwright (no npm constraint) — orchestrator runs gates after.
+
+## Report (result.md + final message)
+Files changed per commit, critique summary, verification per commit, deviations/decisions needing owner input (esp. Active/Closed language, print-artifact mm sizing), e2e specs touched.
