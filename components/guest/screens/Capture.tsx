@@ -1,4 +1,4 @@
-import { ChangeEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { useCamera } from "@/hooks/use-camera";
 import {
   canDeletePhoto,
@@ -440,13 +440,48 @@ function ReviewOverlay({
   onRetake: () => void;
   onDelete: () => void;
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  // Focus trap (mirrors admin PreviewDialog): focus the first focusable on
+  // open, cycle Tab/Shift+Tab inside the panel, Escape closes.
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (!panel) return;
+    const focusables = panel.querySelectorAll<HTMLElement>("button:not([disabled])");
+    (focusables[0] ?? panel).focus();
+  }, []);
+
+  function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      onClose();
+      return;
+    }
+    if (e.key !== "Tab" || !panelRef.current) return;
+    const focusables = panelRef.current.querySelectorAll<HTMLElement>("button:not([disabled])");
+    if (focusables.length === 0) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-bg-base/80 backdrop-blur-md p-4"
       role="dialog"
-      aria-label="Photo review"
+      aria-modal="true"
+      aria-labelledby="review-overlay-title"
+      ref={panelRef}
+      tabIndex={-1}
+      onKeyDown={onKeyDown}
     >
       <div className="relative w-full max-w-md rounded-2xl border border-border bg-bg-elevated p-4 shadow-2xl">
+        <h2 id="review-overlay-title" className="sr-only">Photo review</h2>
         <div className="aspect-[9/16] max-h-[60dvh] mx-auto overflow-hidden rounded-xl bg-bg-surface border border-border/60 shadow-inner">
           <img src={photo.previewUrl} alt="Photo review" className="h-full w-full object-contain" />
         </div>

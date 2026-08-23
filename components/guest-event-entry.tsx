@@ -60,6 +60,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
   pendingPhotosRef.current = pendingPhotos;
   const [syncing, setSyncing] = useState(false);
   const [reviewIndex, setReviewIndex] = useState<number | null>(null);
+  const reviewReturnFocusRef = useRef<HTMLElement | null>(null);
   const syncAbortedRef = useRef(false);
   // Set when the review CTA requested an advance after sync; the effect
   // consumes it once the sync's final state commits (race fix, 2026-08-20).
@@ -558,8 +559,18 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
         onDeletePhoto={deletePhoto}
         onRetakePhoto={retakePhoto}
         onRetryPhoto={retryPhoto}
-        onReviewPhoto={(i) => setReviewIndex(i)}
-        onCloseReview={() => setReviewIndex(null)}
+        onReviewPhoto={(i) => {
+          // Focus restore (mirrors admin openPreview/closePreview): remember
+          // the opener so closing the review overlay returns focus to it.
+          reviewReturnFocusRef.current = document.activeElement as HTMLElement | null;
+          setReviewIndex(i);
+        }}
+        onCloseReview={() => {
+          setReviewIndex(null);
+          const origin = reviewReturnFocusRef.current;
+          reviewReturnFocusRef.current = null;
+          window.setTimeout(() => origin?.focus(), 0);
+        }}
       />
     );
   }
