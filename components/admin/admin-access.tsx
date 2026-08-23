@@ -1,121 +1,27 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ChevronDown, Printer } from "lucide-react";
-import { api, AuthGate, Button, Event, Shell, Status, Busy } from "./admin-ui";
+import { useEffect, useState } from "react";
+import { api, AuthGate, Button, Shell, Status, Busy } from "./admin-ui";
 import { AdminPageShell } from "./admin-page-shell";
 import { QRCodeSVG } from "qrcode.react";
 
-type PrintVariant = "qr" | "card";
-
 const focusRing = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
-
-const printOptions: { variant: PrintVariant; label: string }[] = [
-  { variant: "qr", label: "Print QR only" },
-  { variant: "card", label: "Print access card" },
-];
-
-// Print artifact: bare QR sheet. One A4 page; no vh/min-h-screen units.
-function PrintQrOnly({ title, url }: { title: string; url: string }) {
-  return (
-    <div className="flex h-[260mm] flex-col items-center justify-center text-center">
-      <h1 className="font-display text-4xl font-semibold tracking-tight">{title || "Event access"}</h1>
-      <div className="mt-10 w-[145mm]">
-        <QRCodeSVG value={url} bgColor="#FFFFFF" fgColor="#000000" className="h-auto w-full" />
-      </div>
-      <p className="mt-8 break-words text-lg">{url}</p>
-    </div>
-  );
-}
-
-// Print artifact: framed access card with guest instruction. One A4 page.
-function PrintAccessCard({ title, url }: { title: string; url: string }) {
-  return (
-    <div className="flex h-[260mm] flex-col items-center justify-center">
-      <section className="flex max-w-[170mm] flex-col items-center rounded-[6mm] border-2 border-black p-[12mm] text-center">
-        <h1 className="font-display text-3xl font-semibold tracking-tight">{title || "Event access"}</h1>
-        <div className="mt-8 w-[145mm]">
-          <QRCodeSVG value={url} bgColor="#FFFFFF" fgColor="#000000" className="h-auto w-full" />
-        </div>
-        <p className="mt-8 text-base">Scan to share your photos and voice notes.</p>
-        <p className="mt-4 break-words text-sm">{url}</p>
-      </section>
-    </div>
-  );
-}
 
 export function AdminAccess({ publicId }: { publicId: string }) {
   const [url, setUrl] = useState("");
-  const [title, setTitle] = useState("");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
-  const [printVariant, setPrintVariant] = useState<PrintVariant | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [activeItem, setActiveItem] = useState(0);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   useEffect(() => {
     api<{ public_url: string }>(`/api/admin/events/${publicId}/access`).then((x) => setUrl(x.public_url)).catch((e) => setError(e.message));
-    api<{ event: Event }>(`/api/admin/events/${publicId}`)
-      .then((x) => setTitle(x.event.title))
-      .catch(() => {});
   }, [publicId]);
 
-  // Print flow: choose variant -> artifact renders in the print-only container ->
-  // window.print() on next frame -> restore on afterprint.
+  // Copied status auto-clears after 2s (DESIGN.md §4: API-driven state, instant).
   useEffect(() => {
-    if (!printVariant) return;
-    const done = () => setPrintVariant(null);
-    window.addEventListener("afterprint", done);
-    const raf = requestAnimationFrame(() => window.print());
-    return () => {
-      window.removeEventListener("afterprint", done);
-      cancelAnimationFrame(raf);
-    };
-  }, [printVariant]);
-
-  // Roving focus: keep the active menu item focused.
-  useEffect(() => {
-    if (menuOpen) itemRefs.current[activeItem]?.focus();
-  }, [menuOpen, activeItem]);
-
-  // Click-outside closes the print menu.
-  useEffect(() => {
-    if (!menuOpen) return;
-    const onPointerDown = (e: PointerEvent) => {
-      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
-    };
-    document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, [menuOpen]);
-
-  function closeMenu(returnFocus = true) {
-    setMenuOpen(false);
-    if (returnFocus) triggerRef.current?.focus();
-  }
-
-  function selectOption(variant: PrintVariant) {
-    closeMenu();
-    setPrintVariant(variant);
-  }
-
-  function onMenuKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Escape") {
-      e.preventDefault();
-      closeMenu();
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setActiveItem((i) => (i + 1) % printOptions.length);
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setActiveItem((i) => (i - 1 + printOptions.length) % printOptions.length);
-    } else if (e.key === "Tab") {
-      setMenuOpen(false);
-    }
-  }
+    if (!copied) return;
+    const t = window.setTimeout(() => setCopied(false), 2000);
+    return () => window.clearTimeout(t);
+  }, [copied]);
 
   async function copy() {
     try {
@@ -129,129 +35,62 @@ export function AdminAccess({ publicId }: { publicId: string }) {
   return (
     <AuthGate>
       <Shell eyebrow="Event desk">
-        {/* ponytail: page-scoped print isolation (hide chrome, neutralize Shell <main> geometry); promote to a print stylesheet if more pages ship print artifacts. */}
-        <style>{`@page { size: A4; margin: 12mm; }
+        {/* ponytail: page-scoped print isolation (hide chrome, neutralize Shell geometry); promote to a print stylesheet if more pages ship print artifacts. */}
+        <style>{`@page { margin: 0; }
 @media print {
   header { display: none; }
   main { min-height: 0 !important; padding: 0 !important; }
   main > div { max-width: none !important; }
 }`}</style>
-        <div className="mx-auto max-w-4xl print:hidden">
-          <Link
-            href={`/admin/events/${publicId}`}
-            className={`mb-6 inline-flex min-h-12 items-center gap-1.5 rounded-md text-sm font-medium text-text-muted transition duration-fast ease-out hover:text-text-primary ${focusRing}`}
-          >
-            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            Back to event
-          </Link>
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <AdminPageShell eyebrow="Share access" title="Share event access.">
-              <p className="mt-3 text-sm text-text-secondary leading-relaxed">Guests can scan this access card or open the public link.</p>
-            </AdminPageShell>
-          </div>
-          {error ? (
-            <Status
-              error
-              message={error === "OFFLINE" ? "Access details are unavailable offline." : "This access card is unavailable."}
-              action={<Button secondary onClick={() => window.location.reload()}>Retry</Button>}
-            />
-          ) : !url ? (
-            <div className="mt-8">
-              <Busy label="Loading access details" />
-            </div>
-          ) : (
-            <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_18rem]">
-              <section className="rounded-2xl border border-border bg-bg-surface p-6">
-                <h2 className="text-lg font-semibold text-text-primary">Public URL</h2>
-                <label className="mt-4 block text-xs font-medium text-text-secondary" htmlFor="public-url">
-                  Share link
-                  <input
-                    id="public-url"
-                    readOnly
-                    value={url}
-                    className="mt-2 w-full border-0 border-b border-border bg-transparent rounded-none px-0 pb-2 h-12 font-mono tabular-nums text-sm text-text-muted pointer-events-none select-all focus:border-accent focus:outline-none transition-colors"
-                  />
-                </label>
-                <div className="mt-4 flex flex-wrap items-center gap-2">
-                  <Button onClick={copy}>{copied ? "Copied" : "Copy link"}</Button>
-                  <div ref={menuRef} className="relative">
-                    {/* Native button: admin-ui Button does not forward refs; classes mirror secondary Button. */}
-                    <button
-                      type="button"
-                      ref={triggerRef}
-                      aria-haspopup="menu"
-                      aria-expanded={menuOpen}
-                      aria-controls="print-menu"
-                      disabled={printVariant !== null}
-                      onClick={() => {
-                        if (menuOpen) {
-                          closeMenu(false);
-                        } else {
-                          setActiveItem(0);
-                          setMenuOpen(true);
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-                          e.preventDefault();
-                          setActiveItem(e.key === "ArrowDown" ? 0 : printOptions.length - 1);
-                          setMenuOpen(true);
-                        }
-                      }}
-                      className={`flex min-h-12 items-center gap-1.5 rounded-lg border border-border bg-bg-surface px-4 py-2 text-sm font-semibold text-text-primary transition duration-fast hover:bg-bg-elevated disabled:cursor-not-allowed disabled:opacity-45 ${focusRing}`}
-                    >
-                      <Printer className="h-4 w-4" aria-hidden="true" />
-                      Print
-                      <ChevronDown className="h-4 w-4" aria-hidden="true" />
-                    </button>
-                    {menuOpen && (
-                      <div
-                        role="menu"
-                        id="print-menu"
-                        aria-label="Print options"
-                        onKeyDown={onMenuKeyDown}
-                        className="absolute right-0 z-20 mt-2 w-56 rounded-lg border border-border bg-bg-elevated p-1"
-                      >
-                        {printOptions.map((option, i) => (
-                          <button
-                            key={option.variant}
-                            type="button"
-                            role="menuitem"
-                            ref={(el) => {
-                              itemRefs.current[i] = el;
-                            }}
-                            tabIndex={i === activeItem ? 0 : -1}
-                            onClick={() => selectOption(option.variant)}
-                            className={`flex min-h-12 w-full items-center rounded-md px-3 text-left text-sm font-medium text-text-primary transition duration-fast hover:bg-bg-elevated ${focusRing}`}
-                          >
-                            {option.label}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                {printVariant && (
-                  <p role="status" className="mt-3 text-sm text-text-muted">
-                    Preparing {printVariant === "qr" ? "QR code" : "access card"} for printing…
-                  </p>
-                )}
-                {copied && <Status message="Link copied to your clipboard." />}
-              </section>
-              <section className="rounded-2xl border border-border bg-bg-surface p-6 text-center">
-                <h2 className="text-lg font-semibold text-text-primary">QR access</h2>
-                {/* QR keeps a white quiet zone (bgColor/includeMargin) for scannability on the dark surface. */}
-                <div className="mx-auto mt-5 aspect-square w-full max-w-52 rounded-md border border-border bg-bg-elevated p-3">
+        <div className="mx-auto max-w-md print:hidden">
+          <AdminPageShell eyebrow="Share access" title="Share event access.">
+            <p className="mt-3 text-sm text-text-secondary leading-relaxed">Guests can scan this access card or open the public link.</p>
+            {error ? (
+              <Status
+                error
+                message={error === "OFFLINE" ? "Access details are unavailable offline." : "This access card is unavailable."}
+                action={<Button secondary onClick={() => window.location.reload()}>Retry</Button>}
+              />
+            ) : !url ? (
+              <div className="mt-8">
+                <Busy label="Loading access details" />
+              </div>
+            ) : (
+              <div className="mt-8 rounded-2xl border border-border bg-bg-surface/85 p-5 backdrop-blur-xl">
+                {/* Row 1: QR centered, max 160px */}
+                <div className="mx-auto w-40">
                   <QRCodeSVG value={url} bgColor="#FFFFFF" fgColor="#000000" includeMargin aria-label="QR code for event access" className="h-full w-full" />
                 </div>
-                <p className="mt-4 text-xs text-text-muted">Scan with a phone camera to open the guest page, or share the public link.</p>
-              </section>
-            </div>
-          )}
+                <p className="mt-4 text-center text-xs text-text-muted">Scan with a phone camera to open the guest page, or share the public link.</p>
+                {/* Row 2: URL underline display */}
+                <input
+                  id="public-url"
+                  readOnly
+                  value={url}
+                  aria-label="Public URL"
+                  className="mt-5 w-full truncate border-0 border-b border-border bg-transparent rounded-none pb-1 font-mono text-xs text-text-muted pointer-events-none select-all focus:border-accent focus:outline-none"
+                />
+                {/* Row 3: actions */}
+                <div className="mt-5 flex gap-3">
+                  <button type="button" onClick={copy} className={`gold-foil-btn h-12 flex-1 rounded-xl px-4 text-sm font-semibold transition duration-fast active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 ${focusRing}`}>
+                    Copy link
+                  </button>
+                  <button type="button" onClick={() => window.print()} className={`flex h-12 flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-bg-surface px-4 text-sm font-semibold text-text-primary transition duration-fast hover:bg-bg-elevated disabled:cursor-not-allowed disabled:opacity-45 ${focusRing}`}>
+                    Print QR
+                  </button>
+                </div>
+                {copied && (
+                  <p role="status" className="mt-3 text-center text-xs text-text-muted">
+                    Link copied to your clipboard.
+                  </p>
+                )}
+              </div>
+            )}
+          </AdminPageShell>
         </div>
-        <div aria-hidden="true" className="hidden print:block print:overflow-hidden">
-          {url && printVariant === "qr" && <PrintQrOnly title={title} url={url} />}
-          {url && printVariant === "card" && <PrintAccessCard title={title} url={url} />}
+        {/* Print-only: bare QR, one A4 page, no title/URL/chrome */}
+        <div aria-hidden="true" className="hidden print:flex print:min-h-screen print:w-full print:items-center print:justify-center print:overflow-hidden">
+          {url && <QRCodeSVG value={url} bgColor="#FFFFFF" fgColor="#000000" className="h-[80mm] w-[80mm]" />}
         </div>
       </Shell>
     </AuthGate>

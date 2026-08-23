@@ -19,8 +19,8 @@ test("QR renders, encodes exact public URL, copy/print intact (desktop)", async 
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto(`/admin/events/${EVENT_ID}/access`, { waitUntil: "networkidle" });
 
-  // QR heading visible.
-  await expect(page.getByRole("heading", { name: "QR access" })).toBeVisible();
+  // Page heading visible.
+  await expect(page.getByRole("heading", { name: "Share event access." })).toBeVisible();
 
   // SVG rendered with correct accessibility.
   const svg = page.locator('svg[aria-label="QR code for event access"]');
@@ -47,9 +47,9 @@ test("QR renders, encodes exact public URL, copy/print intact (desktop)", async 
   const urlInput = page.locator("#public-url");
   await expect(urlInput).toHaveValue(EXPECTED_URL);
 
-  // Copy + print buttons present (print variants live behind the Print menu).
+  // Copy + print buttons present (single Print QR action; no menu).
   await expect(page.getByRole("button", { name: "Copy link" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Print", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Print QR" })).toBeVisible();
 
   // No private/secret/signed URL anywhere on page.
   const bodyText = await page.locator("body").innerText();
@@ -101,8 +101,9 @@ test("copy button provides feedback", async ({ page }) => {
   const copyBtn = page.getByRole("button", { name: "Copy link" });
   await copyBtn.click();
 
-  // Button label changes to "Copied".
-  await expect(page.getByRole("button", { name: "Copied" })).toBeVisible({ timeout: 3000 });
+  // Inline copied status appears, then auto-clears.
+  await expect(page.getByText("Link copied to your clipboard.")).toBeVisible({ timeout: 3000 });
+  await expect(page.getByText("Link copied to your clipboard.")).toBeHidden({ timeout: 4000 });
 
   // Clipboard contains the exact URL.
   const clipText = await page.evaluate(() => navigator.clipboard.readText());
