@@ -36,6 +36,20 @@ const typeLabel = (item: Submission) => (item.type === "PHOTO" ? "Photo" : "Voic
 
 type Group = { ref: string; name: string; session: number | null; items: Submission[] };
 
+type MediaFilter = "ALL" | "PHOTO" | "VOICE_NOTE";
+const MEDIA_SEGMENTS: { value: MediaFilter; label: string }[] = [
+  { value: "ALL", label: "All" },
+  { value: "PHOTO", label: "Photos" },
+  { value: "VOICE_NOTE", label: "Voice" },
+];
+const initialsOf = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join("") || "?";
+
 function groupByGuest(items: Submission[]): Group[] {
   const map = new Map<string, Submission[]>();
   for (const item of items) {
@@ -66,6 +80,8 @@ function groupByGuest(items: Submission[]): Group[] {
 
 const focusRing = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 const quietButton = "border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated";
+// Decorative static waveform behind the voice progress bar (fixed heights, muted).
+const WAVEFORM_BARS = [0.35, 0.6, 0.45, 0.8, 1, 0.7, 0.5, 0.9, 0.65, 0.4, 0.75, 0.55, 0.85, 0.5, 0.3, 0.62, 0.9, 0.7, 0.45, 0.66, 0.82, 0.52, 0.36, 0.58];
 
 const downloadFileName = (item: Submission) => {
   const m = item.mime_type.toLowerCase();
@@ -176,16 +192,23 @@ function PhotoTile({ item, name, onPreview }: { item: Submission; name: string; 
           onClick={onPreview}
           disabled={!url}
           aria-label={`Preview photo from ${name}, ${fmtFull(item.created_at)}`}
-          className={`block w-full text-left transition duration-fast ease-out enabled:hover:brightness-105 disabled:cursor-wait ${focusRing}`}
+          className={`group block w-full text-left transition duration-fast ease-out disabled:cursor-wait ${focusRing}`}
         >
-          <span className="block aspect-square w-full bg-bg-elevated">
+          <span className="block aspect-square w-full overflow-hidden bg-bg-elevated">
             {loading && (
               <span role="status" className="flex h-full w-full items-center justify-center text-text-muted">
                 <Loader2 className="h-5 w-5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
                 <span className="sr-only">Loading photo…</span>
               </span>
             )}
-            {url && <img src={url} alt="" loading="lazy" className="h-full w-full object-cover" />}
+            {url && (
+              <img
+                src={url}
+                alt=""
+                loading="lazy"
+                className="h-full w-full object-cover transition-transform duration-base ease-out motion-reduce:transition-none motion-safe:group-hover:scale-[1.03]"
+              />
+            )}
           </span>
           <span className="flex items-center justify-between gap-2 px-3 py-2 text-xs">
             <span className="inline-flex items-center gap-1.5 font-semibold text-text-primary">
@@ -238,7 +261,7 @@ function VoiceTile({ item, name }: { item: Submission; name: string }) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-border bg-bg-surface p-3">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-border bg-bg-surface/90 p-4">
       <audio
         ref={audioRef}
         preload="none"
@@ -275,11 +298,16 @@ function VoiceTile({ item, name }: { item: Submission; name: string }) {
         Voice note
         {duration && <span className="font-mono tabular-nums text-text-muted">{duration}</span>}
       </span>
-      <span className="relative h-1 min-w-16 flex-1 overflow-hidden rounded-full bg-border" aria-hidden="true">
-        <span
-          className="absolute inset-y-0 left-0 h-full w-full origin-left rounded-full bg-accent transition-transform duration-[var(--motion-base)]"
-          style={{ transform: `scaleX(${progress})` }}
-        />
+      <span className="relative flex h-8 min-w-24 flex-1 items-center justify-between gap-[3px]" aria-hidden="true">
+        {WAVEFORM_BARS.map((height, i) => (
+          <span key={i} className="w-[3px] shrink-0 rounded-full bg-text-muted/30" style={{ height: `${Math.round(height * 100)}%` }} />
+        ))}
+        <span className="pointer-events-none absolute inset-x-0 top-1/2 h-1 -translate-y-1/2">
+          <span
+            className="block h-full w-full origin-left rounded-full bg-accent transition-transform duration-[var(--motion-base)]"
+            style={{ transform: `scaleX(${progress})` }}
+          />
+        </span>
       </span>
       <time dateTime={item.created_at} className="font-mono text-xs tabular-nums text-text-muted">
         {fmtShort(item.created_at)}
@@ -314,7 +342,7 @@ function GuestGroup({ group, onPreview }: { group: Group; onPreview: (item: Subm
     .join(" · ");
 
   return (
-    <section className="pt-6">
+    <section className="rounded-3xl border border-border bg-bg-surface/90 p-5 backdrop-blur-sm">
       <h3>
         <button
           type="button"
@@ -328,6 +356,9 @@ function GuestGroup({ group, onPreview }: { group: Group; onPreview: (item: Subm
           ) : (
             <ChevronRight className="h-4 w-4 shrink-0 text-text-muted" aria-hidden="true" />
           )}
+          <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bg-elevated text-xs font-semibold text-text-secondary">
+            {initialsOf(group.name)}
+          </span>
           <span className="text-lg font-semibold text-text-primary">{group.name}</span>
           {group.session !== null && (
             <span className="text-xs font-medium text-text-muted">Session {group.session}</span>
@@ -505,10 +536,11 @@ function PreviewDialog({
 
 function TimelineSkeleton() {
   return (
-    <div role="status" aria-label="Loading submissions" className="mt-6 grid animate-pulse gap-8">
+    <div role="status" aria-label="Loading submissions" className="mt-6 grid animate-pulse gap-6">
       {[0, 1].map((g) => (
-        <div key={g} aria-hidden="true">
+        <div key={g} aria-hidden="true" className="rounded-3xl border border-border bg-bg-surface/90 p-5">
           <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-full bg-bg-elevated" />
             <div className="h-6 w-36 rounded bg-bg-elevated" />
             <div className="h-5 w-16 rounded-full bg-bg-elevated" />
             <div className="ml-auto h-4 w-28 rounded bg-bg-elevated" />
@@ -565,7 +597,25 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
     }
   }
 
-  const groups = useMemo(() => groupByGuest(items), [items]);
+  const [mediaFilter, setMediaFilter] = useState<MediaFilter>("ALL");
+  // Derived metrics from the loaded submissions only — no extra fetch (task spec).
+  const metrics = useMemo(() => {
+    const guests = new Set<string>();
+    let photos = 0;
+    let voices = 0;
+    for (const item of items) {
+      guests.add(item.guest_session_ref);
+      if (item.type === "PHOTO") photos += 1;
+      else voices += 1;
+    }
+    return { guests: guests.size, photos, voices, media: items.length };
+  }, [items]);
+  // Segmented media filter applied client-side before grouping.
+  const visibleItems = useMemo(
+    () => (mediaFilter === "ALL" ? items : items.filter((item) => item.type === mediaFilter)),
+    [items, mediaFilter],
+  );
+  const groups = useMemo(() => groupByGuest(visibleItems), [visibleItems]);
 
   function openPreview(item: Submission, name: string, index: number, count: number) {
     returnFocusRef.current = document.activeElement as HTMLElement | null;
@@ -613,6 +663,21 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
             )}
           </aside>
           <section className="max-w-4xl">
+            <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {(
+                [
+                  { label: "Guests", value: metrics.guests },
+                  { label: "Photos", value: metrics.photos },
+                  { label: "Voice notes", value: metrics.voices },
+                  { label: "Media", value: metrics.media },
+                ] as const
+              ).map((stat) => (
+                <div key={stat.label} className="rounded-xl border border-border bg-bg-surface p-4">
+                  <p className="font-mono text-2xl tabular-nums text-text-primary">{stat.value}</p>
+                  <p className="mt-1 text-xs text-text-muted">{stat.label}</p>
+                </div>
+              ))}
+            </div>
             <div className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="text-xs font-medium tracking-[0.04em] text-text-muted">Submissions</p>
@@ -639,15 +704,35 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
                 </Button>
               </form>
             </div>
+            <div role="group" aria-label="Filter by media type" className="mt-4 inline-flex rounded-lg border border-border bg-bg-surface p-1">
+              {MEDIA_SEGMENTS.map((segment) => {
+                const selected = mediaFilter === segment.value;
+                return (
+                  <button
+                    key={segment.value}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => setMediaFilter(segment.value)}
+                    className={`min-h-11 rounded-md px-4 text-sm font-semibold transition duration-fast ${selected ? "bg-bg-elevated text-text-primary" : "text-text-secondary hover:text-text-primary"} ${focusRing}`}
+                  >
+                    {segment.label}
+                  </button>
+                );
+              })}
+            </div>
             {error && event && <Status error message={errorText(error)} action={<Button secondary onClick={() => load()}>Retry</Button>} />}
             {busy ? (
               <TimelineSkeleton />
-            ) : items.length === 0 ? (
+            ) : groups.length === 0 ? (
               <p className="mt-6 text-center text-sm text-text-muted">
-                {query ? "No matching submissions. Clear or edit the guest-name search." : "New photos and voice notes will appear here."}
+                {query
+                  ? "No matching submissions. Clear or edit the guest-name search."
+                  : mediaFilter !== "ALL"
+                    ? `No ${mediaFilter === "PHOTO" ? "photos" : "voice notes"} match this filter.`
+                    : "New photos and voice notes will appear here."}
               </p>
             ) : (
-              <div className="mt-6 divide-y divide-border">
+              <div className="mt-6 grid gap-6">
                 {groups.map((group) => (
                   <GuestGroup
                     key={group.ref}
