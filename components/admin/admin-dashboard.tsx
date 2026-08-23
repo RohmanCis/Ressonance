@@ -314,7 +314,7 @@ function GuestGroup({ group, onPreview }: { group: Group; onPreview: (item: Subm
     .join(" · ");
 
   return (
-    <section className="border-t border-border pt-6 first:border-t-0 first:pt-0">
+    <section className="pt-6">
       <h3>
         <button
           type="button"
@@ -450,7 +450,7 @@ function PreviewDialog({
         ref={panelRef}
         tabIndex={-1}
         onKeyDown={onKeyDown}
-        className={`max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-border bg-bg-elevated transition duration-base ease-out motion-reduce:transition-none focus:outline-none ${shown ? "scale-100 opacity-100" : "scale-[0.98] opacity-0"}`}
+        className={`max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-border bg-bg-elevated shadow-2xl transition duration-base ease-out motion-reduce:transition-none focus:outline-none ${shown ? "scale-100 opacity-100" : "scale-[0.98] opacity-0"}`}
       >
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border px-4 py-3 sm:px-6">
           <div className="min-w-0">
@@ -505,7 +505,7 @@ function PreviewDialog({
 
 function TimelineSkeleton() {
   return (
-    <div role="status" aria-label="Loading submissions" className="mt-6 grid gap-8">
+    <div role="status" aria-label="Loading submissions" className="mt-6 grid animate-pulse gap-8">
       {[0, 1].map((g) => (
         <div key={g} aria-hidden="true">
           <div className="flex items-center gap-3">
@@ -647,7 +647,7 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
                 {query ? "No matching submissions. Clear or edit the guest-name search." : "New photos and voice notes will appear here."}
               </p>
             ) : (
-              <div className="mt-6 grid gap-8">
+              <div className="mt-6 divide-y divide-border">
                 {groups.map((group) => (
                   <GuestGroup
                     key={group.ref}
