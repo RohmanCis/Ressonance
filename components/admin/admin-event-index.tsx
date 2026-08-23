@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { api, Busy, Button, Event, Shell, Status } from "./admin-ui";
+import { AdminPageShell } from "./admin-page-shell";
 
 const ID_MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
 const pad2 = (n: number) => String(n).padStart(2, "0");
@@ -53,10 +54,7 @@ export function AdminEventIndex() {
   return (
     <Shell>
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-xs font-medium tracking-[0.04em] text-text-muted">Event index</p>
-          <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-text-primary">Your events.</h1>
-        </div>
+        <AdminPageShell eyebrow="Event index" title="Your events." />
         <Link href="/admin/events/new" className={linkGold}>
           Create new event
         </Link>

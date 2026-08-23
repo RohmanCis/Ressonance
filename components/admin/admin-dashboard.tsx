@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { ChevronDown, ChevronRight, Download, Image as ImageIcon, Loader2, Mic, Pause, Play, X } from "lucide-react";
 import { api, AuthGate, Button, Busy, Event, Shell, Status, Submission } from "./admin-ui";
+import { AdminInput } from "./admin-input";
 import { describeDownloadResponse, downloadErrorCodeFromResponse, downloadErrorMessage } from "@/lib/admin-download";
 
 const errorTextMap: Record<string, string> = {
@@ -618,24 +619,24 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
                 <h2 className="mt-1 text-xl font-semibold text-text-primary">Newest first</h2>
               </div>
               <form
-                className="flex w-full gap-2 sm:max-w-sm"
+                className="w-full sm:max-w-sm"
                 onSubmit={(e) => {
                   e.preventDefault();
                   load();
                 }}
               >
-                <label className="sr-only" htmlFor="guest-search">
-                  Search by guest name
-                </label>
-                <input
+                <AdminInput
                   id="guest-search"
+                  label="Search by guest name"
                   type="search"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search guest name"
-                  className="min-w-0 flex-1 border-0 border-b border-border bg-transparent rounded-none px-0 pb-2 h-12 text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none transition-colors"
+                  autoComplete="off"
                 />
-                <Button secondary>Search</Button>
+                <Button secondary className="mt-3">
+                  Search
+                </Button>
               </form>
             </div>
             {error && event && <Status error message={errorText(error)} action={<Button secondary onClick={() => load()}>Retry</Button>} />}

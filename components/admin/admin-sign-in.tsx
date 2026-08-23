@@ -2,6 +2,8 @@
 
 import { FormEvent, useState } from "react";
 import { api, Button, Shell, Status } from "./admin-ui";
+import { AdminInput } from "./admin-input";
+import { AdminPageShell } from "./admin-page-shell";
 
 const errorText: Record<string, string> = {
   AUTHENTICATION_REQUIRED: "Sign-in is required.",
@@ -33,41 +35,37 @@ export function AdminSignIn() {
   return (
     <Shell title="Admin" eyebrow="Admin sign-in">
       <div className="mx-auto max-w-md pt-8">
-        <p className="mb-3 text-xs font-medium tracking-[0.04em] text-text-muted">Admin access</p>
-        <h1 className="font-display text-3xl font-semibold tracking-tight text-text-primary">Open your event desk.</h1>
-        <p className="mt-3 text-text-secondary">Sign in to create an event, share its access card, and review every submission.</p>
-        <form onSubmit={submit} className="mt-8 rounded-2xl border border-border bg-bg-surface p-6">
-          <label className="block text-xs font-medium text-text-secondary" htmlFor="email">
-            Email
-            <input
+        <AdminPageShell eyebrow="Admin access" title="Open your event desk.">
+          <p className="mt-3 text-text-secondary">Sign in to create an event, share its access card, and review every submission.</p>
+          <form onSubmit={submit} className="mt-8 rounded-2xl border border-border bg-bg-surface p-6">
+            <AdminInput
               id="email"
+              label="Email"
               type="email"
               required
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-2 w-full border-0 border-b border-border bg-transparent rounded-none px-0 pb-2 h-12 text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none transition-colors"
             />
-          </label>
-          <label className="mt-4 block text-xs font-medium text-text-secondary" htmlFor="password">
-            Password
-            <input
-              id="password"
-              type="password"
-              required
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-2 w-full border-0 border-b border-border bg-transparent rounded-none px-0 pb-2 h-12 text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none transition-colors"
-            />
-          </label>
-          <Button disabled={busy} className="mt-6 w-full">
-            {busy ? "Signing in…" : "Sign in"}
-          </Button>
-        </form>
-        {/* DESIGN.md §6: status region below the form; role="alert" + instant
-            appearance (§4) preserved via Status. */}
-        {error && <Status error message={error} />}
+            <div className="mt-4">
+              <AdminInput
+                id="password"
+                label="Password"
+                type="password"
+                required
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <Button disabled={busy} className="mt-6 w-full">
+              {busy ? "Signing in…" : "Sign in"}
+            </Button>
+          </form>
+          {/* DESIGN.md §6: status region below the form; role="alert" + instant
+              appearance (§4) preserved via Status. */}
+          {error && <Status error message={error} />}
+        </AdminPageShell>
       </div>
     </Shell>
   );
