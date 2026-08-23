@@ -11,6 +11,8 @@
   --text-muted: #9a8f82;
   --accent: #d4af37;
   --accent-soft: rgba(212, 175, 55, 0.14);
+  --accent-foil-light: #f0d97a; /* gold-foil button gradient highlight (DESIGN.md §2) */
+  --accent-foil-dark: #b8912a;  /* gold-foil button gradient deep shade (DESIGN.md §2) */
   --error: #c0564f;
   --success: #7da37a;
   --border: rgba(247, 242, 234, 0.12);
@@ -132,11 +134,11 @@ body {
 .gold-foil-btn {
   background: linear-gradient(
     135deg,
-    #b8912a 0%,
+    var(--accent-foil-dark) 0%,
     var(--accent) 35%,
-    #f0d97a 50%,
+    var(--accent-foil-light) 50%,
     var(--accent) 65%,
-    #b8912a 100%
+    var(--accent-foil-dark) 100%
   );
   color: var(--on-accent);
   box-shadow:

@@ -150,10 +150,10 @@ async function syncReviewToVoice(page: Page) {
 
 async function recordAndStop(page: Page, durationMs = 1500) {
   await page.getByRole("button", { name: "Record voice note" }).click();
-  await expect(page.getByText("Recording", { exact: true })).toBeVisible({ timeout: 5000 });
+  await expect(page.getByText("Merekam", { exact: true })).toBeVisible({ timeout: 5000 });
   await page.waitForTimeout(durationMs);
   await page.getByRole("button", { name: "Stop recording" }).click();
-  await expect(page.getByText("Duration:")).toBeVisible({ timeout: 5000 });
+  await expect(page.getByText("Durasi:")).toBeVisible({ timeout: 5000 });
 }
 
 // --- Tests ---
@@ -338,7 +338,7 @@ test.describe("Mobile-media QA", () => {
     await page.getByRole("button", { name: "Kirim & Lanjut" }).click();
 
     // Error alert with retry-or-delete guidance.
-    await expect(page.getByText("1 photo could not be saved. Retry or delete it before continuing.")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("1 foto nggak tersimpan. Ulangi kirim atau hapus dulu sebelum lanjut.")).toBeVisible({ timeout: 5000 });
 
     // CTA blocked while unresolved errors remain (nothing left to send).
     await expect(page.getByRole("button", { name: "Kirim & Lanjut" })).toBeDisabled();
@@ -355,7 +355,7 @@ test.describe("Mobile-media QA", () => {
     await startSession(page);
     // DM Mono frame counter reflects the exhausted budget (local hint).
     await expect(page.getByText("0 / 5")).toBeVisible();
-    await expect(page.getByText("Photo limit reached for this guest session.")).toBeVisible();
+    await expect(page.getByText("Batas foto untuk sesi ini sudah terpakai.")).toBeVisible();
     await expect(page.getByRole("button", { name: "Take photo" })).toBeDisabled();
   });
 
@@ -371,13 +371,13 @@ test.describe("Mobile-media QA", () => {
     await startSession(page);
     await captureOnePhoto(page);
     await advanceToVoiceScreen(page);
-    await expect(page.getByText("Microphone permission will be requested after you choose Record.")).toBeVisible();
+    await expect(page.getByText("Browser bakal minta izin mikrofon setelah kamu tekan rekam.")).toBeVisible();
 
     // Record. (The "Allow microphone access" hint is transient — replaced by
-    // "Recording" the moment the granted fake permission resolves — so only
+    // "Merekam" the moment the granted fake permission resolves — so only
     // the stable recording state is asserted.)
     await page.getByRole("button", { name: "Record voice note" }).click();
-    await expect(page.getByText("Recording", { exact: true })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("Merekam", { exact: true })).toBeVisible({ timeout: 5000 });
     await expect(page.getByRole("button", { name: "Stop recording" })).toBeVisible();
     // DM Mono elapsed timer (00:00 / 00:30).
     await expect(page.getByText(/\/ 00:30/)).toBeVisible();
@@ -387,7 +387,7 @@ test.describe("Mobile-media QA", () => {
     await page.getByRole("button", { name: "Stop recording" }).click();
 
     // Review state.
-    await expect(page.getByText("Duration:")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("Durasi:")).toBeVisible({ timeout: 5000 });
     await expect(page.locator('audio[aria-label="Voice note playback"]')).toBeVisible();
     await expect(page.getByRole("button", { name: "Kirim Pesan Suara" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Rekam Ulang" })).toBeVisible();
@@ -464,11 +464,11 @@ test.describe("Mobile-media QA", () => {
     await captureOnePhoto(page);
     await advanceToVoiceScreen(page);
     await page.getByRole("button", { name: "Record voice note" }).click();
-    await expect(page.getByText("Recording", { exact: true })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("Merekam", { exact: true })).toBeVisible({ timeout: 5000 });
 
     // Auto-stop at 30s. Timer: at seconds>=29, finishRecording() + return 30.
-    await expect(page.getByText("Duration:")).toBeVisible({ timeout: 35000 });
-    await expect(page.getByText("Duration:")).toContainText("30s");
+    await expect(page.getByText("Durasi:")).toBeVisible({ timeout: 35000 });
+    await expect(page.getByText("Durasi:")).toContainText("30s");
   });
 
   // 6. VOICE: re-record replaces unsent take
@@ -514,13 +514,13 @@ test.describe("Mobile-media QA", () => {
     await page.getByRole("button", { name: "Kirim Pesan Suara" }).click();
 
     // Error message shown.
-    await expect(page.getByText("Voice notes must be 5–30 seconds. Re-record within that range.")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("Pesan suara harus 5–30 detik. Rekam ulang di rentang itu.")).toBeVisible({ timeout: 5000 });
 
     // Audio playback retained.
     await expect(page.locator('audio[aria-label="Voice note playback"]')).toBeVisible();
 
     // Duration retained.
-    await expect(page.getByText("Duration:")).toBeVisible();
+    await expect(page.getByText("Durasi:")).toBeVisible();
 
     // Re-record button available.
     await expect(page.getByRole("button", { name: "Rekam Ulang" })).toBeVisible();
@@ -596,14 +596,14 @@ test.describe("Mobile-media QA", () => {
 
     // Record for ~6 seconds (above the 5s threshold).
     await page.getByRole("button", { name: "Record voice note" }).click();
-    await expect(page.getByText("Recording", { exact: true })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("Merekam", { exact: true })).toBeVisible({ timeout: 5000 });
     await page.waitForTimeout(6000);
     await page.getByRole("button", { name: "Stop recording" }).click();
 
-    await expect(page.getByText("Duration:")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("Durasi:")).toBeVisible({ timeout: 5000 });
 
     // Duration display correct (~6s).
-    const durationText = await page.getByText("Duration:").textContent();
+    const durationText = await page.getByText("Durasi:").textContent();
     expect(durationText).not.toContain("0s");
 
     // "Too short" hint should NOT show (6s >= 5s).
@@ -665,7 +665,7 @@ test.describe("Mobile-media QA", () => {
     // Open review overlay and delete.
     await page.getByRole("button", { name: /Photo 1/ }).click();
     await expect(page.getByRole("dialog", { name: "Photo review" })).toBeVisible({ timeout: 3000 });
-    await page.getByRole("button", { name: "Delete" }).click();
+    await page.getByRole("button", { name: "Hapus" }).click();
 
     // Pending strip empty → no advance button and no photo thumbnails.
     await expect(page.getByRole("button", { name: /Photo 1/ })).toHaveCount(0);
@@ -699,7 +699,7 @@ test.describe("Mobile-media QA", () => {
     await page.getByRole("button", { name: /Photo 1/ }).click();
     const dialog = page.getByRole("dialog", { name: "Photo review" });
     await expect(dialog).toBeVisible({ timeout: 3000 });
-    await dialog.getByRole("button", { name: "Retake" }).click();
+    await dialog.getByRole("button", { name: "Ulangi" }).click();
 
     // Dialog closed, strip empty, no advance button, budget restored.
     await expect(dialog).toHaveCount(0);

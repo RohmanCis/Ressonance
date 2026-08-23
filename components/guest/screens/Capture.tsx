@@ -146,9 +146,9 @@ export function Capture({
                 role="alert"
                 className="rounded-xl border border-border bg-bg-elevated/95 backdrop-blur-md p-3 shadow-xl"
               >
-                <p className="text-sm font-semibold text-accent">Event closed</p>
+                <p className="text-sm font-semibold text-text-secondary">Acara sudah selesai</p>
                 <p className="text-xs text-text-secondary">
-                  Your session remains viewable, but new submissions are not accepted.
+                  Sesimu masih bisa dilihat, tapi kiriman baru nggak diterima lagi.
                 </p>
               </div>
             )}
@@ -158,7 +158,7 @@ export function Capture({
                 className="rounded-xl border border-border bg-bg-elevated/95 backdrop-blur-md p-3 shadow-xl"
               >
                 <p className="text-xs font-medium text-text-primary">
-                  Your session ends in {Math.ceil(secondsLeft! / 60)} min. Send your photos to save them.
+                  Sesi kamu habis dalam {Math.ceil(secondsLeft! / 60)} menit. Kirim fotonya biar tersimpan.
                 </p>
               </div>
             )}
@@ -169,7 +169,7 @@ export function Capture({
             Container queries size the box to the largest exact 9:16 rectangle
             that fits: min(content width, content height × 9/16). */}
         <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center px-2 pb-2 [container-type:size]">
-          <div className="relative aspect-[9/16] w-[min(100cqw,calc(100cqh*9/16))] overflow-hidden rounded-2xl shadow-[0_10px_50px_rgba(0,0,0,0.85)]">
+          <div className="relative aspect-[9/16] w-[min(100cqw,calc(100cqh*9/16))] overflow-hidden rounded-2xl shadow-[0_10px_50px_var(--overlay)]">
             <CameraViewfinder camera={camera} frameOverlaySrc={selectedFrame?.src} />
 
             {/* Shutter flash overlay — scoped to the viewport box */}
@@ -231,7 +231,7 @@ export function Capture({
                 type="button"
                 onClick={handleShutter}
                 disabled={shutterDisabled}
-                className="h-16 w-16 shrink-0 rounded-full border-4 border-bg-base bg-accent shadow-[0_0_20px_rgba(212,175,55,0.45),0_0_40px_rgba(212,175,55,0.2)] transition duration-fast ease-out hover:shadow-[0_0_28px_rgba(212,175,55,0.65)] active:scale-[0.92] focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-40"
+                className="h-[72px] w-[72px] shrink-0 rounded-full border-4 border-bg-base bg-accent shadow-[0_0_20px_color-mix(in_srgb,var(--accent)_45%,transparent),0_0_40px_color-mix(in_srgb,var(--accent)_20%,transparent)] transition duration-fast ease-out hover:shadow-[0_0_28px_color-mix(in_srgb,var(--accent)_65%,transparent)] active:scale-[0.92] focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Take photo"
               />
             </div>
@@ -256,8 +256,8 @@ export function Capture({
 
           {/* Budget Limit Warning Notice */}
           {budgetRemaining <= 0 && !closed && (
-            <p className="text-center text-[11px] text-accent font-medium drop-shadow-sm">
-              Photo limit reached for this guest session.
+            <p className="text-center text-[11px] text-text-muted font-medium drop-shadow-sm">
+              Batas foto untuk sesi ini sudah terpakai.
             </p>
           )}
 
@@ -298,7 +298,7 @@ function CameraViewfinder({
   if (permission === "idle" || permission === "requesting") {
     return (
       <div className="absolute inset-0 flex items-center justify-center bg-bg-base">
-        <p className="text-sm text-text-muted">Starting camera…</p>
+        <p className="text-sm text-text-muted">Nyalain kamera…</p>
       </div>
     );
   }
@@ -309,8 +309,8 @@ function CameraViewfinder({
         <div className="max-w-sm rounded-xl border border-border bg-bg-elevated p-4 shadow-2xl">
           <p className="text-sm text-text-secondary leading-relaxed">
             {permission === "denied"
-              ? "Camera access was not granted. You can still choose a photo below."
-              : "Camera is not available in this browser. You can still choose a photo below."}
+              ? "Akses kamera nggak diberi. Kamu masih bisa pilih foto dari galeri di bawah."
+              : "Kamera nggak tersedia di browser ini. Kamu masih bisa pilih foto dari galeri di bawah."}
           </p>
         </div>
       </div>
@@ -494,15 +494,15 @@ function ReviewOverlay({
           Status:{" "}
           <span className="text-text-primary font-medium">
             {photo.status === "pending"
-              ? "Not sent yet"
+              ? "Belum terkirim"
               : photo.status === "uploading"
-                ? "Sending…"
+                ? "Ngirim…"
                 : photo.status === "confirmed"
-                  ? "Saved"
+                  ? "Tersimpan"
                   : photo.status === "error"
-                    ? "Not saved"
+                    ? "Belum tersimpan"
                     : photo.status === "expired"
-                      ? "Not saved — session expired"
+                      ? "Belum tersimpan — sesi habis"
                       : photo.status}
           </span>
         </p>
@@ -512,7 +512,7 @@ function ReviewOverlay({
             onClick={onClose}
             className="min-h-11 flex-1 rounded-xl border border-border px-4 text-xs font-semibold text-text-primary transition active:scale-95 focus-visible:outline-2 focus-visible:outline-accent"
           >
-            Back
+            Kembali
           </button>
           {canRetake && (
             <button
@@ -520,7 +520,7 @@ function ReviewOverlay({
               onClick={onRetake}
               className="min-h-11 flex-1 rounded-xl bg-accent px-4 text-xs font-bold text-on-accent transition duration-fast hover:brightness-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-accent"
             >
-              Retake
+              Ulangi
             </button>
           )}
           {canDelete && (
@@ -529,7 +529,7 @@ function ReviewOverlay({
               onClick={onDelete}
               className="min-h-11 flex-1 rounded-xl bg-error px-4 text-xs font-bold text-text-primary transition active:scale-95 focus-visible:outline-2 focus-visible:outline-accent"
             >
-              Delete
+              Hapus
             </button>
           )}
         </div>

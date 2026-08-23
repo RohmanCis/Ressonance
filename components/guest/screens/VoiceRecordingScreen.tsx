@@ -141,11 +141,11 @@ export function VoiceRecordingScreen({
       <div className="flex flex-1 flex-col items-center justify-center gap-4 px-5 py-6">
         {limit ? (
           <p role="status" className="max-w-sm text-center text-sm text-text-muted">
-            Voice-note limit reached for this guest session.
+            Batas pesan suara untuk sesi ini sudah terpakai.
           </p>
         ) : closed ? (
           <p role="alert" className="max-w-sm text-center text-sm text-text-muted">
-            This event is closed. New submissions are not accepted.
+            Acara ini sudah selesai. Kiriman baru nggak diterima lagi.
           </p>
         ) : voiceState === "unsupported" ? (
           <p role="alert" className="max-w-sm text-center text-sm text-text-muted">
@@ -155,7 +155,7 @@ export function VoiceRecordingScreen({
           <div className="w-full max-w-md space-y-3">
             <audio controls src={voiceUrl} className="w-full" aria-label="Voice note playback" />
             <p className="text-center text-sm text-text-muted">
-              Duration: <span className="font-mono tabular-nums">{voiceSeconds}s</span>
+              Durasi: <span className="font-mono tabular-nums">{voiceSeconds}s</span>
             </p>
             {voiceSeconds < 5 && (
               <p role="status" className="text-center text-sm text-text-secondary">
@@ -187,12 +187,12 @@ export function VoiceRecordingScreen({
             </p>
             {recording && (
               <p role="status" className="text-sm font-semibold text-text-primary">
-                Recording
+                Merekam
               </p>
             )}
             {voiceState === "idle" && (
               <p className="max-w-sm text-center text-sm text-text-muted">
-                Microphone permission will be requested after you choose Record.
+                Browser bakal minta izin mikrofon setelah kamu tekan rekam.
               </p>
             )}
             {voiceState === "error" && (

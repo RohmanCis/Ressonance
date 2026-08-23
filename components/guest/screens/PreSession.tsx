@@ -41,7 +41,7 @@ export function PreSession({
       <Shell>
         <Card>
           <Skeleton />
-          <p role="status" className="sr-only">Loading event.</p>
+          <p role="status" className="sr-only">Memuat acara.</p>
         </Card>
       </Shell>
     );
@@ -51,7 +51,7 @@ export function PreSession({
     return (
       <Shell>
         <Card>
-          <Status title="Event unavailable" message="This event cannot be found." />
+          <Status title="Acara nggak tersedia" message="Acara ini nggak ditemukan." />
         </Card>
       </Shell>
     );
@@ -62,7 +62,7 @@ export function PreSession({
       <Shell>
         <Card>
           <Status
-            title="Event unavailable"
+            title="Acara nggak tersedia"
             message={message}
             retry={() => window.location.reload()}
           />
@@ -80,7 +80,7 @@ export function PreSession({
         {/* HEADER SECTION */}
         <header className="text-center">
           <p className="font-script text-3xl sm:text-4xl text-accent tracking-wide drop-shadow-[0_2px_10px_color-mix(in_srgb,var(--accent)_30%,transparent)]">
-            You&rsquo;re invited
+            Kamu diundang
           </p>
           <h1 className="mt-2 font-display text-4xl sm:text-5xl font-normal leading-tight tracking-tight text-text-primary">
             {event.title}
@@ -101,7 +101,7 @@ export function PreSession({
         {/* STATUS ALERTS */}
         {blocked && (
           <Status
-            title="Event closed"
+            title="Acara sudah selesai"
             message="Acara ini telah selesai. Pengiriman foto dan pesan suara baru sudah ditutup."
           />
         )}
@@ -116,9 +116,9 @@ export function PreSession({
         {carryOverPrompt && expiredPending.length > 0 && (
           <div
             role="alert"
-            className="mt-6 rounded-xl border border-accent/30 bg-bg-elevated/80 p-4 backdrop-blur-sm"
+            className="mt-6 rounded-xl border border-border bg-bg-elevated/80 p-4 backdrop-blur-sm"
           >
-            <h2 className="font-display text-lg font-semibold text-accent">
+            <h2 className="font-display text-lg font-semibold text-text-primary">
               Foto Belum Tersimpan dari Sesi Sebelumnya
             </h2>
             <p className="mt-1.5 text-xs text-text-secondary leading-relaxed">
@@ -151,7 +151,7 @@ export function PreSession({
               <label htmlFor="guest-name" className="text-xs font-medium text-text-secondary">
                 Nama Anda
               </label>
-              <span className="font-script text-sm text-text-muted">optional</span>
+              <span className="font-script text-sm text-text-muted">opsional</span>
             </div>
             <input
               id="guest-name"

@@ -43,7 +43,7 @@ type ViewState =
   | "done";
 type VoiceState = "idle" | "recording" | "review" | "submitting" | "success" | "error" | "review-error" | "unsupported";
 
-const errorText = "The session could not start. Your name was kept. Try again.";
+const errorText = "Sesi gagal dimulai. Namamu masih tersimpan, coba lagi ya.";
 const SESSION_MAX_SECONDS = 1800;
 const SESSION_STATES: ViewState[] = ["post-session", "photo-review"];
 
@@ -109,7 +109,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
         setState(body.event.status === "CLOSED" ? "closed" : "ready");
       })
       .catch(() => {
-        if (active) { setState("unexpected"); setMessage("The event could not be loaded. Try again."); }
+        if (active) { setState("unexpected"); setMessage("Acara nggak bisa dimuat. Coba lagi ya."); }
       });
     return () => { active = false; };
   }, [publicId]);
@@ -157,21 +157,21 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
       const code = body.error?.code;
       if (response.status === 422 && code === "INVALID_INPUT") {
         setState("invalid");
-        setMessage(body.error?.fields?.guest_name ?? "Enter a valid name or leave this field blank.");
+        setMessage(body.error?.fields?.guest_name ?? "Nama belum valid — kosongin saja kalau nggak mau isi.");
       } else if (response.status === 429 && code === "RATE_LIMITED") {
         setState("rate-limited");
         const retryAfter = response.headers.get("Retry-After");
-        setMessage(retryAfter ? `Starting is temporarily unavailable. Retry after ${retryAfter} seconds.` : "Starting is temporarily unavailable. Try again later.");
+        setMessage(retryAfter ? `Mulai sesi lagi dibatasi sebentar. Coba lagi dalam ${retryAfter} detik.` : "Mulai sesi lagi dibatasi sebentar. Coba beberapa saat lagi.");
       } else if (code === "EVENT_CLOSED") {
         setState("closed");
-        setMessage("This event is closed. New submissions are not accepted.");
+        setMessage("Acara ini sudah selesai. Kiriman baru nggak diterima lagi.");
       } else {
         setState("unexpected");
         setMessage(errorText);
       }
     } catch {
       setState("offline");
-      setMessage("Starting did not complete. Check your connection, then try again.");
+      setMessage("Sesi belum berhasil dimulai. Cek koneksimu, lalu coba lagi.");
     }
   }
 
@@ -191,10 +191,10 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
       if (!response.ok || typeof body.photos_submitted !== "number" || typeof body.photos_remaining !== "number" || typeof body.voice_note_submitted !== "boolean" || typeof body.voice_note_available !== "boolean") throw new Error("usage");
       setSession({ guest_name: body.guest_name ?? null, photos_submitted: body.photos_submitted, photos_remaining: body.photos_remaining, voice_note_submitted: body.voice_note_submitted, voice_note_available: body.voice_note_available });
       if (body.event?.status === "CLOSED") setEvent((current) => current ? { ...current, status: "CLOSED" } : current);
-      setMessage(body.event?.status === "CLOSED" ? "This event is closed. New submissions are not accepted." : "Session ready.");
+      setMessage(body.event?.status === "CLOSED" ? "Acara ini sudah selesai. Kiriman baru nggak diterima lagi." : "Session ready.");
       return true;
     } catch {
-      setMessage("Usage could not be confirmed. Check your connection, then try again.");
+      setMessage("Sesi belum bisa dicek. Cek koneksimu, lalu coba lagi.");
       return true;
     }
   }
@@ -204,7 +204,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
     setSelectedFrame(frame);
     frameImgRef.current = frame.src ? await loadFrameImage(frame) : null;
     setState("post-session-loading");
-    setMessage("Confirming your session usage…");
+    setMessage("Ngecek sesimu dulu…");
     const proceed = await confirmUsage();
     if (!proceed) return;
     if (carryOverPrompt && expiredPending.length > 0) {
@@ -240,8 +240,8 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
     setCarryOverPrompt(unsaved.length > 0);
     setMessage(
       unsaved.length > 0
-        ? `Your session has expired. ${unsaved.length} photo${unsaved.length > 1 ? "s were" : " was"} not saved. Press Start to begin again.`
-        : "Your session has expired. Press Start to begin again.",
+        ? `Sesi kamu sudah habis. ${unsaved.length} foto belum tersimpan. Tekan Mulai untuk mulai lagi.`
+        : "Sesi kamu sudah habis. Tekan Mulai untuk mulai lagi.",
     );
   }
 
@@ -426,26 +426,26 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
   }
   async function recordVoice() {
     if (!session || event?.status === "CLOSED" || !session.voice_note_available || voiceState === "recording" || voiceState === "submitting") return;
-    if (!window.MediaRecorder || !navigator.mediaDevices?.getUserMedia) { setVoiceState("unsupported"); setVoiceMessage("Voice recording is not supported here. Try another browser or device."); return; }
-    setVoiceMessage("Allow microphone access when your browser asks. Recording starts after permission.");
+    if (!window.MediaRecorder || !navigator.mediaDevices?.getUserMedia) { setVoiceState("unsupported"); setVoiceMessage("Rekaman suara nggak didukung di sini. Coba browser atau perangkat lain."); return; }
+    setVoiceMessage("Browser bakal minta izin mikrofon. Rekamannya mulai setelah izin diberi.");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream); voiceRecorder.current = recorder; voiceChunks.current = [];
       const generation = voiceGeneration.current;
       recorder.ondataavailable = (entry) => { if (entry.data.size) voiceChunks.current.push(entry.data); };
-      recorder.onstop = () => { stream.getTracks().forEach((track) => track.stop()); if (generation !== voiceGeneration.current) return; const blob = new Blob(voiceChunks.current, { type: recorder.mimeType || "audio/webm" }); setVoice(blob); setVoiceUrl(URL.createObjectURL(blob)); setVoiceState("review"); setVoiceMessage(voiceSecondsRef.current < 5 ? "Too short. Keep recording for at least 5 seconds when possible; the server decides whether it is accepted." : "Review your voice note before saving."); };
-      setVoiceSeconds(0); voiceSecondsRef.current = 0; setVoiceState("recording"); setVoiceMessage("Recording"); recorder.start();
+      recorder.onstop = () => { stream.getTracks().forEach((track) => track.stop()); if (generation !== voiceGeneration.current) return; const blob = new Blob(voiceChunks.current, { type: recorder.mimeType || "audio/webm" }); setVoice(blob); setVoiceUrl(URL.createObjectURL(blob)); setVoiceState("review"); setVoiceMessage(voiceSecondsRef.current < 5 ? "Terlalu singkat. Minimal 5 detik ya — hasil akhirnya tetap server yang menentukan." : "Dengarkan dulu rekamanmu sebelum dikirim."); };
+      setVoiceSeconds(0); voiceSecondsRef.current = 0; setVoiceState("recording"); setVoiceMessage("Merekam"); recorder.start();
       voiceTimer.current = setInterval(() => setVoiceSeconds((seconds) => { if (seconds >= 29) { finishRecording(); return 30; } const next = seconds + 1; voiceSecondsRef.current = next; return next; }), 1000);
-    } catch { setVoiceState("error"); setVoiceMessage("Microphone access was not granted. Check permission, then try recording again."); }
+    } catch { setVoiceState("error"); setVoiceMessage("Akses mikrofon nggak diberi. Cek izinnya, lalu rekam lagi."); }
   }
   function resetVoice() { voiceGeneration.current += 1; finishRecording(); if (voiceUrl) URL.revokeObjectURL(voiceUrl); setVoice(null); setVoiceUrl(""); setVoiceSeconds(0); setVoiceState("idle"); setVoiceMessage(""); }
   function submitVoice() {
     if (!voice || voiceState === "submitting" || !session || event?.status === "CLOSED") return;
-    setVoiceState("submitting"); setVoiceMessage("Uploading voice note…"); const form = new FormData(); form.append("voice_note", voice, "voice-note.webm"); const request = new XMLHttpRequest(); request.open("POST", `/api/events/${encodeURIComponent(publicId)}/voice-notes`); request.upload.onprogress = (progress) => { if (progress.lengthComputable) setVoiceMessage(`Uploading voice note… ${Math.round(progress.loaded / progress.total * 100)}%`); };
+    setVoiceState("submitting"); setVoiceMessage("Ngirim pesan suara…"); const form = new FormData(); form.append("voice_note", voice, "voice-note.webm"); const request = new XMLHttpRequest(); request.open("POST", `/api/events/${encodeURIComponent(publicId)}/voice-notes`); request.upload.onprogress = (progress) => { if (progress.lengthComputable) setVoiceMessage(`Ngirim pesan suara… ${Math.round(progress.loaded / progress.total * 100)}%`); };
     request.onload = async () => {
       try {
         if (request.status === 201) {
-          setVoiceState("success"); setVoiceMessage("Voice note saved.");
+          setVoiceState("success"); setVoiceMessage("Pesan suara tersimpan.");
           const proceed = await confirmUsage();
           if (proceed) setState("done");
           return;
@@ -453,10 +453,10 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
         let code: string | undefined;
         try { code = (JSON.parse(request.responseText || "{}").error?.code as string | undefined); } catch { code = undefined; }
         if (request.status === 401 && ["SESSION_INVALID", "SESSION_EXPIRED", "SESSION_REQUIRED"].includes(code ?? "")) { resetVoice(); handleSessionExpired(); return; }
-        setVoiceState("review-error"); setVoiceMessage(code === "UNSUPPORTED_MEDIA" ? "This audio format is not supported. Record again in a supported browser." : code === "FILE_TOO_LARGE" ? "This voice note is too large. Record a shorter note." : code === "AUDIO_DURATION_INVALID" ? "Voice notes must be 5–30 seconds. Re-record within that range." : code === "AUDIO_UNINSPECTABLE" ? "The voice note could not be verified. Re-record it." : code === "VOICE_NOTE_LIMIT_REACHED" ? "Voice-note limit reached for this guest session." : code === "EVENT_CLOSED" ? "This event is closed. New submissions are not accepted." : code === "RATE_LIMITED" ? "Too many requests. Wait, then try again deliberately." : code === "MEDIA_PERSISTENCE_FAILED" ? "The voice note was not confirmed as saved. Try again." : "The voice note could not be uploaded. Check your connection, then try again.");
-      } catch { setVoiceState("review-error"); setVoiceMessage("The voice note could not be confirmed as saved. Check your connection, then try again."); }
+        setVoiceState("review-error"); setVoiceMessage(code === "UNSUPPORTED_MEDIA" ? "Format audionya nggak didukung. Rekam ulang di browser yang didukung." : code === "FILE_TOO_LARGE" ? "Rekamannya kegedean. Rekam yang lebih singkat." : code === "AUDIO_DURATION_INVALID" ? "Pesan suara harus 5–30 detik. Rekam ulang di rentang itu." : code === "AUDIO_UNINSPECTABLE" ? "Rekamannya nggak bisa diverifikasi. Rekam ulang ya." : code === "VOICE_NOTE_LIMIT_REACHED" ? "Batas pesan suara untuk sesi ini sudah terpakai." : code === "EVENT_CLOSED" ? "Acara ini sudah selesai. Kiriman baru nggak diterima lagi." : code === "RATE_LIMITED" ? "Terlalu banyak permintaan. Tunggu sebentar, lalu coba lagi." : code === "MEDIA_PERSISTENCE_FAILED" ? "Pesan suaranya belum terkonfirmasi tersimpan. Coba lagi." : "Pesan suara gagal dikirim. Cek koneksimu, lalu coba lagi.");
+      } catch { setVoiceState("review-error"); setVoiceMessage("Pesan suara gagal dikirim. Cek koneksimu, lalu coba lagi."); }
     };
-    request.onerror = () => { setVoiceState("review-error"); setVoiceMessage("The voice note could not be confirmed as saved. Check your connection, then try again."); }; request.send(form);
+    request.onerror = () => { setVoiceState("review-error"); setVoiceMessage("Pesan suara gagal dikirim. Cek koneksimu, lalu coba lagi."); }; request.send(form);
   }
 
   // --- Skip voice: discard any unsent take (§4.5) and finish the flow ---
@@ -527,7 +527,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
       <main className="min-h-dvh bg-bg-base px-5 pt-[calc(4rem+env(safe-area-inset-top))] pb-[calc(2rem+env(safe-area-inset-bottom))] text-text-primary sm:px-8">
         <div className="mx-auto w-full max-w-[30rem]">
           <header>
-            <p className="text-xs font-medium tracking-[0.04em] text-text-muted">Guest entry</p>
+            <p className="text-xs font-medium tracking-[0.04em] text-text-muted">Masuk acara</p>
             <h1 className="mt-3 font-display text-4xl font-semibold leading-tight tracking-tight">
               {event!.title}
             </h1>
@@ -535,7 +535,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
           <div role="status" aria-label="Loading session usage" className="mt-8 space-y-4">
             <div className="h-28 animate-pulse rounded-lg bg-bg-surface" />
             <div className="h-32 animate-pulse rounded-lg bg-bg-surface" />
-            <p className="text-sm text-text-muted">Loading your session usage…</p>
+            <p className="text-sm text-text-muted">Ngecek sesi kamu…</p>
           </div>
         </div>
       </main>

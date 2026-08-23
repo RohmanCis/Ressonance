@@ -74,6 +74,9 @@ export function PhotoReview({
                     className="h-full w-full object-cover"
                   />
                 </div>
+                <p className="mt-1 text-center font-mono text-xs tabular-nums text-text-muted">
+                  Foto {index + 1}
+                </p>
                 <StatusBadge status={photo.status} />
                 {/* 44×44 hit area: invisible padded button, visual chip stays
                     28px anchored at the tile corner (AGENTS.md §6). The extra
@@ -115,13 +118,12 @@ export function PhotoReview({
 
         {hasErrors && (
           <p role="alert" className="mt-4 text-sm text-text-secondary">
-            {errorCount} photo{errorCount > 1 ? "s" : ""} could not be saved. Retry or delete
-            {errorCount > 1 ? " them" : " it"} before continuing.
+            {errorCount} foto nggak tersimpan. Ulangi kirim atau hapus dulu sebelum lanjut.
           </p>
         )}
         {closed && !allConfirmed && (
           <p role="alert" className="mt-4 text-sm text-text-secondary">
-            This event is closed. New submissions are not accepted.
+            Acara ini sudah selesai. Kiriman baru nggak diterima lagi.
           </p>
         )}
       </div>
@@ -129,7 +131,7 @@ export function PhotoReview({
       <div className="space-y-2 px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:px-8">
         {syncing && (
           <p role="status" className="text-center text-xs text-text-muted">
-            Sending photos…
+            Ngirim foto…
           </p>
         )}
         <button

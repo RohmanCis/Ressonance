@@ -21,6 +21,8 @@ The experience should feel like handling a roll of film at a wedding table at ni
   --text-secondary: #d4cec3; /* supporting copy, labels */
   --text-muted: #9a8f82;     /* hints, timestamps, placeholders */
   --accent: #d4af37;         /* warm gold — actions, active states ONLY */
+  --accent-foil-light: #f0d97a; /* gold-foil button gradient highlight */
+  --accent-foil-dark: #b8912a;  /* gold-foil button gradient deep shade */
   --accent-soft: rgba(212, 175, 55, 0.14); /* selected-frame glow, active fills */
   --error: #c0564f;          /* destructive / upload failure */
   --success: #7da37a;        /* confirmed persistence */
@@ -30,6 +32,8 @@ The experience should feel like handling a roll of film at a wedding table at ni
 ```
 
 Rules: gold is the only accent and appears only on primary actions, focus rings, and confirmed/active states. Errors and successes never use gold. Text on `--accent` fills is `#14110f`. All contrast pairs (primary text on base, secondary on surface, accent on base) target WCAG AA.
+
+Ambient gold (bg-accent/10–20, blur-based orbs, hairline accent/20 borders) is ratified as system mood — permitted in background layers and decorative surfaces where it does not compete with interactive elements.
 
 ## 3. Typography
 
