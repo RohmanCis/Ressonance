@@ -33,10 +33,10 @@ export function AdminSignIn() {
   }
 
   return (
-    <Shell title="Admin" eyebrow="Admin sign-in">
+    <Shell title="Admin">
       <div className="mx-auto max-w-md pt-8">
         <AdminPageShell eyebrow="Admin access" title="Open your event desk.">
-          <p className="mt-3 text-text-secondary">Sign in to create an event, share its access card, and review every submission.</p>
+          <p className="mt-3 text-sm text-text-secondary leading-relaxed">Sign in to create an event, share its access card, and review every submission.</p>
           <form onSubmit={submit} className="mt-8 rounded-2xl border border-border bg-bg-surface p-6">
             <AdminInput
               id="email"

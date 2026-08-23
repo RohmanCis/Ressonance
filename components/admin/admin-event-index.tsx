@@ -52,7 +52,7 @@ export function AdminEventIndex() {
   const history = events?.filter((event) => event.status !== "ACTIVE") ?? [];
 
   return (
-    <Shell>
+    <Shell eyebrow="Event desk">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <AdminPageShell eyebrow="Event index" title="Your events." />
         <Link href="/admin/events/new" className={linkGold}>

@@ -21,7 +21,7 @@ export async function api<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 // DESIGN.md §6: admin chrome on dark tokens — bg-base page, hairline header, gold only on primary actions.
-export function Shell({ children, title = "Admin", eyebrow = "Event desk" }: { children: ReactNode; title?: string; eyebrow?: string }) {
+export function Shell({ children, title = "Admin", eyebrow }: { children: ReactNode; title?: string; eyebrow?: string }) {
   return (
     <main className="relative flex min-h-dvh flex-col overflow-hidden bg-bg-base px-5 pt-[calc(2rem+env(safe-area-inset-top))] pb-[calc(2rem+env(safe-area-inset-bottom))] text-text-primary sm:px-8">
       {/* 1. AMBIENT GLOW LAYER 1 (Top-Right Amber Orb) — PreSession baseline */}
@@ -34,7 +34,7 @@ export function Shell({ children, title = "Admin", eyebrow = "Event desk" }: { c
       <div className="relative z-10 mx-auto w-full max-w-[90rem]">
         <header className="mb-10 flex items-center justify-between border-b border-border pb-5">
           <Link href="/admin" className="font-display text-xl font-semibold tracking-tight text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">{title}</Link>
-          <span className="text-xs font-medium tracking-[0.04em] text-text-muted">{eyebrow}</span>
+          {eyebrow && <span className="text-xs font-medium tracking-[0.04em] text-text-muted">{eyebrow}</span>}
         </header>
         {children}
       </div>
@@ -69,5 +69,5 @@ export function Button({ children, secondary = false, ...props }: React.ButtonHT
 export function AdminCreateEvent() {
   const [title, setTitle] = useState(""); const [busy, setBusy] = useState(false); const [message, setMessage] = useState(""); const [error, setError] = useState("");
   async function submit(event: FormEvent) { event.preventDefault(); setBusy(true); setError(""); setMessage(""); try { const body = await api<{ event: Event; public_url: string }>("/api/admin/events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title }) }); setMessage(`Created “${body.event.title}”.`); window.location.href = `/admin/events/${body.event.public_id}`; } catch (e) { setError(errorText[(e as Error).message] ?? ((e as Error).message === "OFFLINE" ? "You appear offline. Retry when connected." : "Could not create the event. Retry safely.")); setBusy(false); } }
-  return <AuthGate><Shell><div className="mx-auto max-w-2xl"><AdminPageShell eyebrow="New event" title="Create a new event."><p className="mt-3 text-text-secondary">Create one active event. You can close it when the day is complete.</p><form onSubmit={submit} className="mt-8 rounded-2xl border border-border bg-bg-surface p-6"><AdminInput id="event-title" label="Event title" required value={title} onChange={e => setTitle(e.target.value)} placeholder="Summer party" />{error && <Status error message={error} action={error.includes("already") ? <Link href="/admin" className="underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Find existing event</Link> : undefined} />}{message && <Status message={message} />}<Button disabled={busy} className="mt-6">{busy ? "Creating…" : "Create event"}</Button></form></AdminPageShell></div></Shell></AuthGate>;
+  return <AuthGate><Shell eyebrow="Event desk"><div className="mx-auto max-w-2xl"><AdminPageShell eyebrow="New event" title="Create a new event."><p className="mt-3 text-sm text-text-secondary leading-relaxed">Create one active event. You can close it when the day is complete.</p><form onSubmit={submit} className="mt-8 rounded-2xl border border-border bg-bg-surface p-6"><AdminInput id="event-title" label="Event title" required value={title} onChange={e => setTitle(e.target.value)} placeholder="Summer party" />{error && <Status error message={error} action={error.includes("already") ? <Link href="/admin" className="underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Find existing event</Link> : undefined} />}{message && <Status message={message} />}<Button disabled={busy} className="mt-6">{busy ? "Creating…" : "Create event"}</Button></form></AdminPageShell></div></Shell></AuthGate>;
 }

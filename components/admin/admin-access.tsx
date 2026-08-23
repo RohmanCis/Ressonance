@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ChevronDown, Printer } from "lucide-react";
 import { api, AuthGate, Button, Event, Shell, Status, Busy } from "./admin-ui";
-import { AdminInput } from "./admin-input";
 import { AdminPageShell } from "./admin-page-shell";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -129,7 +128,7 @@ export function AdminAccess({ publicId }: { publicId: string }) {
 
   return (
     <AuthGate>
-      <Shell>
+      <Shell eyebrow="Event desk">
         {/* ponytail: page-scoped print isolation (hide chrome, neutralize Shell <main> geometry); promote to a print stylesheet if more pages ship print artifacts. */}
         <style>{`@page { size: A4; margin: 12mm; }
 @media print {
@@ -147,7 +146,7 @@ export function AdminAccess({ publicId }: { publicId: string }) {
           </Link>
           <div className="flex flex-wrap items-end justify-between gap-4">
             <AdminPageShell eyebrow="Share access" title="Share event access.">
-              <p className="mt-3 text-text-secondary">Guests can scan this access card or open the public link.</p>
+              <p className="mt-3 text-sm text-text-secondary leading-relaxed">Guests can scan this access card or open the public link.</p>
             </AdminPageShell>
           </div>
           {error ? (
@@ -164,9 +163,15 @@ export function AdminAccess({ publicId }: { publicId: string }) {
             <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_18rem]">
               <section className="rounded-2xl border border-border bg-bg-surface p-6">
                 <h2 className="text-lg font-semibold text-text-primary">Public URL</h2>
-                <div className="mt-4">
-                  <AdminInput id="public-url" label="Share link" readOnly value={url} />
-                </div>
+                <label className="mt-4 block text-xs font-medium text-text-secondary" htmlFor="public-url">
+                  Share link
+                  <input
+                    id="public-url"
+                    readOnly
+                    value={url}
+                    className="mt-2 w-full border-0 border-b border-border bg-transparent rounded-none px-0 pb-2 h-12 font-mono tabular-nums text-sm text-text-muted pointer-events-none select-all focus:border-accent focus:outline-none transition-colors"
+                  />
+                </label>
                 <div className="mt-4 flex flex-wrap items-center gap-2">
                   <Button onClick={copy}>{copied ? "Copied" : "Copy link"}</Button>
                   <div ref={menuRef} className="relative">

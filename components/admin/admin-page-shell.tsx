@@ -8,7 +8,7 @@ export function AdminPageShell({ eyebrow, title, children }: { eyebrow?: string;
   return (
     <div>
       {eyebrow && <p className="text-xs font-medium tracking-[0.04em] text-text-muted">{eyebrow}</p>}
-      <h1 className="mt-2 font-display text-3xl font-semibold text-text-primary">{title}</h1>
+      <h1 className="mt-2 font-display text-3xl font-semibold leading-tight tracking-tight text-text-primary">{title}</h1>
       {children}
     </div>
   );

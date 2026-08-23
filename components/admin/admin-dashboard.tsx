@@ -580,7 +580,7 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
 
   return (
     <AuthGate>
-      <Shell>
+      <Shell eyebrow="Event desk">
         <div className="grid gap-8 lg:grid-cols-[18rem_1fr]">
           <aside className="lg:sticky lg:top-6 lg:self-start">
             <p className="text-xs font-medium tracking-[0.04em] text-text-muted">Event desk</p>
