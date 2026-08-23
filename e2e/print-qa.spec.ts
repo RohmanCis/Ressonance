@@ -42,7 +42,9 @@ test("Print QR: exactly one page, bare QR only, no chrome", async ({ page }) => 
   await expect(page.locator("#public-url")).toBeHidden();
 
   // Bare QR visible; no title/URL/instruction text on the artifact.
-  await expect(page.locator('svg[aria-label="QR code for event access"]')).toBeVisible();
+  // Screen QR is print:hidden; the print-only 80mm artifact carries the print label.
+  await expect(page.locator('svg[aria-label="Printable QR code for event access"]')).toBeVisible();
+  await expect(page.locator('svg[aria-label="QR code for event access"]')).toBeHidden();
   await expect(page.getByText(EVENT_TITLE)).toBeHidden();
   await expect(page.getByText(EXPECTED_URL)).toBeHidden();
   await expect(page.getByText("Scan to share your photos and voice notes.")).toBeHidden();

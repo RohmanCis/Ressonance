@@ -90,7 +90,7 @@ export function AdminAccess({ publicId }: { publicId: string }) {
         </div>
         {/* Print-only: bare QR, one A4 page, no title/URL/chrome */}
         <div aria-hidden="true" className="hidden print:flex print:min-h-screen print:w-full print:items-center print:justify-center print:overflow-hidden">
-          {url && <QRCodeSVG value={url} bgColor="#FFFFFF" fgColor="#000000" className="h-[80mm] w-[80mm]" />}
+          {url && <QRCodeSVG value={url} bgColor="#FFFFFF" fgColor="#000000" aria-label="Printable QR code for event access" className="h-[80mm] w-[80mm]" />}
         </div>
       </Shell>
     </AuthGate>
