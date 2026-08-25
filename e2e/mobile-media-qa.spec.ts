@@ -108,7 +108,7 @@ function mockVoiceUploadSuccess(page: Page, session: ReturnType<typeof mockState
 async function startSession(page: Page) {
   await page.goto(`/e/${EVENT_ID}`, { waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { name: "QA Media Event" })).toBeVisible();
-  await page.getByLabel(/Nama Anda/).fill("QA Tester");
+  await page.getByLabel(/Nama kamu/).fill("QA Tester");
   await page.getByRole("button", { name: "Mulai Pengalaman" }).click();
   // Frame-selection step (DESIGN.md §5.2) sits between Start and the capture
   // screen. Default path through the suite: continue without a frame.
@@ -134,7 +134,7 @@ async function captureOnePhoto(page: Page) {
 
 async function advanceToVoiceScreen(page: Page) {
   await page.getByRole("button", { name: "Lanjut →" }).click();
-  await expect(page.getByRole("heading", { name: /^Foto Anda \(\d+\)$/ })).toBeVisible({ timeout: 5000 });
+  await expect(page.getByRole("heading", { name: /^Foto kamu \(\d+\)$/ })).toBeVisible({ timeout: 5000 });
   await page.getByRole("button", { name: "Kirim & Lanjut" }).click();
   await expect(page.getByRole("heading", { name: "Tinggalkan Pesan Suara" })).toBeVisible({ timeout: 5000 });
 }
@@ -289,7 +289,7 @@ test.describe("Mobile-media QA", () => {
     await page.getByRole("button", { name: "Lanjut →" }).click();
 
     // Photo-review: CTA syncs pending photos, then advances to voice-note.
-    await expect(page.getByRole("heading", { name: /^Foto Anda \(\d+\)$/ })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole("heading", { name: /^Foto kamu \(\d+\)$/ })).toBeVisible({ timeout: 5000 });
     await syncReviewToVoice(page);
 
     // Sync success is proven by the advance to the voice screen (the CTA only
@@ -332,7 +332,7 @@ test.describe("Mobile-media QA", () => {
 
     await expect(page.getByRole("button", { name: /Photo 1/ })).toBeVisible({ timeout: 3000 });
     await page.getByRole("button", { name: "Lanjut →" }).click();
-    await expect(page.getByRole("heading", { name: /^Foto Anda \(\d+\)$/ })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole("heading", { name: /^Foto kamu \(\d+\)$/ })).toBeVisible({ timeout: 5000 });
 
     // CTA triggers the sync; the 422 leaves the item in error state on review.
     await page.getByRole("button", { name: "Kirim & Lanjut" }).click();
@@ -640,7 +640,7 @@ test.describe("Mobile-media QA", () => {
 
     // Advance to review and sync both.
     await page.getByRole("button", { name: "Lanjut →" }).click();
-    await expect(page.getByRole("heading", { name: /^Foto Anda \(\d+\)$/ })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole("heading", { name: /^Foto kamu \(\d+\)$/ })).toBeVisible({ timeout: 5000 });
     await syncReviewToVoice(page);
 
     // Both saved: CTA only advances once every item is confirmed.
@@ -739,7 +739,7 @@ test.describe("Mobile-media QA", () => {
     await expect(page.getByRole("button", { name: /Photo 2/ })).toBeVisible({ timeout: 3000 });
 
     await page.getByRole("button", { name: "Lanjut →" }).click();
-    await expect(page.getByRole("heading", { name: /^Foto Anda \(\d+\)$/ })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole("heading", { name: /^Foto kamu \(\d+\)$/ })).toBeVisible({ timeout: 5000 });
     await page.getByRole("button", { name: "Kirim & Lanjut" }).click();
 
     // CTA blocked while syncing.

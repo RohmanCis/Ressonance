@@ -133,7 +133,7 @@ export function VoiceRecordingScreen({
           Tinggalkan Pesan Suara
         </h1>
         <p className="mt-2 text-sm text-text-secondary">
-          Tinggalkan satu pesan suara hingga 30 detik untuk host.
+          Satu pesan suara, maksimal 30 detik, buat yang punya hajat.
         </p>
       </header>
 

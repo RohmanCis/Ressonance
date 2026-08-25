@@ -48,10 +48,10 @@ export function PhotoReview({
           tabIndex={-1}
           className="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight outline-none"
         >
-          Foto Anda ({photos.length})
+          Foto kamu ({photos.length})
         </h1>
         <p className="mt-2 text-sm text-text-secondary">
-          Hapus yang tidak diinginkan sebelum dikirim.
+          Hapus yang nggak diinginkan sebelum dikirim.
         </p>
       </header>
 

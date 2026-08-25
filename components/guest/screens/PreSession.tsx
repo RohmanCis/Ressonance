@@ -107,7 +107,7 @@ export function PreSession({
         )}
         {failed && (
           <Status
-            title={state === "invalid" ? "Periksa Nama Anda" : "Gagal Memulai Sesi"}
+            title={state === "invalid" ? "Cek nama kamu" : "Gagal memulai sesi"}
             message={message}
           />
         )}
@@ -119,10 +119,10 @@ export function PreSession({
             className="mt-6 rounded-xl border border-border bg-bg-elevated/80 p-4 backdrop-blur-sm"
           >
             <h2 className="font-display text-lg font-semibold text-text-primary">
-              Foto Belum Tersimpan dari Sesi Sebelumnya
+              Foto belum tersimpan dari sesi sebelumnya
             </h2>
             <p className="mt-1.5 text-xs text-text-secondary leading-relaxed">
-              Anda memiliki {expiredPending.length} foto yang belum sempat terkirim. Klik mulai untuk memasukkannya ke sesi baru.
+              Kamu punya {expiredPending.length} foto yang belum sempat terkirim. Tekan mulai untuk membawanya ke sesi baru.
             </p>
             <div className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
               {expiredPending.map((p) => (
@@ -149,7 +149,7 @@ export function PreSession({
           <div className="space-y-1.5">
             <div className="flex justify-between items-baseline">
               <label htmlFor="guest-name" className="text-xs font-medium text-text-secondary">
-                Nama Anda
+                Nama kamu
               </label>
               <span className="font-script text-sm text-text-muted">opsional</span>
             </div>
@@ -164,7 +164,7 @@ export function PreSession({
               aria-describedby="name-help"
             />
             <p id="name-help" className="text-[11px] text-text-muted pt-0.5">
-              Nama ini akan disematkan pada setiap foto dan rekaman Anda.
+              Nama ini bakal disematkan di setiap foto dan rekaman kamu.
             </p>
           </div>
 
