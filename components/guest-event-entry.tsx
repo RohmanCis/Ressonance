@@ -45,7 +45,7 @@ type VoiceState = "idle" | "recording" | "review" | "submitting" | "success" | "
 
 const errorText = "Sesi gagal dimulai. Namamu masih tersimpan, coba lagi ya.";
 const SESSION_MAX_SECONDS = 1800;
-const SESSION_STATES: ViewState[] = ["post-session", "photo-review"];
+const SESSION_STATES: ViewState[] = ["post-session", "photo-review", "voice-note"];
 
 export function GuestEventEntry({ publicId }: { publicId: string }) {
   const [event, setEvent] = useState<EventData | null>(null);
@@ -584,6 +584,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
         event={event!}
         photos={pendingPhotos}
         syncing={syncing}
+        secondsLeft={secondsLeft}
         onDeletePhoto={deletePhoto}
         onRetryPhoto={retryPhoto}
         onNext={handleReviewNext}
@@ -601,6 +602,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
         voiceSeconds={voiceSeconds}
         voiceUrl={voiceUrl}
         voiceMessage={voiceMessage}
+        secondsLeft={secondsLeft}
         onRecord={recordVoice}
         onStop={finishRecording}
         onReset={resetVoice}

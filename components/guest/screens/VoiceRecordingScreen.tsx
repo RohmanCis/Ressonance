@@ -80,6 +80,8 @@ function Spool({ spinning }: { spinning: boolean }) {
  * for duration. MediaRecorder/voiceUrl/timers are owned by the parent
  * (guest-event-entry): reset/submit/skip handlers handle teardown.
  */
+const PRE_EXPIRY_WARN_SECONDS = 300;
+
 export function VoiceRecordingScreen({
   event,
   session,
@@ -87,6 +89,7 @@ export function VoiceRecordingScreen({
   voiceSeconds,
   voiceUrl,
   voiceMessage,
+  secondsLeft,
   onRecord,
   onStop,
   onReset,
@@ -99,6 +102,7 @@ export function VoiceRecordingScreen({
   voiceSeconds: number;
   voiceUrl: string;
   voiceMessage: string;
+  secondsLeft: number | null;
   onRecord: () => void;
   onStop: () => void;
   onReset: () => void;
@@ -135,6 +139,13 @@ export function VoiceRecordingScreen({
         <p className="mt-2 text-sm text-text-secondary">
           Satu pesan suara, maksimal 30 detik, buat yang punya hajat.
         </p>
+        {/* Pre-expiry hint (UX hint; server expires_at stays authoritative) —
+            same muted anatomy as the Capture banner, gold-rule compliant. */}
+        {secondsLeft !== null && secondsLeft <= PRE_EXPIRY_WARN_SECONDS && secondsLeft > 0 && (
+          <p role="status" className="mt-3 rounded-lg border border-border bg-bg-elevated/90 px-3 py-2 text-xs text-text-secondary">
+            Sesi kamu habis dalam {Math.ceil(secondsLeft / 60)} menit. Kirim pesan suaramu biar tersimpan.
+          </p>
+        )}
       </header>
 
       {/* Center stage */}
@@ -182,7 +193,9 @@ export function VoiceRecordingScreen({
                 <Mic className="h-9 w-9" aria-hidden="true" />
               )}
             </button>
-            <p className="font-mono text-xl tabular-nums text-text-primary" aria-live="polite">
+            {/* Ticking display is visual-only (aria-live="off"); record
+                start/stop are announced by the status regions below instead. */}
+            <p className="font-mono text-xl tabular-nums text-text-primary" aria-live="off">
               {formatTimer(voiceSeconds)} / {formatTimer(MAX_SECONDS)}
             </p>
             {recording && (

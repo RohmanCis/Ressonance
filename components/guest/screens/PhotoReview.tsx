@@ -10,10 +10,13 @@ type EventData = { title: string; status: "ACTIVE" | "CLOSED" };
  * and advances to the Voice Note screen only once every remaining item is
  * server-confirmed (backend-authoritative, DESIGN.md §5.4–§5.5).
  */
+const PRE_EXPIRY_WARN_SECONDS = 300;
+
 export function PhotoReview({
   event,
   photos,
   syncing,
+  secondsLeft,
   onDeletePhoto,
   onRetryPhoto,
   onNext,
@@ -21,6 +24,7 @@ export function PhotoReview({
   event: EventData;
   photos: PendingPhoto[];
   syncing: boolean;
+  secondsLeft: number | null;
   onDeletePhoto: (id: string) => void;
   onRetryPhoto: (id: string) => void;
   onNext: () => void;
@@ -53,6 +57,13 @@ export function PhotoReview({
         <p className="mt-2 text-sm text-text-secondary">
           Hapus yang nggak diinginkan sebelum dikirim.
         </p>
+        {/* Pre-expiry hint (UX hint; server expires_at stays authoritative) —
+            same muted anatomy as the Capture banner, gold-rule compliant. */}
+        {secondsLeft !== null && secondsLeft <= PRE_EXPIRY_WARN_SECONDS && secondsLeft > 0 && (
+          <p role="status" className="mt-3 rounded-lg border border-border bg-bg-elevated/90 px-3 py-2 text-xs text-text-secondary">
+            Sesi kamu habis dalam {Math.ceil(secondsLeft / 60)} menit. Kirim fotonya biar tersimpan.
+          </p>
+        )}
       </header>
 
       <div className="flex-1 px-5 py-6 sm:px-8">

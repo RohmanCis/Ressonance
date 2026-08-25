@@ -1,6 +1,6 @@
 "use client";
 
-import { KeyboardEvent, useRef, useState } from "react";
+import { KeyboardEvent, useEffect, useRef, useState } from "react";
 import { Check } from "lucide-react";
 import { DEFAULT_FRAME_ID, FRAMES, type Frame } from "@/lib/frames";
 
@@ -18,6 +18,12 @@ export function FrameSelection({
   const headingRef = useRef<HTMLHeadingElement | null>(null);
   const selected = OPTIONS.find((frame) => frame.id === selectedId) ?? null;
   const noneFrame = FRAMES.find((frame) => frame.id === DEFAULT_FRAME_ID);
+
+  // Focus the heading on mount — same screen-entry pattern as Capture,
+  // PhotoReview, Voice and Done (keyboard/SR users land on the screen title).
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
 
   function moveSelection(from: number, delta: number) {
     if (OPTIONS.length === 0) return;
