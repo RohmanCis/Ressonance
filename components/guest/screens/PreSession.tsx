@@ -124,7 +124,7 @@ export function PreSession({
             <p className="mt-1.5 text-xs text-text-secondary leading-relaxed">
               Anda memiliki {expiredPending.length} foto yang belum sempat terkirim. Klik mulai untuk memasukkannya ke sesi baru.
             </p>
-            <div className="mt-3 flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
               {expiredPending.map((p) => (
                 <img
                   key={p.id}

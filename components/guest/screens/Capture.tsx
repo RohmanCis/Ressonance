@@ -1,5 +1,5 @@
 import { ChangeEvent, useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { RotateCcw } from "lucide-react";
+import { ImagePlus, RotateCcw } from "lucide-react";
 import type { useCamera } from "@/hooks/use-camera";
 import { PendingStatusBadge } from "@/components/guest/pending-status-badge";
 import {
@@ -203,20 +203,7 @@ export function Capture({
                 className="flex h-11 w-11 items-center justify-center rounded-xl bg-bg-base/70 backdrop-blur-md border border-border/70 text-text-secondary transition active:scale-95 cursor-pointer hover:text-text-primary focus-within:outline-2 focus-within:outline-accent shadow-lg"
               >
                 <span className="sr-only">Choose a photo</span>
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <rect x="3" y="5" width="18" height="14" rx="2" />
-                  <circle cx="9" cy="10" r="1.5" />
-                  <path d="m5 17 4-4 3 3 3-3 4 4" />
-                </svg>
+                <ImagePlus className="h-5 w-5" aria-hidden="true" />
                 <input
                   className="sr-only"
                   type="file"

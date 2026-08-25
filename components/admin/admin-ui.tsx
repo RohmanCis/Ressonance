@@ -49,8 +49,8 @@ export function Status({ message, error = false, action }: { message: string; er
 export function Busy({ label = "Loading" }) {
   return (
     <div role="status" aria-label={label} className="flex animate-pulse gap-2">
-      <div className="h-4 w-32 bg-bg-surface/60" />
-      <div className="h-3 w-48 bg-bg-surface/60" />
+      <div className="h-4 w-32 rounded bg-bg-surface/60" />
+      <div className="h-3 w-48 rounded bg-bg-surface/60" />
     </div>
   );
 }

@@ -633,7 +633,6 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
       <Shell eyebrow="Event desk">
         <div className="grid gap-8 lg:grid-cols-[18rem_1fr]">
           <aside className="lg:sticky lg:top-6 lg:self-start">
-            <p className="text-xs font-medium tracking-[0.04em] text-text-muted">Event desk</p>
             {busy && !event ? (
               <Busy label="Loading event" />
             ) : error && !event ? (
@@ -641,7 +640,7 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
             ) : (
               event && (
                 <>
-                  <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-text-primary">{event.title}</h1>
+                  <h1 className="font-display text-3xl font-semibold tracking-tight text-text-primary">{event.title}</h1>
                   <p className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${event.status === "ACTIVE" ? "border-accent/40 bg-accent-soft text-accent" : "border-border text-text-muted"}`}>
                     {event.status === "ACTIVE" ? "Active" : "Closed"}
                   </p>

@@ -43,7 +43,6 @@
   --font-mono: var(--font-dm-mono), DM Mono, ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-script: var(--font-pinyon), "Pinyon Script", cursive;
   --animate-spin-tape: spin-tape 2s linear infinite;
-  --animate-stamp: stamp-drop 600ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
   --animate-wave-pulse: wave-pulse 900ms ease-in-out infinite;
   --animate-develop: polaroid-develop 800ms ease-out both;
   --duration-fast: var(--motion-fast);
@@ -159,13 +158,6 @@ body {
 @keyframes spin-tape {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
-}
-
-/* Wax seal entrance. */
-@keyframes stamp-drop {
-  0% { transform: scale(1.6) rotate(-14deg); opacity: 0; }
-  60% { transform: scale(0.95) rotate(3deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 
 /* Audio bar pulse. */

@@ -37,9 +37,10 @@ export function FrameSelection({
     }
   }
 
+  // selectedId defaults to the first card and is never cleared, so a
+  // null-selection confirm is unreachable; "no frame" is skip-only (UX_FLOW §2).
   function confirm() {
     if (selected) onFrameConfirm(selected);
-    else if (noneFrame) onFrameConfirm(noneFrame);
   }
 
   return (
@@ -142,7 +143,7 @@ export function FrameSelection({
           onClick={confirm}
           className="gold-foil-btn h-12 w-full rounded-xl text-sm font-semibold transition duration-fast hover:brightness-105 active:scale-[0.98] shadow-lg"
         >
-          {selected ? `Gunakan Bingkai ${selected.label}` : "Lanjut Tanpa Bingkai"}
+          {selected ? `Gunakan Bingkai ${selected.label}` : "Pilih Bingkai"}
         </button>
 
         <button
