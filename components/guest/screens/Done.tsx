@@ -45,7 +45,7 @@ export function Done({
         {eventTitle}
       </h1>
       <p className="mt-4 max-w-sm text-sm text-text-secondary">
-        Terima kasih — foto dan pesan suara Anda sudah kami terima.
+        Terima kasih — foto dan pesan suara kamu sudah kami terima.
       </p>
       <p className="mt-1 max-w-sm text-sm text-text-muted">
         Host akan melihatnya setelah acara.
@@ -58,7 +58,7 @@ export function Done({
             Simpan Kenangan Digital
           </h2>
           <p className="mt-2 text-sm text-text-muted">
-            Unduh foto kenangan berbingkai dari acara ini ke galeri Anda.
+            Unduh foto kenangan berbingkai dari acara ini ke galeri kamu.
           </p>
           <button
             type="button"
