@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, Download, Image as ImageIcon, Loader2, Mic, Pause, Play, X } from "lucide-react";
-import { api, AuthGate, Button, Busy, Event, Shell, Status, Submission } from "./admin-ui";
+import { api, AuthGate, Button, Event, Shell, Status, Submission } from "./admin-ui";
 import { AdminInput } from "./admin-input";
 import { describeDownloadResponse, downloadErrorCodeFromResponse, downloadErrorMessage } from "@/lib/admin-download";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
@@ -156,11 +156,34 @@ function DownloadButton({ item, name, className = "" }: { item: Submission; name
   );
 }
 
+// Fires once when the element scrolls within rootMargin of the viewport, then disconnects.
+function useInViewOnce<T extends Element>(rootMargin = "200px") {
+  const ref = useRef<T | null>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setInView(true);
+      return;
+    }
+    const obs = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) {
+        setInView(true);
+        obs.disconnect();
+      }
+    }, { rootMargin });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [rootMargin]);
+  return { ref, inView };
+}
+
 function PhotoTile({ item, name, onPreview }: { item: Submission; name: string; onPreview: () => void }) {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  // ponytail: eager signed-URL fetch per tile; add IntersectionObserver lazy fetch when event volume grows.
+  const { ref, inView } = useInViewOnce<HTMLDivElement>("200px");
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -173,11 +196,11 @@ function PhotoTile({ item, name, onPreview }: { item: Submission; name: string; 
     }
   }, [item.id]);
   useEffect(() => {
-    void load();
-  }, [load]);
+    if (inView && !url && !error) void load();
+  }, [inView, url, error, load]);
 
   return (
-    <div className="relative overflow-hidden rounded-lg border border-border bg-bg-surface">
+    <div ref={ref} className="relative overflow-hidden rounded-lg border border-border bg-bg-surface">
       {error ? (
         <div className="flex aspect-square flex-col items-center justify-center gap-2 bg-bg-elevated p-3 text-center">
           <p role="alert" className="text-xs text-text-muted">
@@ -207,6 +230,7 @@ function PhotoTile({ item, name, onPreview }: { item: Submission; name: string; 
                 src={url}
                 alt=""
                 loading="lazy"
+                decoding="async"
                 className="h-full w-full object-cover transition-transform duration-base ease-out motion-reduce:transition-none motion-safe:group-hover:scale-[1.03]"
               />
             )}
@@ -551,7 +575,7 @@ function PreviewDialog({
           ) : error ? (
             <Status error message={errorText(error)} action={<Button secondary onClick={load}>Retry</Button>} />
           ) : (
-            <img src={url} alt={`Photo from ${name}`} className="max-h-[70vh] w-full rounded-md bg-bg-surface object-contain" />
+            <img src={url} alt={`Photo from ${name}`} decoding="async" className="max-h-[70vh] w-full rounded-md bg-bg-surface object-contain" />
           )}
         </div>
       </div>
@@ -582,6 +606,23 @@ function TimelineSkeleton() {
   );
 }
 
+function AsideSkeleton() {
+  return (
+    <div role="status" aria-label="Loading event" className="animate-pulse">
+      <div aria-hidden="true">
+        <div className="h-3 w-20 rounded bg-bg-elevated" />
+        <div className="mt-3 h-9 w-48 rounded bg-bg-elevated" />
+        <div className="mt-3 h-6 w-16 rounded-full bg-bg-elevated" />
+        <div className="mt-6 grid gap-2">
+          <div className="min-h-12 rounded-lg bg-bg-elevated" />
+          <div className="min-h-12 rounded-lg bg-bg-elevated" />
+        </div>
+      </div>
+      <span className="sr-only">Loading event</span>
+    </div>
+  );
+}
+
 export function AdminDashboard({ publicId }: { publicId: string }) {
   const [event, setEvent] = useState<Event | null>(null);
   const [items, setItems] = useState<Submission[]>([]);
@@ -596,10 +637,13 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
     setBusy(true);
     setError("");
     try {
-      const e = await api<{ event: Event }>(`/api/admin/events/${publicId}`);
-      setEvent(e.event);
       const suffix = search ? `?guest_name=${encodeURIComponent(search)}` : "";
-      setItems((await api<{ submissions: Submission[] }>(`/api/admin/events/${publicId}/submissions${suffix}`)).submissions);
+      const [eventRes, subsRes] = await Promise.all([
+        api<{ event: Event }>(`/api/admin/events/${publicId}`),
+        api<{ submissions: Submission[] }>(`/api/admin/events/${publicId}/submissions${suffix}`),
+      ]);
+      setEvent(eventRes.event);
+      setItems(subsRes.submissions);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -659,9 +703,9 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
     <AuthGate>
       <Shell eyebrow="Event desk">
         <div className="grid gap-8 lg:grid-cols-[18rem_1fr]">
-          <aside className="lg:sticky lg:top-6 lg:self-start">
+          <aside className="min-h-[300px] lg:sticky lg:top-6 lg:self-start">
             {busy && !event ? (
-              <Busy label="Loading event" />
+              <AsideSkeleton />
             ) : error && !event ? (
               <Status error message={errorText(error)} action={<Button secondary onClick={() => load("")}>Retry</Button>} />
             ) : (

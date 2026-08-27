@@ -1,25 +1,52 @@
-# Result: Custom AudioPlayer on Voice screen
+# Result: Admin Dashboard Lighthouse Remediation (waves 1–3)
 
 ## Status
-COMPLETE (with one flagged e2e drift — see Blockers).
+COMPLETE — all gates met.
 
-## Files changed
-- `components/guest/audio-player.tsx` — NEW. Props `{ src: string; duration: number }`. Dark container `bg-bg-surface rounded-xl border border-border/60 px-4 py-3`; 44px round play/pause button (lucide `Play`/`Pause`, `text-accent`, aria-label, gold focus ring, `active:scale`); seek = hairline `bg-border h-1 rounded-full` track + `bg-accent` `scaleX` fill (`motion-reduce:transition-none`) with a real `input[type=range]` (`aria-label="Seek voice note"`) stretched to h-11 (44px touch target) at `opacity-0` over it, `peer-focus-visible` gold outline on a ring span; DM Mono `text-xs tabular-nums text-text-muted` `m:ss / m:ss` timestamps. Hidden `<audio>` drives playback (play/pause/ended/timeupdate); `elapsed` resets on `src` change. No volume/download UI. Tokens only; TS strict, no `any`.
-- `components/guest/screens/VoiceRecordingScreen.tsx` — 3 lines: +1 import, `<audio controls …>` swapped for `<AudioPlayer src={voiceUrl} duration={voiceSeconds} />`. Existing "Durasi: Ns" line and <5s warning kept (e2e `mobile-media-qa.spec.ts` asserts "Durasi:" text at 7 spots). No autoplay/loop behavior existed on the native element; nothing else relied on it.
+## Before / After (Lighthouse, desktop preset)
+| Metric | Before | After | Gate |
+|---|---|---|---|
+| Performance | 49 | **93** (auth dashboard) / 100 (sign-in) | ≥90 ✅ |
+| CLS | 0.615 | **0** | ≤0.02 ✅ |
+| LCP | 4.4s | <2.5s (no LCP violation reported) | ✅ |
+| TBT | 410ms | 0ms reported | ✅ |
+| Accessibility / BP / SEO | — | 100 / 100 / 100 | ✅ |
+
+Baseline: owner-reported audit of `/admin/events/[public_id]` (perf 49→60 after first partial pass, CLS 0.615, LCP 4.4s→3.1s).
+After: fresh `npm run build && npm run start`, authenticated run (live admin cookie, event `tnqbbcMsf1TeSUXEA_k6AQ`), `lh-dash2.json`.
+
+## Code changes
+- `components/admin/admin-dashboard.tsx`
+  - `useInViewOnce` (IntersectionObserver, rootMargin 200px, once+disconnect, IO-undefined eager fallback); PhotoTile signed-URL fetch now viewport-gated. Retry/error/loading UI unchanged.
+  - `decoding="async"` on PhotoTile + PreviewDialog `<img>` (PhotoTile keeps `loading="lazy"`).
+  - `AsideSkeleton` (zero-shift: eyebrow h-3, title h-9, badge h-6, 2× min-h-12, same mt rhythm) replacing `Busy`; aside `min-h-[300px]`.
+  - `load()` sequential waterfall → `Promise.all` (event + submissions); single try/catch preserved.
+  - Unused `Busy` import removed.
+- `app/layout.tsx` — `display: "swap"` on all 4 `next/font/google` configs.
+- `next.config.ts` — `headers()`: `/frames/:path*` → `Cache-Control: public, max-age=31536000, immutable`.
+- `app/icon.svg` — favicon (was sole BP deduction via 404).
+
+## Skeleton-transition note (directive 3)
+Left/right skeletons already unmount atomically: `Promise.all` resolves both fetches in one tick; `setEvent`/`setItems`/`setBusy(false)` land in one React commit. Right column keys on `busy`, left on `busy && !event` — deliberately retained so search refetches (event already loaded) don't flash AsideSkeleton and reintroduce shift. No change needed.
 
 ## Validation
-- `npx tsc --noEmit` — PASS (no output).
-- e2e not run (task contract scope = tsc only).
+- `npm run typecheck` — 0 errors.
+- `npx vitest run` — 354/354 (43 files).
+- `npx playwright test` — 37 passed / 1 skipped (live-backend skip, expected).
+- `npm run build` — PASS (warnings pre-existing).
 
-## Blockers / risks
-- E2E drift: `e2e/mobile-media-qa.spec.ts:391,520` assert `audio[aria-label="Voice note playback"]` is **visible**. The new component renders its `<audio>` hidden (aria-label preserved on the element). Those two `toBeVisible()` assertions will fail; needs a one-line e2e update (e.g. assert the play button / seek slider instead). Out of task scope (2 files only) — flagging for orchestrator.
-- Other 7 e2e assertions on "Durasi:" text remain satisfied.
+## Pitfalls hit (for future runs)
+- Stale `next start` on :3000 served old asset hashes → 400s; Lighthouse against it is invalid. Verify a current-build asset returns 200 before measuring.
+- Lighthouse `--extra-headers` accepts a JSON file path (raw `Cookie:` string is misparsed as a file).
+- Leaked headless Chrome processes lock `%TEMP%\lighthouse.*` (EPERM); kill headless-only Chrome and redirect TMP before rerunning.
 
-## SSOT conflict
-None. Player anatomy (gold on active control, DM Mono timestamps, hairline track, no motion beyond transform) follows DESIGN.md §2/§5.5 and mirrors the admin VoiceTile pattern.
+## Verification limits
+- Perf 93 / CLS 0 = single Lighthouse sample, desktop preset, one event dataset (owner accepted single-sample limitation). Aside geometry is content-independent (fixed buttons + min-h floor), so dataset-shape risk is confined to the left column.
+- Mobile preset unmeasured (baseline was desktop; desktop is scope).
+- Preview/download/search behavior covered by existing vitest + Playwright suites, not by Lighthouse.
 
-## Architecture drift
-None. Client-only presentational component; no API/schema/deps touched. No npm installs.
+## Blockers / SSOT conflicts / drift
+None. No API/schema/docs changes; no new deps.
 
-## Next step
-Update the two `audio[aria-label=…]` visibility assertions in `mobile-media-qa.spec.ts` (or approve the drift), then run Playwright voice suites.
+## Next
+Commit proposed: `perf(admin): lazy PhotoTile fetch, AsideSkeleton, parallel load, font swap, cache headers, favicon`

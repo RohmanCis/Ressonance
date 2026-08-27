@@ -7,17 +7,20 @@ const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   style: ["normal", "italic"],
+  display: "swap",
   variable: "--font-cormorant",
 });
 
 const dmMono = DM_Mono({
   subsets: ["latin"],
   weight: ["400", "500"],
+  display: "swap",
   variable: "--font-dm-mono",
 });
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
+  display: "swap",
   variable: "--font-dm-sans",
 });
 
@@ -25,6 +28,7 @@ const dmSans = DM_Sans({
 const pinyon = Pinyon_Script({
   subsets: ["latin"],
   weight: "400",
+  display: "swap",
   variable: "--font-pinyon",
 });
 
