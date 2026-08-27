@@ -388,7 +388,7 @@ test.describe("Mobile-media QA", () => {
 
     // Review state.
     await expect(page.getByText("Durasi:")).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('audio[aria-label="Voice note playback"]')).toBeVisible();
+    await expect(page.getByRole("button", { name: "Play voice note" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Kirim Pesan Suara" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Rekam Ulang" })).toBeVisible();
 
@@ -517,7 +517,7 @@ test.describe("Mobile-media QA", () => {
     await expect(page.getByText("Pesan suara harus 5–30 detik. Rekam ulang di rentang itu.")).toBeVisible({ timeout: 5000 });
 
     // Audio playback retained.
-    await expect(page.locator('audio[aria-label="Voice note playback"]')).toBeVisible();
+    await expect(page.getByRole("button", { name: "Play voice note" })).toBeVisible();
 
     // Duration retained.
     await expect(page.getByText("Durasi:")).toBeVisible();

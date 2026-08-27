@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Mic, Square } from "lucide-react";
+import { AudioPlayer } from "@/components/guest/audio-player";
 import type { Usage } from "@/lib/usage";
 
 type VoiceState =
@@ -164,7 +165,7 @@ export function VoiceRecordingScreen({
           </p>
         ) : reviewing ? (
           <div className="w-full max-w-md space-y-3">
-            <audio controls src={voiceUrl} className="w-full" aria-label="Voice note playback" />
+            <AudioPlayer src={voiceUrl} duration={voiceSeconds} />
             <p className="text-center text-sm text-text-muted">
               Durasi: <span className="font-mono tabular-nums">{voiceSeconds}s</span>
             </p>

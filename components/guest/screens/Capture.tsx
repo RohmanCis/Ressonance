@@ -1,5 +1,6 @@
-import { ChangeEvent, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { ImagePlus, RotateCcw } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import type { useCamera } from "@/hooks/use-camera";
 import { PendingStatusBadge } from "@/components/guest/pending-status-badge";
 import {
@@ -397,77 +398,67 @@ function ReviewOverlay({
   onRetake: () => void;
   onDelete: () => void;
 }) {
-  const panelRef = useRef<HTMLDivElement>(null);
-  // Focus trap (mirrors admin PreviewDialog): focus the first focusable on
-  // open, cycle Tab/Shift+Tab inside the panel, Escape closes.
-  useEffect(() => {
-    const panel = panelRef.current;
-    if (!panel) return;
-    const focusables = panel.querySelectorAll<HTMLElement>("button:not([disabled])");
-    (focusables[0] ?? panel).focus();
-  }, []);
-
-  function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
-    if (e.key === "Escape") {
-      e.preventDefault();
-      onClose();
-      return;
-    }
-    if (e.key !== "Tab" || !panelRef.current) return;
-    const focusables = panelRef.current.querySelectorAll<HTMLElement>("button:not([disabled])");
-    if (focusables.length === 0) return;
-    const first = focusables[0];
-    const last = focusables[focusables.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
-    }
-  }
-
+  // shadcn Dialog (Radix) owns role="dialog"/aria-modal, the focus trap,
+  // Escape/backdrop close and initial focus — the former hand-rolled trap,
+  // panelRef and initial-focus effect are intentionally deleted.
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-bg-base/80 backdrop-blur-md p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="review-overlay-title"
-      ref={panelRef}
-      tabIndex={-1}
-      onKeyDown={onKeyDown}
-    >
-      <div className="relative w-full max-w-md rounded-2xl border border-border bg-bg-elevated p-4 shadow-2xl">
+    <Dialog open={photo !== null} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent
+        showCloseButton={false}
+        aria-labelledby="review-overlay-title"
+        className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-bg-base/95 backdrop-blur-md border-0 rounded-none max-w-full max-h-full w-full h-full p-4 gap-0 outline-none translate-x-0 translate-y-0 sm:max-w-full"
+      >
         <h2 id="review-overlay-title" className="sr-only">Photo review</h2>
-        <div className="aspect-[9/16] max-h-[60dvh] mx-auto overflow-hidden rounded-xl bg-bg-surface border border-border/60 shadow-inner">
-          <img src={photo.previewUrl} alt="Photo review" className="h-full w-full object-contain" />
+
+        {/* Hero photo — exact 9:16, uncropped 1080×1920 composited capture.
+            Status pill is absolutely positioned inside the photo box. */}
+        <div className="relative aspect-[9/16] w-full max-w-[min(85vw,calc(72dvh*9/16))] overflow-hidden rounded-2xl border border-border/40 bg-bg-base shadow-[0_16px_60px_rgba(0,0,0,0.9)] mx-auto">
+          <img src={photo.previewUrl} alt="Photo review" className="absolute inset-0 h-full w-full object-contain" />
+
+          {/* Status pill — strings verbatim (e2e/a11y locked) */}
+          <p className="absolute bottom-3 left-1/2 -translate-x-1/2 flex w-fit items-center gap-2 rounded-full border border-border/60 bg-bg-elevated/70 px-3 py-1 text-xs backdrop-blur-md">
+            <span
+              aria-hidden="true"
+              className={`h-1.5 w-1.5 rounded-full ${
+                photo.status === "confirmed"
+                  ? "bg-accent"
+                  : photo.status === "uploading"
+                    ? "bg-accent"
+                    : photo.status === "error" || photo.status === "expired"
+                      ? "bg-error"
+                      : "bg-text-muted"
+              }`}
+            />
+            <span className="font-medium text-text-primary">
+              {photo.status === "pending"
+                ? "Belum terkirim"
+                : photo.status === "uploading"
+                  ? "Ngirim…"
+                  : photo.status === "confirmed"
+                    ? "Tersimpan"
+                    : photo.status === "error"
+                      ? "Belum tersimpan"
+                      : photo.status === "expired"
+                        ? "Belum tersimpan — sesi habis"
+                        : photo.status}
+            </span>
+          </p>
         </div>
+
         {photo.errorMessage && (
-          <p role="alert" className="mt-3 text-sm text-error">
+          <p role="alert" className="text-xs text-error text-center mt-3">
             {photo.errorMessage}
           </p>
         )}
-        <p className="mt-3 text-xs text-text-muted text-center">
-          Status:{" "}
-          <span className="text-text-primary font-medium">
-            {photo.status === "pending"
-              ? "Belum terkirim"
-              : photo.status === "uploading"
-                ? "Ngirim…"
-                : photo.status === "confirmed"
-                  ? "Tersimpan"
-                  : photo.status === "error"
-                    ? "Belum tersimpan"
-                    : photo.status === "expired"
-                      ? "Belum tersimpan — sesi habis"
-                      : photo.status}
-          </span>
-        </p>
-        <div className="mt-4 flex gap-2">
+
+        {/* Action row — thumb zone, safe-area padded */}
+        <div className="flex gap-2.5 w-full max-w-[min(85vw,calc(72dvh*9/16))] mx-auto mt-4 pb-[calc(env(safe-area-inset-bottom)+0.5rem)]">
           <button
             type="button"
+            autoFocus
             onClick={onClose}
-            className="min-h-11 flex-1 rounded-xl border border-border px-4 text-xs font-semibold text-text-primary transition active:scale-95 focus-visible:outline-2 focus-visible:outline-accent"
+            aria-label="Kembali"
+            className="flex-1 h-12 rounded-xl border border-border bg-bg-surface/80 text-xs font-semibold text-text-primary transition active:scale-95 hover:bg-bg-elevated focus-visible:outline-2 focus-visible:outline-accent"
           >
             Kembali
           </button>
@@ -475,7 +466,8 @@ function ReviewOverlay({
             <button
               type="button"
               onClick={onRetake}
-              className="min-h-11 flex-1 rounded-xl bg-accent px-4 text-xs font-bold text-on-accent transition duration-fast hover:brightness-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-accent"
+              aria-label="Ulangi"
+              className="flex-1 h-12 rounded-xl gold-foil-btn text-xs font-bold transition active:scale-95 hover:brightness-105 focus-visible:outline-2 focus-visible:outline-accent"
             >
               Ulangi
             </button>
@@ -484,13 +476,14 @@ function ReviewOverlay({
             <button
               type="button"
               onClick={onDelete}
-              className="min-h-11 flex-1 rounded-xl bg-error px-4 text-xs font-bold text-text-primary transition active:scale-95 focus-visible:outline-2 focus-visible:outline-accent"
+              aria-label="Hapus"
+              className="flex-1 h-12 rounded-xl border border-red-500/30 bg-red-500/10 text-xs font-semibold text-red-400 transition active:scale-95 hover:bg-red-500/20 focus-visible:outline-2 focus-visible:outline-accent"
             >
               Hapus
             </button>
           )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
