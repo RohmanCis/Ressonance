@@ -6,6 +6,7 @@ import { ChevronDown, ChevronLeft, ChevronRight, Download, Image as ImageIcon, L
 import { api, AuthGate, Button, Busy, Event, Shell, Status, Submission } from "./admin-ui";
 import { AdminInput } from "./admin-input";
 import { describeDownloadResponse, downloadErrorCodeFromResponse, downloadErrorMessage } from "@/lib/admin-download";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 
 const errorTextMap: Record<string, string> = {
   FORBIDDEN: "You cannot access this media.",
@@ -415,6 +416,7 @@ function PreviewDialog({
   const item = photos[index];
   const count = photos.length;
   const panelRef = useRef<HTMLDivElement>(null);
+  const trapFocus = useFocusTrap(panelRef);
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -462,18 +464,7 @@ function PreviewDialog({
       onNavigate(index + 1);
       return;
     }
-    if (e.key !== "Tab" || !panelRef.current) return;
-    const focusables = panelRef.current.querySelectorAll<HTMLElement>("button:not([disabled]), [tabindex]:not([tabindex='-1'])");
-    if (focusables.length === 0) return;
-    const first = focusables[0];
-    const last = focusables[focusables.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
-    }
+    trapFocus(e);
   }
 
   const label = `${typeLabel(item)} from ${name}, photo ${index + 1} of ${count}`;
