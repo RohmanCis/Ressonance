@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { canDeletePhoto, type PendingPhoto } from "@/lib/pending-photos";
-import { PendingStatusBadge } from "@/components/guest/pending-status-badge";
+import { PendingStatusBadge, PendingUploadingRing } from "@/components/guest/pending-status-badge";
 
 type EventData = { title: string; status: "ACTIVE" | "CLOSED" };
 
@@ -82,12 +82,13 @@ export function PhotoReview({
                 className="relative animate-develop"
                 style={{ animationDelay: `${index * 60}ms` }}
               >
-                <div className="aspect-square overflow-hidden rounded-lg border border-border bg-bg-surface">
+                <div className="relative aspect-square overflow-hidden rounded-lg border border-border bg-bg-surface">
                   <img
                     src={photo.previewUrl}
                     alt={`Photo ${index + 1}`}
                     className="h-full w-full object-cover"
                   />
+                  {photo.status === "uploading" && <PendingUploadingRing />}
                 </div>
                 <p className="mt-1 text-center font-mono text-xs tabular-nums text-text-muted">
                   Foto {index + 1}

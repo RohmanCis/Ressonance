@@ -2,7 +2,7 @@ import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { ImagePlus, RotateCcw } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import type { useCamera } from "@/hooks/use-camera";
-import { PendingStatusBadge } from "@/components/guest/pending-status-badge";
+import { PendingStatusBadge, PendingUploadingRing } from "@/components/guest/pending-status-badge";
 import {
   canDeletePhoto,
   canRetakePhoto,
@@ -351,10 +351,11 @@ function PendingStrip({
           <button
             type="button"
             onClick={() => onReview(index)}
-            className="block h-12 w-12 overflow-hidden rounded-lg border-2 border-border/80 bg-bg-surface shadow-md focus-visible:outline-2 focus-visible:outline-accent"
+            className="relative block h-12 w-12 overflow-hidden rounded-lg border-2 border-border/80 bg-bg-surface shadow-md focus-visible:outline-2 focus-visible:outline-accent"
             aria-label={`Photo ${index + 1}, ${photo.status}`}
           >
             <img src={photo.previewUrl} alt="" className="h-full w-full object-cover" />
+            {photo.status === "uploading" && <PendingUploadingRing />}
           </button>
           <PendingStatusBadge status={photo.status} />
           {photo.status === "error" && (
