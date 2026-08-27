@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { ChevronDown, ChevronRight, Download, Image as ImageIcon, Loader2, Mic, Pause, Play, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Download, Image as ImageIcon, Loader2, Mic, Pause, Play, X } from "lucide-react";
 import { api, AuthGate, Button, Busy, Event, Shell, Status, Submission } from "./admin-ui";
 import { AdminInput } from "./admin-input";
 import { describeDownloadResponse, downloadErrorCodeFromResponse, downloadErrorMessage } from "@/lib/admin-download";
@@ -327,7 +327,7 @@ function VoiceTile({ item, name }: { item: Submission; name: string }) {
   );
 }
 
-function GuestGroup({ group, onPreview }: { group: Group; onPreview: (item: Submission, index: number) => void }) {
+function GuestGroup({ group, onPreview }: { group: Group; onPreview: (item: Submission) => void }) {
   const [open, setOpen] = useState(true);
   const contentId = useId();
   const newest = group.items[0];
@@ -377,7 +377,7 @@ function GuestGroup({ group, onPreview }: { group: Group; onPreview: (item: Subm
           {photos.length > 0 && (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {photos.map((item) => (
-                <PhotoTile key={item.id} item={item} name={group.name} onPreview={() => onPreview(item, group.items.indexOf(item))} />
+                <PhotoTile key={item.id} item={item} name={group.name} onPreview={() => onPreview(item)} />
               ))}
             </div>
           )}
@@ -400,18 +400,20 @@ function GuestGroup({ group, onPreview }: { group: Group; onPreview: (item: Subm
 }
 
 function PreviewDialog({
-  item,
+  photos,
   name,
   index,
-  count,
   onClose,
+  onNavigate,
 }: {
-  item: Submission;
+  photos: Submission[];
   name: string;
   index: number;
-  count: number;
   onClose: () => void;
+  onNavigate: (index: number) => void;
 }) {
+  const item = photos[index];
+  const count = photos.length;
   const panelRef = useRef<HTMLDivElement>(null);
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(true);
@@ -450,6 +452,16 @@ function PreviewDialog({
       onClose();
       return;
     }
+    if (e.key === "ArrowLeft" && index > 0) {
+      e.preventDefault();
+      onNavigate(index - 1);
+      return;
+    }
+    if (e.key === "ArrowRight" && index < count - 1) {
+      e.preventDefault();
+      onNavigate(index + 1);
+      return;
+    }
     if (e.key !== "Tab" || !panelRef.current) return;
     const focusables = panelRef.current.querySelectorAll<HTMLElement>("button:not([disabled]), [tabindex]:not([tabindex='-1'])");
     if (focusables.length === 0) return;
@@ -464,7 +476,7 @@ function PreviewDialog({
     }
   }
 
-  const label = `${typeLabel(item)} from ${name}, item ${index + 1} of ${count}`;
+  const label = `${typeLabel(item)} from ${name}, photo ${index + 1} of ${count}`;
   const { busy: downloading, error: downloadError, retry: retryDownload } = useDownload(item);
 
   return (
@@ -494,6 +506,28 @@ function PreviewDialog({
             </time>
           </div>
           <div className="ml-auto flex items-center gap-2">
+            {count > 1 && (
+              <div role="group" aria-label="Navigate photos" className="flex items-center gap-1">
+                <button
+                  type="button"
+                  aria-label="Previous photo"
+                  onClick={() => onNavigate(index - 1)}
+                  disabled={index === 0}
+                  className={`flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-bg-surface text-text-secondary transition duration-fast ease-out hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-45 ${focusRing}`}
+                >
+                  <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Next photo"
+                  onClick={() => onNavigate(index + 1)}
+                  disabled={index === count - 1}
+                  className={`flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-bg-surface text-text-secondary transition duration-fast ease-out hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-45 ${focusRing}`}
+                >
+                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </div>
+            )}
             <Button
               secondary
               onClick={retryDownload}
@@ -564,7 +598,7 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
   const [busy, setBusy] = useState(true);
   const [closing, setClosing] = useState(false);
   const [error, setError] = useState("");
-  const [preview, setPreview] = useState<{ item: Submission; name: string; index: number; count: number } | null>(null);
+  const [preview, setPreview] = useState<{ photos: Submission[]; name: string; index: number } | null>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
 
   async function load(search = query) {
@@ -617,9 +651,11 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
   );
   const groups = useMemo(() => groupByGuest(visibleItems), [visibleItems]);
 
-  function openPreview(item: Submission, name: string, index: number, count: number) {
+  function openPreview(item: Submission, group: Group) {
     returnFocusRef.current = document.activeElement as HTMLElement | null;
-    setPreview({ item, name, index, count });
+    // Lightbox navigates photos only, newest-first within the guest group.
+    const photos = group.items.filter((i) => i.type === "PHOTO");
+    setPreview({ photos, name: group.name, index: photos.indexOf(item) });
   }
   function closePreview() {
     setPreview(null);
@@ -736,7 +772,7 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
                   <GuestGroup
                     key={group.ref}
                     group={group}
-                    onPreview={(item, index) => openPreview(item, group.name, index, group.items.length)}
+                    onPreview={(item) => openPreview(item, group)}
                   />
                 ))}
               </div>
@@ -745,12 +781,12 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
         </div>
         {preview && (
           <PreviewDialog
-            key={preview.item.id}
-            item={preview.item}
+            key={preview.photos[preview.index].id}
+            photos={preview.photos}
             name={preview.name}
             index={preview.index}
-            count={preview.count}
             onClose={closePreview}
+            onNavigate={(index) => setPreview((p) => (p ? { ...p, index } : p))}
           />
         )}
       </Shell>
