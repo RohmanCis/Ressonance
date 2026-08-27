@@ -121,6 +121,22 @@ export const FRAMES: Frame[] = [
     src: "/frames/wedding-crimson.png",
     textLayers: [],
   },
+  {
+    id: "flower",
+    label: "Flower",
+    src: "/frames/flower.png",
+    textLayers: [
+      {
+        text: "eventTitle",
+        fontVar: "--font-pinyon",
+        fallback: "cursive",
+        fontWeight: 400,
+        sizePx: 118,
+        yRatio: 0.85,
+        color: "#f7f2ea",
+      },
+    ],
+  },
 ];
 
 export const DEFAULT_FRAME_ID = "none";

@@ -28,6 +28,6 @@ test("guest event entry shows Start surface (live backend)", async ({ page }) =>
     "requires PLAYWRIGHT_LIVE=1 and a live backend with a seeded ACTIVE event at /e/smoke-test-event",
   );
   await page.goto("/e/smoke-test-event");
-  await expect(page.getByLabel(/Nama kamu/)).toBeVisible();
-  await expect(page.getByRole("button", { name: "Mulai Pengalaman" })).toBeVisible();
+  await expect(page.getByLabel(/Namamu/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Mulai yuk" })).toBeVisible();
 });

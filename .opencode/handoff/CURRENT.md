@@ -1,15 +1,24 @@
 # Current Task Status
 
-**Status:** COMPLETE — review-remediation wave done + verified (2026-08-27). Uncommitted, ready to commit.
+**Status:** IDLE — session closed 2026-08-28. No active task.
 
-Changes (fix-1, diff inspected): red→error tokens + `var(--overlay)` shadow + shared status-pill mapping (Capture.tsx); NEW `components/guest/ambient-backdrop.tsx` (Shell + PreSession dedupe); NEW `components/guest/screens/expiry-hint.tsx` (PhotoReview + VoiceRecording dedupe); `formatTime` exported + 6 new tests. Verification (orchestrator-run): typecheck 0, vitest 360/360, lint = baseline (1+12), e2e 37/1skip. Before/after metrics in `result.md`.
+## Session record (2026-08-28)
+1. **Flower frame template**: `public/frames/flower.png` (1080×1920, alpha OK — 2 re-exports + 1px trim), registry entry #5 in `lib/frames.ts` (Pinyon 118px ivory, yRatio 0.85), `frames.test.ts` 5-template invariants, DESIGN.md §5.2 amended (registry + new copy lock).
+2. **Copy sync wave** (owner edits made canonical): PreSession + FrameSelection copy refresh → DESIGN.md §5.1/§5.2 + UX_FLOW.md §2 synced; e2e asserts updated (`Mulai yuk`, `Namamu`, `Pakai X`, `Tanpa Frame, lanjut`, CLOSED copy, count 5).
+3. **Verification**: typecheck 0 · vitest 361/361 · e2e full pass (owner-run; qr-qa:65 mobile was flaky-in-full-run, passes solo — watch next full run).
 
-**Remaining owner wave (deferred, doc-ratification):** lightbox prev/next, low-power ambient tier, pre-expiry hints on PhotoReview/Voice → DESIGN.md amendments; UX_FLOW.md §2 "Nama Anda"→"Nama kamu" sync; FrameSelection label vs DESIGN.md §5.2 ("Pilih Bingkai" vs "Gunakan Bingkai {Frame}"); gold-on-uploading-ring ratify-or-demote; dialog.tsx token strip; hooks mediaFilter/useInViewOnce/useLowPowerAmbient tests (need jsdom or refactor); rgba literals in VoiceRecordingScreen/PreSession (out of scope this wave).
+## Uncommitted work (ready to commit)
+`feat(guest): Flower frame template + PreSession/FrameSelection copy refresh, sync e2e + canonical docs`
+- lib/frames.ts, lib/frames.test.ts, public/frames/flower.png (new)
+- DESIGN.md (§5.1, §5.2), UX_FLOW.md (§2)
+- e2e/mobile-media-qa.spec.ts, e2e/smoke.spec.ts
+- components/guest/screens/{FrameSelection,PreSession}.tsx (owner edits, now canonical)
+- .tmp-status.txt deletion (stale, from prior session)
 
-**Pre-deploy blocker:** `TRUSTED_PROXY=1` + `CRON_SECRET` in Vercel. Push still pending (13 ahead of origin/main).
-- Note: perf wave already committed clean as `92bb5ec` (7 files, +161/−97); prior defective `330e2a1` reset pre-push; stray PNGs/dev-server.log deleted.
-- Skills installed (global): vercel-react-best-practices, supabase-postgres-best-practices, playwright-best-practices.
-- Owner is considering deploy in parallel; push still pending (13 ahead of origin/main).
+## Prior session (2026-08-27, committed)
+- Perf wave `92bb5ec` (dashboard Lighthouse 49→93, CLS 0) + remediation wave `5350ecd`. Details in result.md history / AGENTS.md §12.
 
-## Prior task (COMPLETE — 2026-08-27)
-Authenticated dashboard Lighthouse (fresh prod build, live admin): **perf 93, a11y 100, BP 100, SEO 100, CLS 0, TBT 0**. Before/after + limits in `result.md`. Committed `92bb5ec`.
+## Deferred owner decisions
+- DESIGN.md ratification: lightbox prev/next, low-power ambient tier, pre-expiry hints on PhotoReview/Voice, gold-on-uploading-ring (partially superseded: copy drift + UX_FLOW §2 now closed).
+- dialog.tsx token strip; hooks tests (need jsdom); rgba literals in VoiceRecordingScreen/PreSession.
+- Pre-deploy blocker: `TRUSTED_PROXY=1` + `CRON_SECRET` in Vercel; push (15 commits after this one lands).

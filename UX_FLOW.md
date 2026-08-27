@@ -9,8 +9,8 @@ QA companion to DESIGN.md (canonical design system) and docs/TECHNICAL_DESIGN.md
 ### 1. PRE_SESSION (Landing)
 
 - Open `/e/{public_id}`. Event loads; no session is created on page load.
-- Shows event title, optional guest-name field ("Nama Anda"), and the Start action ("Mulai Pengalaman").
-- Enter optional name → press **Mulai Pengalaman**. A 30-minute guest session begins (HttpOnly cookie; never reused after expiry).
+- Shows event title, optional guest-name field ("Namamu"), and the Start action ("Mulai yuk").
+- Enter optional name → press **Mulai yuk**. A 30-minute guest session begins (HttpOnly cookie; never reused after expiry).
 
 ### 2. FRAME_SELECT
 
