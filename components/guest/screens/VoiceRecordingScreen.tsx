@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Mic, Square } from "lucide-react";
 import { AudioPlayer } from "@/components/guest/audio-player";
 import type { Usage } from "@/lib/usage";
+import { ExpiryHint } from "./expiry-hint";
 
 type VoiceState =
   | "idle"
@@ -81,7 +82,6 @@ function Spool({ spinning }: { spinning: boolean }) {
  * for duration. MediaRecorder/voiceUrl/timers are owned by the parent
  * (guest-event-entry): reset/submit/skip handlers handle teardown.
  */
-const PRE_EXPIRY_WARN_SECONDS = 300;
 
 export function VoiceRecordingScreen({
   event,
@@ -142,11 +142,10 @@ export function VoiceRecordingScreen({
         </p>
         {/* Pre-expiry hint (UX hint; server expires_at stays authoritative) —
             same muted anatomy as the Capture banner, gold-rule compliant. */}
-        {secondsLeft !== null && secondsLeft <= PRE_EXPIRY_WARN_SECONDS && secondsLeft > 0 && (
-          <p role="status" className="mt-3 rounded-lg border border-border bg-bg-elevated/90 px-3 py-2 text-xs text-text-secondary">
-            Sesi kamu habis dalam {Math.ceil(secondsLeft / 60)} menit. Kirim pesan suaramu biar tersimpan.
-          </p>
-        )}
+        <ExpiryHint
+          secondsLeft={secondsLeft}
+          message={`Sesi kamu habis dalam ${Math.ceil((secondsLeft ?? 0) / 60)} menit. Kirim pesan suaramu biar tersimpan.`}
+        />
       </header>
 
       {/* Center stage */}

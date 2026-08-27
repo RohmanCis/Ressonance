@@ -1,6 +1,6 @@
 import { FormEvent } from "react";
 import type { PendingPhoto } from "@/lib/pending-photos";
-import { useLowPowerAmbient } from "@/hooks/use-low-power-ambient";
+import { AmbientBackdrop } from "@/components/guest/ambient-backdrop";
 
 type EventData = { title: string; status: "ACTIVE" | "CLOSED" };
 type ViewState =
@@ -192,31 +192,12 @@ export function PreSession({
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
-  const lowPower = useLowPowerAmbient();
   return (
     <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-bg-base px-4 py-8 text-text-primary sm:px-6">
-      
-      {/* 1. AMBIENT GLOW LAYER 1 (Top-Right Amber Orb) */}
-      <div 
-        aria-hidden="true" 
-        className={`pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent/20 blur-[100px] ${lowPower ? "" : "animate-ambient-1"}`} 
-      />
+      {/* Ambient orbs + grain (DESIGN.md §2) */}
+      <AmbientBackdrop />
 
-      {/* 2. AMBIENT GLOW LAYER 2 (Bottom-Left Warm Bronze Orb) */}
-      <div 
-        aria-hidden="true" 
-        className={`pointer-events-none absolute -bottom-24 -left-24 h-[420px] w-[420px] rounded-full bg-accent/15 blur-[110px] ${lowPower ? "" : "animate-ambient-2"}`} 
-      />
-
-      {/* 3. FILM GRAIN OVERLAY — skipped on low-power devices */}
-      {!lowPower && (
-        <div 
-          aria-hidden="true" 
-          className="pointer-events-none absolute inset-0 film-grain" 
-        />
-      )}
-
-      {/* 4. CONTENT WRAPPER */}
+      {/* CONTENT WRAPPER */}
       <div className="relative z-10 w-full flex justify-center">
         {children}
       </div>

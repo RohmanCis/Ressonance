@@ -2,7 +2,7 @@ import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { ImagePlus, RotateCcw } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import type { useCamera } from "@/hooks/use-camera";
-import { PendingStatusBadge, PendingUploadingRing } from "@/components/guest/pending-status-badge";
+import { PendingStatusBadge, PendingUploadingRing, statusPillDotClass, statusPillLabel } from "@/components/guest/pending-status-badge";
 import {
   canDeletePhoto,
   canRetakePhoto,
@@ -413,36 +413,13 @@ function ReviewOverlay({
 
         {/* Hero photo — exact 9:16, uncropped 1080×1920 composited capture.
             Status pill is absolutely positioned inside the photo box. */}
-        <div className="relative aspect-[9/16] w-full max-w-[min(85vw,calc(72dvh*9/16))] overflow-hidden rounded-2xl border border-border/40 bg-bg-base shadow-[0_16px_60px_rgba(0,0,0,0.9)] mx-auto">
+        <div className="relative aspect-[9/16] w-full max-w-[min(85vw,calc(72dvh*9/16))] overflow-hidden rounded-2xl border border-border/40 bg-bg-base shadow-[0_16px_60px_var(--overlay)] mx-auto">
           <img src={photo.previewUrl} alt="Photo review" className="absolute inset-0 h-full w-full object-contain" />
 
           {/* Status pill — strings verbatim (e2e/a11y locked) */}
           <p className="absolute bottom-3 left-1/2 -translate-x-1/2 flex w-fit items-center gap-2 rounded-full border border-border/60 bg-bg-elevated/70 px-3 py-1 text-xs backdrop-blur-md">
-            <span
-              aria-hidden="true"
-              className={`h-1.5 w-1.5 rounded-full ${
-                photo.status === "confirmed"
-                  ? "bg-accent"
-                  : photo.status === "uploading"
-                    ? "bg-accent"
-                    : photo.status === "error" || photo.status === "expired"
-                      ? "bg-error"
-                      : "bg-text-muted"
-              }`}
-            />
-            <span className="font-medium text-text-primary">
-              {photo.status === "pending"
-                ? "Belum terkirim"
-                : photo.status === "uploading"
-                  ? "Ngirim…"
-                  : photo.status === "confirmed"
-                    ? "Tersimpan"
-                    : photo.status === "error"
-                      ? "Belum tersimpan"
-                      : photo.status === "expired"
-                        ? "Belum tersimpan — sesi habis"
-                        : photo.status}
-            </span>
+            <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${statusPillDotClass(photo.status)}`} />
+            <span className="font-medium text-text-primary">{statusPillLabel(photo.status)}</span>
           </p>
         </div>
 
@@ -478,7 +455,7 @@ function ReviewOverlay({
               type="button"
               onClick={onDelete}
               aria-label="Hapus"
-              className="flex-1 h-12 rounded-xl border border-red-500/30 bg-red-500/10 text-xs font-semibold text-red-400 transition active:scale-95 hover:bg-red-500/20 focus-visible:outline-2 focus-visible:outline-accent"
+              className="flex-1 h-12 rounded-xl border border-error/30 bg-error/10 text-xs font-semibold text-error transition active:scale-95 hover:bg-error/20 focus-visible:outline-2 focus-visible:outline-accent"
             >
               Hapus
             </button>

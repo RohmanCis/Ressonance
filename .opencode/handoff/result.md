@@ -1,52 +1,58 @@
-# Result: Admin Dashboard Lighthouse Remediation (waves 1–3)
+# Result: Standards-review remediation (mechanical wave)
 
 ## Status
-COMPLETE — all gates met.
+COMPLETE — all 5 fixes + testing gate. No docs/schema/API changes, no new deps.
 
-## Before / After (Lighthouse, desktop preset)
-| Metric | Before | After | Gate |
-|---|---|---|---|
-| Performance | 49 | **93** (auth dashboard) / 100 (sign-in) | ≥90 ✅ |
-| CLS | 0.615 | **0** | ≤0.02 ✅ |
-| LCP | 4.4s | <2.5s (no LCP violation reported) | ✅ |
-| TBT | 410ms | 0ms reported | ✅ |
-| Accessibility / BP / SEO | — | 100 / 100 / 100 | ✅ |
+## Files changed
+- `components/guest/ambient-backdrop.tsx` (NEW) — shared AmbientBackdrop (`printHidden` prop for admin print:hidden gating); class output byte-identical to both prior implementations incl. lowPower gating.
+- `components/guest/screens/expiry-hint.tsx` (NEW) — shared ExpiryHint (PRE_EXPIRY_WARN_SECONDS + guard + `<p role="status">`, `message` prop).
+- `components/guest/screens/PhotoReview.tsx` — pre-expiry block → `<ExpiryHint message=…>` (copy unchanged); removed local const.
+- `components/guest/screens/VoiceRecordingScreen.tsx` — same swap; removed local const.
+- `components/guest/pending-status-badge.tsx` — added `statusPillDotClass` + `statusPillLabel` exports (single home for status→visual mapping).
+- `components/guest/screens/Capture.tsx` — (1) Hapus button `border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20` → `border-error/30 bg-error/10 text-error hover:bg-error/20` (error-token family, outline anatomy preserved); (3) ReviewOverlay status-pill cascades → `statusPillDotClass`/`statusPillLabel` (class-identical output, strings verbatim); (5) `shadow-[0_16px_60px_rgba(0,0,0,0.9)]` → `shadow-[0_16px_60px_var(--overlay)]` (existing token, same-file precedent at viewport box).
+- `components/admin/admin-ui.tsx` — Shell ambient orbs+grain → `<AmbientBackdrop printHidden />`; dropped `useLowPowerAmbient` import.
+- `components/guest/screens/PreSession.tsx` — Shell ambient orbs+grain → `<AmbientBackdrop />`; dropped import.
+- `components/guest/audio-player.tsx` — exported `formatTime` (pure fn, one-word change).
 
-Baseline: owner-reported audit of `/admin/events/[public_id]` (perf 49→60 after first partial pass, CLS 0.615, LCP 4.4s→3.1s).
-After: fresh `npm run build && npm run start`, authenticated run (live admin cookie, event `tnqbbcMsf1TeSUXEA_k6AQ`), `lh-dash2.json`.
+## Tests added
+- `components/guest/pending-status-badge.test.ts` (4 tests) — statusPillDotClass + statusPillLabel (dot-color triads + exact e2e-locked strings).
+- `components/guest/audio-player.test.ts` (2 tests) — formatTime m:ss/zero-pad/clamp.
 
-## Code changes
-- `components/admin/admin-dashboard.tsx`
-  - `useInViewOnce` (IntersectionObserver, rootMargin 200px, once+disconnect, IO-undefined eager fallback); PhotoTile signed-URL fetch now viewport-gated. Retry/error/loading UI unchanged.
-  - `decoding="async"` on PhotoTile + PreviewDialog `<img>` (PhotoTile keeps `loading="lazy"`).
-  - `AsideSkeleton` (zero-shift: eyebrow h-3, title h-9, badge h-6, 2× min-h-12, same mt rhythm) replacing `Busy`; aside `min-h-[300px]`.
-  - `load()` sequential waterfall → `Promise.all` (event + submissions); single try/catch preserved.
-  - Unused `Busy` import removed.
-- `app/layout.tsx` — `display: "swap"` on all 4 `next/font/google` configs.
-- `next.config.ts` — `headers()`: `/frames/:path*` → `Cache-Control: public, max-age=31536000, immutable`.
-- `app/icon.svg` — favicon (was sole BP deduction via 404).
-
-## Skeleton-transition note (directive 3)
-Left/right skeletons already unmount atomically: `Promise.all` resolves both fetches in one tick; `setEvent`/`setItems`/`setBusy(false)` land in one React commit. Right column keys on `busy`, left on `busy && !event` — deliberately retained so search refetches (event already loaded) don't flash AsideSkeleton and reintroduce shift. No change needed.
+## Skipped (with reason)
+- `mediaFilter` test — inline `useState` inside AdminDashboard, not exportable without refactor; task permits skip (no refactor-for-testability this wave).
+- `useInViewOnce` / `useLowPowerAmbient` tests — DOM/hook-dependent; vitest config is `environment: "node"` (no jsdom). Remaining gap noted.
+- Remaining rgba literals outside task scope: `VoiceRecordingScreen.tsx` Cassette shadow, `PreSession.tsx` Card shadow (task item 5 named Capture.tsx only).
 
 ## Validation
-- `npm run typecheck` — 0 errors.
-- `npx vitest run` — 354/354 (43 files).
-- `npx playwright test` — 37 passed / 1 skipped (live-backend skip, expected).
-- `npm run build` — PASS (warnings pre-existing).
+- `npm run typecheck` — PASS, 0 errors.
+- `npx vitest run` — PASS, 360/360 (45 files; 354 prior + 6 new), single instance.
+- `npm run lint` — baseline identical: 1 pre-existing `any` error (`e2e/print-qa.spec.ts:33`), 12 pre-existing warnings (no new files flagged). 13 problems total = documented baseline.
+- Playwright NOT run (per contract; orchestrator after reconciliation).
 
-## Pitfalls hit (for future runs)
-- Stale `next start` on :3000 served old asset hashes → 400s; Lighthouse against it is invalid. Verify a current-build asset returns 200 before measuring.
-- Lighthouse `--extra-headers` accepts a JSON file path (raw `Cookie:` string is misparsed as a file).
-- Leaked headless Chrome processes lock `%TEMP%\lighthouse.*` (EPERM); kill headless-only Chrome and redirect TMP before rerunning.
+## Blockers
+None.
 
-## Verification limits
-- Perf 93 / CLS 0 = single Lighthouse sample, desktop preset, one event dataset (owner accepted single-sample limitation). Aside geometry is content-independent (fixed buttons + min-h floor), so dataset-shape risk is confined to the left column.
-- Mobile preset unmeasured (baseline was desktop; desktop is scope).
-- Preview/download/search behavior covered by existing vitest + Playwright suites, not by Lighthouse.
+## SSOT conflict
+None.
 
-## Blockers / SSOT conflicts / drift
-None. No API/schema/docs changes; no new deps.
+## Architecture drift
+None. Zero new deps; shared components under existing dirs; token/behavior unchanged.
 
-## Next
-Commit proposed: `perf(admin): lazy PhotoTile fetch, AsideSkeleton, parallel load, font swap, cache headers, favicon`
+## Risks
+- Low: `border-error/30 bg-error/10 text-error` renders `--error (#c0564f)` instead of Tailwind `red-400 (#f87171)` — token-canonical per DESIGN.md §2; intent of S1 fix.
+- Low: `--overlay` shadow is rgba(0,0,0,0.6) vs literal 0.9 — near-invisible delta on dark bg; task-authorized nearest non-literal (no new tokens invented).
+- `statusPillDotClass`/`statusPillLabel` live in pending-status-badge.tsx (client-free) — pure, tested.
+
+## Playwright (orchestrator, post-reconciliation)
+`npm run e2e` — 37 passed / 1 skipped (live-backend, expected), 2.2m. Copy/a11y parity confirmed (e2e-locked status strings, roles, admin dashboard flow all green).
+
+## Before/after (review metrics)
+| Axis | Before (13 commits) | After (this wave) |
+|---|---|---|
+| Hard standards violations | 2 (red-* literals; missing unit tests) | 0 |
+| Duplicated-Code smells | 3 (ExpiryHint ×2, status cascade ×3, ambient conditional ×2) | 0 |
+| Raw color/rgba literals (scoped) | 2 in Capture.tsx | 0 (token family + `var(--overlay)`) |
+| Unit tests | 354 | 360 (+6) |
+| Gates | typecheck/vitest/lint/e2e green | unchanged green |
+
+## Next step
