@@ -40,6 +40,13 @@ export const SIGNED_URL_TTL_SECONDS = 900;
 
 type Db = SupabaseClient;
 
+/**
+ * UUID format check for media ids. PostgREST errors (→ 500) when a non-UUID
+ * value filters a UUID column; a malformed `media_id` must surface as 404
+ * NOT_FOUND per API Contract §5.8/§5.9. Checked before any DB query.
+ */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /** Load an event by public_id including its DB id and admin_id for ownership. */
 export async function findEventByPublicId(
   db: Db,
@@ -74,6 +81,10 @@ export async function findEventOwnerById(
  * GuestSession used to reach the Event.
  */
 export async function findMedia(db: Db, mediaId: string): Promise<MediaRecord | null> {
+  // Reject non-UUID ids before querying — a malformed id would surface as a
+  // PostgREST error (500) instead of the contract's 404 NOT_FOUND (§5.8/§5.9).
+  if (!UUID_RE.test(mediaId)) return null;
+
   const { data: photo, error: photoError } = await db
     .from("photos")
     .select("id, guest_session_id, storage_key, mime_type, file_size")

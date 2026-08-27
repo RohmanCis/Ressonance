@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { listAdminEvents } from "@/lib/admin-event-repo";
+import { closeAdminEvent, listAdminEvents } from "@/lib/admin-event-repo";
 import { createFakeDb, type FakeEventRow } from "@/test/admin-event-db";
 
 /**
@@ -60,5 +60,41 @@ describe("listAdminEvents", () => {
   it("throws when the db query fails", async () => {
     const db = createFakeDb({ events: [], selectError: { message: "connection reset" } });
     await expect(listAdminEvents(asDb(db), "admin-1")).rejects.toThrow("connection reset");
+  });
+});
+
+describe("closeAdminEvent", () => {
+  it("closes an ACTIVE event and returns the updated CLOSED shape", async () => {
+    const db = createFakeDb({ events: [row({ public_id: "evt-1", status: "ACTIVE" })] });
+    const result = await closeAdminEvent(asDb(db), "evt-1");
+    expect(result.kind).toBe("ok");
+    if (result.kind !== "ok") return;
+    expect(result.event.status).toBe("CLOSED");
+    expect(result.event.closed_at).not.toBeNull();
+  });
+
+  it("returns already_closed for a CLOSED event (API Contract §5.5)", async () => {
+    const db = createFakeDb({
+      events: [row({ public_id: "evt-1", status: "CLOSED", closed_at: "2026-08-11T13:00:00Z" })],
+    });
+    const result = await closeAdminEvent(asDb(db), "evt-1");
+    expect(result.kind).toBe("already_closed");
+  });
+
+  it("returns invalid_event_state for an ARCHIVED event (API Contract §5.5)", async () => {
+    const db = createFakeDb({
+      events: [row({ public_id: "evt-1", status: "ARCHIVED", closed_at: "2026-08-11T13:00:00Z" })],
+    });
+    const result = await closeAdminEvent(asDb(db), "evt-1");
+    expect(result.kind).toBe("invalid_event_state");
+  });
+
+  it("returns error on a db update error", async () => {
+    const db = createFakeDb({
+      events: [row({ public_id: "evt-1", status: "ACTIVE" })],
+      updateError: { message: "connection reset" },
+    });
+    const result = await closeAdminEvent(asDb(db), "evt-1");
+    expect(result.kind).toBe("error");
   });
 });

@@ -57,12 +57,21 @@ export function validateVoiceNoteFile(
 /**
  * Map an ffprobe `format.format_name` (e.g. "webm", "ogg", "mov,mp4,m4a")
  * to an approved MIME type. Returns null for any other parseable format.
+ *
+ * Video containers are rejected upstream by the inspector's `-show_streams`
+ * codec_type check (lib/audio-inspector.ts) — the container format_name alone
+ * cannot distinguish audio-only from video MP4/WebM (same container). Here,
+ * the MP4/MOV acceptance additionally requires the `m4a` audio alias so a
+ * bare `mp4`/`mov` name is not silently accepted as audio (defense in depth).
  */
 export function ffprobeFormatToMime(formatName: string): VoiceNoteMimeType | null {
   const f = formatName.toLowerCase();
   if (f.includes("webm")) return "audio/webm";
   if (f.includes("ogg")) return "audio/ogg";
-  if (f.includes("mp4") || f.includes("mov")) return "audio/mp4";
+  // MP4/MOV accepted only when the `m4a` audio alias is present in the full
+  // format_name (ffprobe emits `mov,mp4,m4a,3gp,3g2,mj2` for any MP4 container).
+  // Video-only MP4 is rejected by the inspector's stream check before this runs.
+  if (f.includes("m4a") && (f.includes("mp4") || f.includes("mov"))) return "audio/mp4";
   return null;
 }
 

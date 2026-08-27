@@ -42,10 +42,20 @@ describe("ffprobeFormatToMime", () => {
     expect(ffprobeFormatToMime("Ogg")).toBe("audio/ogg");
   });
 
-  it("maps mp4/mov containers to audio/mp4", () => {
+  it("maps mp4/mov containers with the m4a audio alias to audio/mp4", () => {
     expect(ffprobeFormatToMime("mov,mp4,m4a,3gp,3g2,mj2")).toBe("audio/mp4");
-    expect(ffprobeFormatToMime("mp4")).toBe("audio/mp4");
-    expect(ffprobeFormatToMime("mov")).toBe("audio/mp4");
+  });
+
+  it("rejects bare mp4/mov without the m4a audio alias (defense in depth)", () => {
+    expect(ffprobeFormatToMime("mp4")).toBeNull();
+    expect(ffprobeFormatToMime("mov")).toBeNull();
+  });
+
+  it("rejects known video-only container format names", () => {
+    expect(ffprobeFormatToMime("avi")).toBeNull();
+    expect(ffprobeFormatToMime("matroska")).toBeNull();
+    expect(ffprobeFormatToMime("flv")).toBeNull();
+    expect(ffprobeFormatToMime("asf")).toBeNull();
   });
 
   it("returns null for an unknown/unparseable format", () => {

@@ -32,6 +32,7 @@ export type CreateEventResult =
 export type CloseEventResult =
   | { kind: "ok"; event: AdminEventRecord }
   | { kind: "already_closed" }
+  | { kind: "invalid_event_state" }
   | { kind: "error" };
 
 type Db = SupabaseClient;
@@ -64,7 +65,14 @@ export async function createAdminEvent(
   return { kind: "ok", event: data as AdminEventRecord };
 }
 
-/** Close an ACTIVE event. Returns already_closed when it is not ACTIVE. */
+/**
+ * Close an ACTIVE event. The atomic UPDATE only matches ACTIVE rows. When it
+ * does not, a follow-up SELECT distinguishes CLOSED (EVENT_ALREADY_CLOSED)
+ * from ARCHIVED or any other non-ACTIVE state (INVALID_EVENT_STATE) per API
+ * Contract §5.5. The route already verified existence + ownership before
+ * calling here, so a missing row on the follow-up is treated defensively as
+ * already_closed (concurrent delete).
+ */
 export async function closeAdminEvent(db: Db, publicId: string): Promise<CloseEventResult> {
   const { data, error } = await db
     .from("events")
@@ -74,8 +82,20 @@ export async function closeAdminEvent(db: Db, publicId: string): Promise<CloseEv
     .select("public_id, title, status, created_at, closed_at")
     .maybeSingle();
   if (error) return { kind: "error" };
-  if (!data) return { kind: "already_closed" };
-  return { kind: "ok", event: data as AdminEventRecord };
+  if (data) return { kind: "ok", event: data as AdminEventRecord };
+
+  // The UPDATE matched no ACTIVE row — distinguish CLOSED from ARCHIVED/other
+  // (API Contract §5.5: CLOSED → 409 EVENT_ALREADY_CLOSED; ARCHIVED → 409
+  // INVALID_EVENT_STATE). The route already 404'd/403'd unknown/unowned events.
+  const { data: current, error: readError } = await db
+    .from("events")
+    .select("status")
+    .eq("public_id", publicId)
+    .maybeSingle();
+  if (readError || !current) return { kind: "already_closed" };
+  const status = (current as { status: string }).status;
+  if (status === "CLOSED") return { kind: "already_closed" };
+  return { kind: "invalid_event_state" };
 }
 
 /** List events owned by an admin, newest first by created_at (API Contract §5.10). */

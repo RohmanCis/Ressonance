@@ -10,10 +10,10 @@ import type { VoiceNoteMimeType } from "@/lib/audio-file";
  * Unlike photos (T006), voice notes take NO per-session row lock:
  * `UNIQUE(guest_session_id)` on voice_notes is the final race-safe guard
  * (ADR-005 / TECHNICAL_DESIGN §9). One `pg` client owns the whole acceptance
- * flow: BEGIN → event-row lock (revalidate ACTIVE atomically) → optional
- * pre-check → (upload happens outside this module) → metadata insert →
- * COMMIT. Storage is not part of the DB transaction; the orchestrator
- * coordinates upload and compensation.
+ * flow: BEGIN → event-row lock (revalidate ACTIVE atomically) → (upload
+ * happens outside this module) → metadata insert → COMMIT. Storage is not
+ * part of the DB transaction; the orchestrator coordinates upload and
+ * compensation.
  *
  * If any step inside `begin` fails, the transaction is rolled back before the
  * error propagates so the pool client is never returned in a dirty state.
@@ -30,11 +30,6 @@ export class VoiceNoteUniqueViolationError extends Error {
 export interface VoiceNoteTx {
   /** Event status re-read inside the transaction (guards concurrent close). */
   eventStatus: string;
-  /**
-   * UX-only pre-check: whether a voice note already exists for the session.
-   * NOT authoritative under concurrency — the unique constraint is (TD §9).
-   */
-  existingVoiceNote: boolean;
   insertVoiceNote(input: {
     sessionId: string;
     storageKey: string;
@@ -72,16 +67,8 @@ export function createVoiceNoteTxRepo(client: Client): VoiceNoteTxRepo {
         );
         const eventStatus = eventRows[0]?.status ?? "";
 
-        // Optional UX pre-check; the unique constraint remains authoritative.
-        const { rows: pre } = await client.query<{ exists: boolean }>(
-          "SELECT EXISTS(SELECT 1 FROM voice_notes WHERE guest_session_id = $1) AS exists",
-          [sessionId],
-        );
-        const existingVoiceNote = pre[0]?.exists ?? false;
-
         return {
           eventStatus,
-          existingVoiceNote,
           async insertVoiceNote(input) {
             try {
               const { rows: inserted } = await client.query<{

@@ -41,8 +41,6 @@ interface State {
   inspection: AudioInspection;
   /** Overrides the event status observed inside the transaction (QA-2 #3). */
   txEventStatus?: string;
-  /** If true, existingVoiceNote pre-check returns true (UX only). */
-  existingVoiceNote?: boolean;
   uploads: { key: string; size: number }[];
   deletes: string[];
   rollbacks: string[];
@@ -56,7 +54,6 @@ function makeTxRepo(state: State): VoiceNoteTxRepo {
       const eventStatus = state.txEventStatus ?? state.events[eventId]?.status ?? "ACTIVE";
       return {
         eventStatus,
-        existingVoiceNote: state.existingVoiceNote ?? false,
         async insertVoiceNote(input) {
           if (state.failInsert) throw new Error("insert failed");
           state.inserted.push(input);
@@ -331,14 +328,5 @@ describe("submitVoiceNote", () => {
     expect(state.rollbacks).toContain("session-1");
     expect(state.deletes).toHaveLength(1);
     expect(state.deletes[0]).toBe(state.uploads[0].key);
-  });
-
-  it("pre-check-existing still proceeds to the constraint guard (constraint authoritative)", async () => {
-    const { state } = fresh({ existingVoiceNote: true });
-    // Even though the pre-check says a note exists, submission proceeds to the
-    // insert; the fake insert succeeds here (no constraint), so it is accepted.
-    const result = await submitVoiceNote(depsOf(state), activeInput(state, audioBytes()));
-    expect(result.kind).toBe("ok");
-    expect(state.inserted).toHaveLength(1);
   });
 });

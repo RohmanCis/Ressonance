@@ -91,6 +91,15 @@ describe("POST /api/admin/events/{public_id}/close", () => {
     expect(body.error.code).toBe("EVENT_ALREADY_CLOSED");
   });
 
+  it("returns 409 INVALID_EVENT_STATE for an ARCHIVED event (API Contract §5.5)", async () => {
+    events[0].status = "ARCHIVED";
+    events[0].closed_at = "2026-08-11T12:30:00Z";
+    const res = await POST(makeRequest("evt-1"), { params: Promise.resolve({ public_id: "evt-1" }) });
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.error.code).toBe("INVALID_EVENT_STATE");
+  });
+
   it("returns 500 INTERNAL_ERROR on an unexpected db error", async () => {
     updateError = { message: "connection reset" };
     const res = await POST(makeRequest("evt-1"), { params: Promise.resolve({ public_id: "evt-1" }) });

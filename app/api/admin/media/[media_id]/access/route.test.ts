@@ -56,7 +56,7 @@ function seed() {
     sessions: [{ id: "session-1", event_id: "event-1", guest_name: "Fante", public_ref: "ref-s1" }],
     photos: [
       {
-        id: "photo-1",
+        id: "11111111-1111-4111-8111-111111111111",
         guest_session_id: "session-1",
         storage_key: "events/e1/sessions/s1/photos/k1.jpg",
         mime_type: "image/jpeg",
@@ -66,7 +66,7 @@ function seed() {
     ],
     voice_notes: [
       {
-        id: "voice-1",
+        id: "22222222-2222-4222-8222-222222222222",
         guest_session_id: "session-1",
         storage_key: "events/e1/sessions/s1/voices/k2.webm",
         mime_type: "audio/webm",
@@ -87,7 +87,7 @@ beforeEach(() => {
 describe("GET /api/admin/media/{media_id}/access", () => {
   it("returns 401 AUTHENTICATION_REQUIRED without a valid session", async () => {
     getUser = { ok: false };
-    const res = await GET(makeRequest("photo-1"), { params: Promise.resolve({ media_id: "photo-1" }) });
+    const res = await GET(makeRequest("11111111-1111-4111-8111-111111111111"), { params: Promise.resolve({ media_id: "11111111-1111-4111-8111-111111111111" }) });
     expect(res.status).toBe(401);
     const body = await res.json();
     expect(body.error.code).toBe("AUTHENTICATION_REQUIRED");
@@ -102,7 +102,7 @@ describe("GET /api/admin/media/{media_id}/access", () => {
 
   it("returns 403 FORBIDDEN when the admin does not own the media's event", async () => {
     state.events[0].admin_id = "someone-else";
-    const res = await GET(makeRequest("photo-1"), { params: Promise.resolve({ media_id: "photo-1" }) });
+    const res = await GET(makeRequest("11111111-1111-4111-8111-111111111111"), { params: Promise.resolve({ media_id: "11111111-1111-4111-8111-111111111111" }) });
     expect(res.status).toBe(403);
     const body = await res.json();
     expect(body.error.code).toBe("FORBIDDEN");
@@ -110,14 +110,14 @@ describe("GET /api/admin/media/{media_id}/access", () => {
 
   it("returns 404 NOT_FOUND when the media's session has no event", async () => {
     state.sessions[0].event_id = "event-ghost";
-    const res = await GET(makeRequest("photo-1"), { params: Promise.resolve({ media_id: "photo-1" }) });
+    const res = await GET(makeRequest("11111111-1111-4111-8111-111111111111"), { params: Promise.resolve({ media_id: "11111111-1111-4111-8111-111111111111" }) });
     expect(res.status).toBe(404);
     const body = await res.json();
     expect(body.error.code).toBe("NOT_FOUND");
   });
 
   it("returns 200 with signed url + expires_at and no storage leak", async () => {
-    const res = await GET(makeRequest("photo-1"), { params: Promise.resolve({ media_id: "photo-1" }) });
+    const res = await GET(makeRequest("11111111-1111-4111-8111-111111111111"), { params: Promise.resolve({ media_id: "11111111-1111-4111-8111-111111111111" }) });
     expect(res.status).toBe(200);
     const text = await res.text();
     const body = JSON.parse(text);
@@ -136,7 +136,7 @@ describe("GET /api/admin/media/{media_id}/access", () => {
 
   it("issues a short-lived signed URL bounded by SIGNED_URL_TTL_SECONDS", async () => {
     const before = Date.now();
-    const res = await GET(makeRequest("photo-1"), { params: Promise.resolve({ media_id: "photo-1" }) });
+    const res = await GET(makeRequest("11111111-1111-4111-8111-111111111111"), { params: Promise.resolve({ media_id: "11111111-1111-4111-8111-111111111111" }) });
     const after = Date.now();
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -149,7 +149,7 @@ describe("GET /api/admin/media/{media_id}/access", () => {
   });
 
   it("returns 200 with a signed url for a voice note", async () => {
-    const res = await GET(makeRequest("voice-1"), { params: Promise.resolve({ media_id: "voice-1" }) });
+    const res = await GET(makeRequest("22222222-2222-4222-8222-222222222222"), { params: Promise.resolve({ media_id: "22222222-2222-4222-8222-222222222222" }) });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.url).toContain("events/e1/sessions/s1/voices/k2.webm");
@@ -157,7 +157,7 @@ describe("GET /api/admin/media/{media_id}/access", () => {
 
   it("returns 502 MEDIA_ACCESS_FAILED when signing fails", async () => {
     state.signError = { message: "boom" };
-    const res = await GET(makeRequest("photo-1"), { params: Promise.resolve({ media_id: "photo-1" }) });
+    const res = await GET(makeRequest("11111111-1111-4111-8111-111111111111"), { params: Promise.resolve({ media_id: "11111111-1111-4111-8111-111111111111" }) });
     expect(res.status).toBe(502);
     const body = await res.json();
     expect(body.error.code).toBe("MEDIA_ACCESS_FAILED");
