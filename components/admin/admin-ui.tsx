@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, ReactNode, useEffect, useState } from "react";
 import { AdminInput } from "./admin-input";
 import { AdminPageShell } from "./admin-page-shell";
+import { useLowPowerAmbient } from "@/hooks/use-low-power-ambient";
 
 export type Event = { public_id: string; title: string; status: "ACTIVE" | "CLOSED"; created_at?: string; closed_at?: string | null };
 export type Submission = { id: string; type: "PHOTO" | "VOICE_NOTE"; guest_name?: string | null; guest_session_ref: string; created_at: string; mime_type: string; file_size: number; duration_seconds?: number | null };
@@ -22,14 +23,15 @@ export async function api<T>(url: string, init?: RequestInit): Promise<T> {
 
 // DESIGN.md §6: admin chrome on dark tokens — bg-base page, hairline header, gold only on primary actions.
 export function Shell({ children, title = "Admin", eyebrow }: { children: ReactNode; title?: string; eyebrow?: string }) {
+  const lowPower = useLowPowerAmbient();
   return (
     <main className="relative flex min-h-dvh flex-col overflow-hidden bg-bg-base px-5 pt-[calc(2rem+env(safe-area-inset-top))] pb-[calc(2rem+env(safe-area-inset-bottom))] text-text-primary sm:px-8">
       {/* 1. AMBIENT GLOW LAYER 1 (Top-Right Amber Orb) — PreSession baseline */}
-      <div aria-hidden="true" className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent/20 blur-[100px] animate-ambient-1 print:hidden" />
+      <div aria-hidden="true" className={`pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent/20 blur-[100px] print:hidden ${lowPower ? "" : "animate-ambient-1"}`} />
       {/* 2. AMBIENT GLOW LAYER 2 (Bottom-Left Warm Bronze Orb) */}
-      <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 -left-24 h-[420px] w-[420px] rounded-full bg-accent/15 blur-[110px] animate-ambient-2 print:hidden" />
-      {/* 3. FILM GRAIN OVERLAY */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 film-grain print:hidden" />
+      <div aria-hidden="true" className={`pointer-events-none absolute -bottom-24 -left-24 h-[420px] w-[420px] rounded-full bg-accent/15 blur-[110px] print:hidden ${lowPower ? "" : "animate-ambient-2"}`} />
+      {/* 3. FILM GRAIN OVERLAY — skipped on low-power devices */}
+      {!lowPower && <div aria-hidden="true" className="pointer-events-none absolute inset-0 film-grain print:hidden" />}
       {/* 4. CONTENT WRAPPER */}
       <div className="relative z-10 mx-auto w-full max-w-[90rem]">
         <header className="mb-10 flex items-center justify-between border-b border-border pb-5">
