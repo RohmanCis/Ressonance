@@ -15,7 +15,7 @@ QA companion to DESIGN.md (canonical design system) and docs/TECHNICAL_DESIGN.md
 ### 2. FRAME_SELECT
 
 - Horizontal snap carousel of 9:16 frame cards (viewport-locked, no page scroll). Selecting a card highlights it (gold border); exactly one frame — or none — is active.
-- Press **Gunakan Bingkai {Frame}** to confirm with a selection, or **Lanjut Tanpa Bingkai** / **Lewati — Tanpa Bingkai** to proceed unframed.
+- Press **Pakai {Frame}** to confirm with a selection, or **Tanpa Frame, lanjut** to proceed unframed.
 - "No Frame" is never a grid card — only reachable via skip.
 - Session usage is confirmed after this step; then the camera opens.
 

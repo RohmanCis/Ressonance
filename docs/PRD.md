@@ -4,7 +4,7 @@ Version: 1.3
 Status: Ready for Implementation  
 Scope: MVP
 
-> **Amended 2026-08-20 (owner):** guest text message UI ("pesan & kesan") removed from MVP scope — the API endpoint, schema, and migration remain in place but are not exposed in the guest UI. The guest flow is now a sequential full-screen experience (capture → photo review → optional voice note → thank-you done screen), contracted in `docs/UI_UX.md` §4.
+> **Amended 2026-08-20 (owner):** guest text message UI ("pesan & kesan") removed from MVP scope — the API endpoint, schema, and migration remain in place but are not exposed in the guest UI. The guest flow is now a sequential full-screen experience (capture → photo review → optional voice note → thank-you done screen), defined in DESIGN.md (root) §5.
 
 ---
 
@@ -127,14 +127,15 @@ A browser/device can potentially create another session or clear browser data. T
 3. System identifies the event from the QR/event URL.
 4. Guest enters their name optionally, then presses Start.
 5. Backend creates the guest session, stores the optional name, and sets a session identifier in an HttpOnly cookie.
-6. Guest captures photos, reviews, and submits them (sequential full-screen flow per UI_UX §4).
-7. Guest optionally records and submits one voice note; the flow ends on a done (thank-you) screen.
-8. Backend validates the request.
-9. Backend checks guest-session limits.
-10. Media is stored.
-11. Media metadata is stored.
-12. Guest sees a success/error message.
-13. Guest can continue until the session limits are reached.
+6. Guest optionally selects a decorative frame for the photos (client-side only; no API impact).
+7. Guest captures photos, reviews, and submits them (per DESIGN.md (root) §5).
+8. Guest optionally records and submits one voice note; the flow ends on a done (thank-you) screen.
+9. Backend validates the request.
+10. Backend checks guest-session limits.
+11. Media is stored.
+12. Media metadata is stored.
+13. Guest sees a success/error message.
+14. Guest can continue until the session limits are reached.
 
 ---
 

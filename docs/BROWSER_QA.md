@@ -1,8 +1,8 @@
 # Browser/E2E QA — Playwright Smoke
 
 Non-canonical QA note. Describes the minimal Playwright smoke foundation only.
-It does not define product behavior, screens, or states; those are owned by the
-locked `docs/UI_UX.md` / `docs/UI_DESIGN.md` and the rest of the canonical set.
+It does not define product behavior, screens, or states; those are owned by
+DESIGN.md (root) and UX_FLOW.md (root) and the rest of the canonical set.
 
 ## Prerequisites
 
