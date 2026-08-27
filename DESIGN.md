@@ -71,6 +71,7 @@ Counters and timers always use DM Mono with tabular figures. Sentence case every
   --motion-fast: 150ms; /* presses, hovers, focus */
   --motion-base: 250ms; /* panel settle, thumbnail appear */
   --motion-slow: 350ms; /* guest screen transitions */
+  --motion-develop: 800ms; /* photo develop effect (Capture, PhotoReview animate-develop) */
 }
 ```
 

@@ -5,7 +5,7 @@ import type { ChangeEvent, HTMLInputTypeAttribute } from "react";
 // DESIGN.md §3/§6: admin fields share the guest underline anatomy
 // (border-0 border-b, transparent, focus:border-accent).
 const underlineInput =
-  "w-full border-0 border-b border-border bg-transparent rounded-none px-0 pb-2 h-12 placeholder:text-text-muted focus:border-accent focus:outline-none transition-colors";
+  "w-full border-0 border-b border-border bg-transparent rounded-none px-0 pb-2 h-12 placeholder:text-text-muted focus:border-accent focus:outline-none";
 
 export function AdminInput({
   id,

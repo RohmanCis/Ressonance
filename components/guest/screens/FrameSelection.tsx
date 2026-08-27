@@ -218,14 +218,20 @@ export function FrameSelection({
             const isSelected = index === selectedIndex;
 
             return (
+              // Fixed-width track; the active bar elongates via scaleX only
+              // (DESIGN.md §4: transform/opacity, never layout properties).
+              // Reduced-motion zeroes the transition — static end states stay
+              // correct: active = full accent bar, inactive = muted dot.
               <span
                 key={frame.id}
-                className={`rounded-full transition-all duration-fast ${
-                  isSelected
-                    ? "h-2 w-5 bg-accent"
-                    : "h-2 w-2 bg-text-muted/40"
-                }`}
-              />
+                className="relative block h-2 w-5 overflow-hidden rounded-full"
+              >
+                <span className="absolute left-0 top-0 h-2 w-2 rounded-full bg-text-muted/40" />
+                <span
+                  className="absolute inset-0 origin-left rounded-full bg-accent transition-transform duration-[var(--motion-base)]"
+                  style={{ transform: `scaleX(${isSelected ? 1 : 0})` }}
+                />
+              </span>
             );
           })}
         </div>

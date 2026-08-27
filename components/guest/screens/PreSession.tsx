@@ -185,7 +185,7 @@ export function PreSession({
               value={name}
               onChange={(e) => onNameChange(e.target.value)}
               disabled={blocked || state === "starting"}
-              className="h-12 w-full rounded-none border-0 border-b border-border bg-transparent px-0 pb-2 text-sm text-text-primary placeholder:text-text-muted/50 transition focus:border-accent focus:outline-none"
+              className="h-12 w-full rounded-none border-0 border-b border-border bg-transparent px-0 pb-2 text-sm text-text-primary placeholder:text-text-muted/50 focus:border-accent focus:outline-none"
               aria-describedby="name-help"
             />
             <p id="name-help" className="text-[11px] text-text-muted pt-0.5">
@@ -219,7 +219,7 @@ export function PreSession({
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-bg-base px-4 py-8 text-text-primary sm:px-6">
+    <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-bg-base px-4 py-8 pb-[calc(2rem+env(safe-area-inset-bottom))] text-text-primary sm:px-6">
       {/* Ambient orbs + grain (DESIGN.md §2) */}
       <AmbientBackdrop />
 

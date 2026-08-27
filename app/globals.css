@@ -21,6 +21,7 @@
   --motion-fast: 150ms;
   --motion-base: 250ms;
   --motion-slow: 350ms;
+  --motion-develop: 800ms;
   --radius: 0.625rem;
 }
 

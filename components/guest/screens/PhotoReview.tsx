@@ -50,7 +50,7 @@ export function PhotoReview({
         <h1
           ref={headingRef}
           tabIndex={-1}
-          className="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight outline-none"
+          className="mt-3 font-mono text-3xl font-semibold leading-tight tracking-tight tabular-nums outline-none"
         >
           Foto kamu ({photos.length})
         </h1>
