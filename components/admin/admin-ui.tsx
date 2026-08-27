@@ -28,7 +28,7 @@ export function Shell({ children, title = "Admin", eyebrow }: { children: ReactN
       {/* Ambient orbs + grain (print-hidden) — PreSession baseline (DESIGN.md §2) */}
       <AmbientBackdrop printHidden />
       {/* CONTENT WRAPPER */}
-      <div className="relative z-10 mx-auto w-full max-w-[90rem]">
+      <div className="relative z-10 mx-auto w-full max-w-[90rem] min-h-[60vh]">
         <header className="mb-10 flex items-center justify-between border-b border-border pb-5">
           <Link href="/admin" className="font-display text-xl font-semibold tracking-tight text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">{title}</Link>
           {eyebrow && <span className="text-xs font-medium tracking-[0.04em] text-text-muted">{eyebrow}</span>}

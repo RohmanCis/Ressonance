@@ -1,19 +1,21 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, Download, Image as ImageIcon, Loader2, Mic, Pause, Play, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Download, Image as ImageIcon, Loader2, Mic, Pause, Play } from "lucide-react";
 import { api, AuthGate, Button, Event, Shell, Status, Submission } from "./admin-ui";
 import { AdminInput } from "./admin-input";
 import { describeDownloadResponse, downloadErrorCodeFromResponse, downloadErrorMessage } from "@/lib/admin-download";
-import { useFocusTrap } from "@/hooks/use-focus-trap";
+
+const PreviewDialog = dynamic(() => import("./admin-preview-dialog").then((m) => m.PreviewDialog));
 
 const errorTextMap: Record<string, string> = {
   FORBIDDEN: "You cannot access this media.",
   NOT_FOUND: "This media is no longer available.",
   MEDIA_ACCESS_FAILED: "The private media could not be opened.",
 };
-function errorText(code: string) {
+export function errorText(code: string) {
   return code === "OFFLINE" ? "Media unavailable offline. Retry when connected." : errorTextMap[code] ?? "Media could not be retrieved. Retry this item.";
 }
 
@@ -22,7 +24,7 @@ const ID_MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep"
 const pad2 = (n: number) => String(n).padStart(2, "0");
 const fmtDate = (d: Date) => `${d.getDate()} ${ID_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 const fmtTime = (d: Date) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-const fmtFull = (iso: string) => {
+export const fmtFull = (iso: string) => {
   const d = new Date(iso);
   return `${fmtDate(d)} · ${fmtTime(d)}`;
 };
@@ -33,7 +35,7 @@ const fmtRange = (oldestIso: string, newestIso: string) => {
   return `${fmtDate(newest)} · ${fmtTime(oldest)}–${fmtTime(newest)}`;
 };
 const fmtDuration = (s?: number | null) => (s == null ? "" : `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`);
-const typeLabel = (item: Submission) => (item.type === "PHOTO" ? "Photo" : "Voice note");
+export const typeLabel = (item: Submission) => (item.type === "PHOTO" ? "Photo" : "Voice note");
 
 type Group = { ref: string; name: string; session: number | null; items: Submission[] };
 
@@ -79,7 +81,7 @@ function groupByGuest(items: Submission[]): Group[] {
   return groups;
 }
 
-const focusRing = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
+export const focusRing = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 const quietButton = "border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated";
 // Decorative static waveform behind the voice progress bar (fixed heights, muted).
 const WAVEFORM_BARS = [0.35, 0.6, 0.45, 0.8, 1, 0.7, 0.5, 0.9, 0.65, 0.4, 0.75, 0.55, 0.85, 0.5, 0.3, 0.62, 0.9, 0.7, 0.45, 0.66, 0.82, 0.52, 0.36, 0.58];
@@ -91,7 +93,7 @@ const downloadFileName = (item: Submission) => {
   return `${base}-${item.created_at.slice(0, 10)}.${ext}`;
 };
 
-function useDownload(item: Submission) {
+export function useDownload(item: Submission) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const inFlight = useRef(false);
@@ -421,165 +423,6 @@ function GuestGroup({ group, onPreview }: { group: Group; onPreview: (item: Subm
         </div>
       )}
     </section>
-  );
-}
-
-function PreviewDialog({
-  photos,
-  name,
-  index,
-  onClose,
-  onNavigate,
-}: {
-  photos: Submission[];
-  name: string;
-  index: number;
-  onClose: () => void;
-  onNavigate: (index: number) => void;
-}) {
-  const item = photos[index];
-  const count = photos.length;
-  const panelRef = useRef<HTMLDivElement>(null);
-  const trapFocus = useFocusTrap(panelRef);
-  const [url, setUrl] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [shown, setShown] = useState(false);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      setUrl((await api<{ url: string }>(`/api/admin/media/${item.id}/access`)).url);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  }, [item.id]);
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  useEffect(() => {
-    const raf = requestAnimationFrame(() => setShown(true));
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    panelRef.current?.focus();
-    return () => {
-      cancelAnimationFrame(raf);
-      document.body.style.overflow = prevOverflow;
-    };
-  }, []);
-
-  function onKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Escape") {
-      e.preventDefault();
-      onClose();
-      return;
-    }
-    if (e.key === "ArrowLeft" && index > 0) {
-      e.preventDefault();
-      onNavigate(index - 1);
-      return;
-    }
-    if (e.key === "ArrowRight" && index < count - 1) {
-      e.preventDefault();
-      onNavigate(index + 1);
-      return;
-    }
-    trapFocus(e);
-  }
-
-  const label = `${typeLabel(item)} from ${name}, photo ${index + 1} of ${count}`;
-  const { busy: downloading, error: downloadError, retry: retryDownload } = useDownload(item);
-
-  return (
-    <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4 transition-opacity duration-base ease-out motion-reduce:transition-none ${shown ? "opacity-100" : "opacity-0"}`}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={label}
-        ref={panelRef}
-        tabIndex={-1}
-        onKeyDown={onKeyDown}
-        className={`max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-border bg-bg-elevated shadow-2xl transition duration-base ease-out motion-reduce:transition-none focus:outline-none ${shown ? "scale-100 opacity-100" : "scale-[0.98] opacity-0"}`}
-      >
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border px-4 py-3 sm:px-6">
-          <div className="min-w-0">
-            <p className="font-mono text-xs font-medium tracking-[0.04em] text-text-muted">
-              {typeLabel(item)} · {index + 1} of {count}
-            </p>
-            <h3 className="truncate text-lg font-semibold text-text-primary">{name}</h3>
-            <time dateTime={item.created_at} className="font-mono text-xs tabular-nums text-text-muted">
-              {fmtFull(item.created_at)}
-            </time>
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            {count > 1 && (
-              <div role="group" aria-label="Navigate photos" className="flex items-center gap-1">
-                <button
-                  type="button"
-                  aria-label="Previous photo"
-                  onClick={() => onNavigate(index - 1)}
-                  disabled={index === 0}
-                  className={`flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-bg-surface text-text-secondary transition duration-fast ease-out hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-45 ${focusRing}`}
-                >
-                  <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Next photo"
-                  onClick={() => onNavigate(index + 1)}
-                  disabled={index === count - 1}
-                  className={`flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-bg-surface text-text-secondary transition duration-fast ease-out hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-45 ${focusRing}`}
-                >
-                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                </button>
-              </div>
-            )}
-            <Button
-              secondary
-              onClick={retryDownload}
-              disabled={downloading}
-              className="inline-flex items-center gap-2"
-            >
-              {downloading ? <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Download className="h-4 w-4" aria-hidden="true" />}
-              {downloading ? "Downloading…" : "Download"}
-            </Button>
-            <button
-              type="button"
-              aria-label="Close preview"
-              onClick={onClose}
-              className={`flex h-12 items-center gap-1.5 rounded-lg border border-border bg-bg-surface px-3 text-sm font-semibold text-text-secondary transition duration-fast ease-out hover:text-text-primary ${focusRing}`}
-            >
-              <X className="h-4 w-4" aria-hidden="true" />
-              Close
-            </button>
-          </div>
-        </div>
-        <div className="px-4 py-4 sm:px-6 sm:pb-6">
-          {downloadError && (
-            <Status error message={`${typeLabel(item)} from ${name}: ${downloadError}`} action={<Button secondary onClick={retryDownload}>Retry</Button>} />
-          )}
-          {loading ? (
-            <div role="status" className="flex h-64 items-center justify-center rounded-md bg-bg-surface text-sm text-text-muted">
-              <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
-              Loading media…
-            </div>
-          ) : error ? (
-            <Status error message={errorText(error)} action={<Button secondary onClick={load}>Retry</Button>} />
-          ) : (
-            <img src={url} alt={`Photo from ${name}`} decoding="async" className="max-h-[70vh] w-full rounded-md bg-bg-surface object-contain" />
-          )}
-        </div>
-      </div>
-    </div>
   );
 }
 
