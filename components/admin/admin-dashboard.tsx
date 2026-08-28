@@ -2,9 +2,10 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { ChevronDown, ChevronRight, Download, Image as ImageIcon, Loader2, Mic, Pause, Play } from "lucide-react";
-import { api, AuthGate, Button, Event, Shell, Status, Submission } from "./admin-ui";
+import { api, Button, Event, Shell, Status, Submission } from "./admin-ui";
 import { AdminInput } from "./admin-input";
 import { describeDownloadResponse, downloadErrorCodeFromResponse, downloadErrorMessage } from "@/lib/admin-download";
 
@@ -467,6 +468,7 @@ function AsideSkeleton() {
 }
 
 export function AdminDashboard({ publicId }: { publicId: string }) {
+  const router = useRouter();
   const [event, setEvent] = useState<Event | null>(null);
   const [items, setItems] = useState<Submission[]>([]);
   const [query, setQuery] = useState("");
@@ -488,7 +490,13 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
       setEvent(eventRes.event);
       setItems(subsRes.submissions);
     } catch (e) {
-      setError((e as Error).message);
+      const code = (e as Error).message;
+      // UI_UX §5.5: unauthenticated access redirects to sign-in.
+      if (code === "AUTHENTICATION_REQUIRED") {
+        router.replace("/admin/sign-in");
+        return;
+      }
+      setError(code);
     } finally {
       setBusy(false);
     }
@@ -543,8 +551,7 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
   }
 
   return (
-    <AuthGate>
-      <Shell eyebrow="Event desk">
+    <Shell eyebrow="Event desk">
         <div className="grid gap-8 lg:grid-cols-[18rem_1fr]">
           <aside className="min-h-[300px] lg:sticky lg:top-6 lg:self-start">
             {busy && !event ? (
@@ -668,6 +675,5 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
           />
         )}
       </Shell>
-    </AuthGate>
   );
 }
