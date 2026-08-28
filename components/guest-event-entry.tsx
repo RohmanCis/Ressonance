@@ -16,12 +16,14 @@ import {
   photoErrorMessage,
   type PendingPhoto,
 } from "@/lib/pending-photos";
+import dynamic from "next/dynamic";
 import { PreSession } from "@/components/guest/screens/PreSession";
 import { FrameSelection } from "@/components/guest/screens/FrameSelection";
-import { Capture } from "@/components/guest/screens/Capture";
-import { PhotoReview } from "@/components/guest/screens/PhotoReview";
-import { VoiceRecordingScreen } from "@/components/guest/screens/VoiceRecordingScreen";
 import { Done } from "@/components/guest/screens/Done";
+
+const Capture = dynamic(() => import("@/components/guest/screens/Capture").then((m) => m.Capture));
+const PhotoReview = dynamic(() => import("@/components/guest/screens/PhotoReview").then((m) => m.PhotoReview));
+const VoiceRecordingScreen = dynamic(() => import("@/components/guest/screens/VoiceRecordingScreen").then((m) => m.VoiceRecordingScreen));
 
 type EventData = { title: string; status: "ACTIVE" | "CLOSED" };
 type SessionData = Usage & { guest_name: string | null };
