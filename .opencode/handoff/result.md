@@ -1,43 +1,38 @@
-﻿# Result — Remove event-title text stamp from captured photos
+﻿# T041 Result
 
-## Status
-COMPLETE
+**Status:** COMPLETE
 
 ## Files changed
-- `lib/frames.ts`
-- `lib/frames.test.ts`
-- `DESIGN.md` (root, §5.2 only — owner-approved canonical sync)
-- `.opencode/handoff/result.md`
 
-## Exact changes
+- `components/guest-event-entry.tsx` (+49): fixes 1–5 (see below)
+- `hooks/use-camera.ts` (+8): fix 4b (capture teardown on dead stream)
 
-### lib/frames.ts
-- Header docblock: "plus optional dynamic text layers rendered onto the 1080×1920 canvas at shutter time" removed; asset-standard paragraph now states text stamp removed (owner decision 2026-08-29) — frames carry decorative artwork only.
-- `royal-gold`, `botanical-romance`, `modern-editorial`, `flower`: per-frame `textLayers` configs (Cormorant italic 96, Pinyon 124, DM Mono 58, Pinyon 118) deleted → `textLayers: []`.
-- `wedding-crimson`: comment updated — baked typography asset (2026-08-21); like every frame registers no dynamic text layers (owner decision 2026-08-29). `textLayers: []` unchanged.
-- KEPT: `FrameTextLayer` type export (frame-compositing.ts + use-camera.ts import it; machinery unused by registry), `DEFAULT_FRAME_ID`, ids/labels/srcs, `loadFrameImage`, `FRAME_OUTPUT`, `FRAME_ASPECT_RATIO`.
+## Fixes
 
-### lib/frames.test.ts
-- `BAKED_TEXT_FRAMES` set + comment deleted.
-- Test "gives every dynamic template an event-title text layer with a valid schema" → "registers no text layers on any frame (owner decision 2026-08-29: no event-title stamp on captured photos)" — asserts `frame.textLayers` toEqual `[]` for all real frames.
-- Test "assigns the three approved display fonts one distinct role" DELETED (no layers to assert).
-- Registry-invariant tests (aspect, key set, unique ids/'none' default, asset paths) unchanged. 6 tests total.
-
-### DESIGN.md (§5.2 only)
-- Registry items 1–3, 5: "event title in …" clauses removed; artwork descriptions kept.
-- Item 4 `wedding-crimson`: reworded — baked typography; like every frame registers no dynamic text layers; no title stamp (owner decision 2026-08-29).
-- "Dynamic composition model" paragraph: text-layer interpolation description (font roles, sizes, yRatio band, `document.fonts.ready` gating) struck; kept 1080×1920 PNG true-alpha transparent photo area, no baked text (sole exception wedding-crimson), no frame registers dynamic event-title layer (2026-08-29), fixed 1080×1920 JPEG quality 0.92, overlay never mirrored — only photo mirrors for front camera.
-- No other sections touched.
+1. **Mic/voice-timer unmount leak** — unmount cleanup now calls `finishRecording()` + `stopVoiceTimer()` and aborts in-flight voice XHR. (Also `eslint-disable-next-line react-hooks/exhaustive-deps` added — cleanup references render-scoped functions with `[]` deps.)
+2. **syncPhotos race** — new `syncingRef` mutex; checked at entry, set before `setSyncing(true)`, cleared on the session-error early return and the normal completion path. Success/failure behavior unchanged.
+3. **start() double-submit** — `startingRef` guard (synchronous, closure-safe), set after the state guard passes, cleared on success return, end-of-try, and catch.
+4. **handleCapture / capture teardown** — `handleCapture` wraps `camera.capture()` in try/catch (fail soft). `use-camera.ts` `capture()` wraps `video.play()`; on rejection nulls `video.srcObject` and returns null instead of throwing.
+5. **Object-URL leaks** — `handleSessionExpired` revokes confirmed-photo URLs before `setPendingPhotos([])`; `onDeclineCarryOver` revokes all expired-photo URLs; `submitVoice` XHR tracked in `voiceXhrRef`, aborted on unmount + session expiry, `request.status === 0` guard prevents post-abort state clobber (e.g. expiry message overwritten by review-error).
 
 ## Validation
-- `npx tsc --noEmit` — PASS.
-- `npx vitest run lib/frames.test.ts` — PASS, 6/6 (1 file).
-- Full suite NOT run (task constraint).
-- Grep `eventTitle|event title|event-title` in lib/frames.ts: 4 matches, all legitimate — L34 `text: "eventTitle"` (the kept type's union literal), L27 type docblock ("the only dynamic token today is the event title"), L12/L83 my new comments. Zero registry text-layer usage.
 
-## Deviations
-- None. FrameTextLayer docblock left as-is (accurately describes the retained machinery/capability; no registry frame uses it).
-- Note: compositing machinery (`lib/frame-compositing.ts`, `use-camera.ts`) untouched — harmless with empty layers, per task.
+- `npm run typecheck` — PASS
+- `npx vitest run` (alone, serialized) — PASS, 46 files / 374 tests
+- Focused test for fix #1 — SKIPPED: vitest environment is `node`, no jsdom/@testing-library in repo; adding a renderer dependency is out of scope. No existing guest-event-entry test harness.
+- E2E — not run (per contract)
 
-## Owner commit message (not committed)
-None provided for this task.
+## Failures
+
+None.
+
+## Risks
+
+- Fix #1/#5 unmount cleanup not covered by an automated test (see above); behavior verified by code review only.
+- `syncingRef`/`startingRef` are manual ref guards — a missed reset on a future early-return path would wedge the guard. Both exit paths currently covered.
+- XHR abort relies on `status === 0` convention (per XHR spec abort fires error/abort, not load).
+- Note: repo test count is 374 (AGENTS.md baseline recorded 373) — one extra test exists upstream of this task; all pass.
+
+## Next step
+
+Orchestrator: reconcile + commit. Librarian lane (DESIGN.md §5.6) separate; not touched here.

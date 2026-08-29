@@ -64,6 +64,8 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
   const [reviewIndex, setReviewIndex] = useState<number | null>(null);
   const reviewReturnFocusRef = useRef<HTMLElement | null>(null);
   const syncAbortedRef = useRef(false);
+  // Mutex: syncPhotos is closure-stale on `syncing`, so guard re-entry with a ref.
+  const syncingRef = useRef(false);
   // Set when the review CTA requested an advance after sync; the effect
   // consumes it once the sync's final state commits (race fix, 2026-08-20).
   const advancePendingRef = useRef(false);
@@ -74,6 +76,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
   expiredPendingRef.current = expiredPending;
   const [carryOverPrompt, setCarryOverPrompt] = useState(false);
   const sessionStartRef = useRef<number | null>(null);
+  const startingRef = useRef(false);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
 
   // Voice note state — presented as the dedicated full-screen VOICE_NOTE
@@ -88,6 +91,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
   const voiceRecorder = useRef<MediaRecorder | null>(null);
   const voiceChunks = useRef<Blob[]>([]);
   const voiceTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const voiceXhrRef = useRef<XMLHttpRequest | null>(null);
   const voiceSecondsRef = useRef(0);
   const voiceGeneration = useRef(0);
 
@@ -136,7 +140,9 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
   // --- Start session ---
   async function start(eventSubmit: FormEvent<HTMLFormElement>) {
     eventSubmit.preventDefault();
+    if (startingRef.current) return;
     if (!event || (state !== "ready" && state !== "invalid" && state !== "rate-limited" && state !== "offline" && state !== "unexpected" && !carryOverPrompt)) return;
+    startingRef.current = true;
     setState("starting");
     setMessage("");
     try {
@@ -154,6 +160,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
         sessionStartRef.current = Date.now();
         setState("frame-select");
         setMessage("");
+        startingRef.current = false;
         return;
       }
       const code = body.error?.code;
@@ -171,7 +178,9 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
         setState("unexpected");
         setMessage(errorText);
       }
+      startingRef.current = false;
     } catch {
+      startingRef.current = false;
       setState("offline");
       setMessage("Sesi belum berhasil dimulai. Cek koneksimu, lalu coba lagi.");
     }
@@ -229,10 +238,16 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
   // --- Session expiry handler ---
   function handleSessionExpired() {
     const unsaved = pendingPhotosRef.current.filter((p) => p.status !== "confirmed");
+    // Confirmed photos are discarded with the session — drop their object URLs.
+    pendingPhotosRef.current
+      .filter((p) => p.status === "confirmed")
+      .forEach((p) => { if (p.previewUrl) URL.revokeObjectURL(p.previewUrl); });
     if (unsaved.length > 0) {
       setExpiredPending(unsaved.map((p) => ({ ...p, status: "expired" as const })));
     }
     setPendingPhotos([]);
+    voiceXhrRef.current?.abort();
+    voiceXhrRef.current = null;
     setSession(null);
     sessionStartRef.current = null;
     setSecondsLeft(null);
@@ -252,11 +267,17 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
   // --- Camera capture (dynamic frame: overlay asset + event-title layers) ---
   async function handleCapture() {
     if (!session || event?.status === "CLOSED" || !event) return;
-    const blob = await camera.capture({
-      frameImg: frameImgRef.current,
-      eventTitle: event.title,
-      layers: selectedFrame?.textLayers ?? [],
-    });
+    let blob: Blob | null = null;
+    try {
+      blob = await camera.capture({
+        frameImg: frameImgRef.current,
+        eventTitle: event.title,
+        layers: selectedFrame?.textLayers ?? [],
+      });
+    } catch {
+      // Dead stream / play() rejection — fail soft, no capture.
+      return;
+    }
     if (!blob) return;
     const photo: PendingPhoto = {
       id: nextPendingId(),
@@ -313,7 +334,8 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
 
   // --- Batch sync: sequential POST /photos ---
   const syncPhotos = useCallback(async () => {
-    if (!session || syncing || event?.status === "CLOSED") return;
+    if (!session || syncing || syncingRef.current || event?.status === "CLOSED") return;
+    syncingRef.current = true;
     syncAbortedRef.current = false;
     setSyncing(true);
 
@@ -353,6 +375,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
           if (isSessionError(response.status, code)) {
             setPendingPhotos((prev) => applySyncResult(prev, itemId, { status: "pending" }));
             setSyncing(false);
+            syncingRef.current = false;
             handleSessionExpired();
             return;
           }
@@ -386,6 +409,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
       }
     }
 
+    syncingRef.current = false;
     setSyncing(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, syncing, event, publicId]);
@@ -445,8 +469,10 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
   function resetVoice() { voiceGeneration.current += 1; finishRecording(); if (voiceUrl) URL.revokeObjectURL(voiceUrl); setVoice(null); setVoiceUrl(""); setVoiceSeconds(0); setVoiceState("idle"); setVoiceMessage(""); }
   function submitVoice() {
     if (!voice || voiceState === "submitting" || !session || event?.status === "CLOSED") return;
-    setVoiceState("submitting"); setVoiceMessage("Ngirim pesan suara…"); const form = new FormData(); form.append("voice_note", voice, "voice-note.webm"); const request = new XMLHttpRequest(); request.open("POST", `/api/events/${encodeURIComponent(publicId)}/voice-notes`); request.upload.onprogress = (progress) => { if (progress.lengthComputable) setVoiceMessage(`Ngirim pesan suara… ${Math.round(progress.loaded / progress.total * 100)}%`); };
+    setVoiceState("submitting"); setVoiceMessage("Ngirim pesan suara…"); const form = new FormData(); form.append("voice_note", voice, "voice-note.webm");     const request = new XMLHttpRequest(); voiceXhrRef.current = request; request.open("POST", `/api/events/${encodeURIComponent(publicId)}/voice-notes`); request.upload.onprogress = (progress) => { if (progress.lengthComputable) setVoiceMessage(`Ngirim pesan suara… ${Math.round(progress.loaded / progress.total * 100)}%`); };
     request.onload = async () => {
+      voiceXhrRef.current = null;
+      if (request.status === 0) return; // aborted — no state change
       try {
         if (request.status === 201) {
           setVoiceState("success"); setVoiceMessage("Pesan suara tersimpan.");
@@ -460,7 +486,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
         setVoiceState("review-error"); setVoiceMessage(code === "UNSUPPORTED_MEDIA" ? "Format audionya nggak didukung. Rekam ulang di browser yang didukung." : code === "FILE_TOO_LARGE" ? "Rekamannya kegedean. Rekam yang lebih singkat." : code === "AUDIO_DURATION_INVALID" ? "Pesan suara harus 5–30 detik. Rekam ulang di rentang itu." : code === "AUDIO_UNINSPECTABLE" ? "Rekamannya nggak bisa diverifikasi. Rekam ulang ya." : code === "VOICE_NOTE_LIMIT_REACHED" ? "Batas pesan suara untuk sesi ini sudah terpakai." : code === "EVENT_CLOSED" ? "Acara ini sudah selesai. Kiriman baru nggak diterima lagi." : code === "RATE_LIMITED" ? "Terlalu banyak permintaan. Tunggu sebentar, lalu coba lagi." : code === "MEDIA_PERSISTENCE_FAILED" ? "Pesan suaranya belum terkonfirmasi tersimpan. Coba lagi." : "Pesan suara gagal dikirim. Cek koneksimu, lalu coba lagi.");
       } catch { setVoiceState("review-error"); setVoiceMessage("Pesan suara gagal dikirim. Cek koneksimu, lalu coba lagi."); }
     };
-    request.onerror = () => { setVoiceState("review-error"); setVoiceMessage("Pesan suara gagal dikirim. Cek koneksimu, lalu coba lagi."); }; request.send(form);
+    request.onerror = () => { voiceXhrRef.current = null; if (request.status === 0) return; setVoiceState("review-error"); setVoiceMessage("Pesan suara gagal dikirim. Cek koneksimu, lalu coba lagi."); }; request.send(form);
   }
 
   // --- Skip voice: discard any unsent take (§4.5) and finish the flow ---
@@ -497,7 +523,13 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
       pendingPhotosRef.current.forEach((p) => { if (p.previewUrl) URL.revokeObjectURL(p.previewUrl); });
       expiredPendingRef.current.forEach((p) => { if (p.previewUrl) URL.revokeObjectURL(p.previewUrl); });
       if (voiceUrlRef.current) URL.revokeObjectURL(voiceUrlRef.current);
+      // Stop any in-flight mic recording/timer and abort an in-flight upload.
+      voiceXhrRef.current?.abort();
+      voiceXhrRef.current = null;
+      finishRecording();
+      stopVoiceTimer();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // --- Render: pre-session states ---
@@ -513,6 +545,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
         onNameChange={setName}
         onStart={start}
         onDeclineCarryOver={() => {
+          expiredPendingRef.current.forEach((p) => { if (p.previewUrl) URL.revokeObjectURL(p.previewUrl); });
           setCarryOverPrompt(false);
           setExpiredPending([]);
         }}

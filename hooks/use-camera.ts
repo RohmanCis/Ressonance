@@ -129,7 +129,13 @@ export function useCamera(): UseCameraResult {
     video.srcObject = s;
     video.muted = true;
     video.playsInline = true;
-    await video.play();
+    try {
+      await video.play();
+    } catch {
+      // Dead/stopped stream — teardown and fail soft: no capture.
+      video.srcObject = null;
+      return null;
+    }
 
     // Deterministic center cover-crop into the fixed 9:16 output. A video
     // that reports zero dimensions (not ready) fails soft: no capture.
