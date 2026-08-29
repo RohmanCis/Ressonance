@@ -12,15 +12,15 @@ import { describeDownloadResponse, downloadErrorCodeFromResponse, downloadErrorM
 const PreviewDialog = dynamic(() => import("./admin-preview-dialog").then((m) => m.PreviewDialog));
 
 const errorTextMap: Record<string, string> = {
-  FORBIDDEN: "You cannot access this media.",
-  NOT_FOUND: "This media is no longer available.",
-  MEDIA_ACCESS_FAILED: "The private media could not be opened.",
+  FORBIDDEN: "Kamu nggak bisa akses media ini.",
+  NOT_FOUND: "Media ini udah nggak tersedia.",
+  MEDIA_ACCESS_FAILED: "Media privatnya nggak bisa dibuka.",
 };
 export function errorText(code: string) {
-  return code === "OFFLINE" ? "Media unavailable offline. Retry when connected." : errorTextMap[code] ?? "Media could not be retrieved. Retry this item.";
+  return code === "OFFLINE" ? "Media nggak tersedia offline. Coba lagi pas konek." : errorTextMap[code] ?? "Media nggak bisa diambil. Coba lagi item ini.";
 }
 
-const nameOf = (item: Submission) => item.guest_name?.trim() || "Anonymous Guest";
+const nameOf = (item: Submission) => item.guest_name?.trim() || "Tamu anonim";
 const ID_MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
 const pad2 = (n: number) => String(n).padStart(2, "0");
 const fmtDate = (d: Date) => `${d.getDate()} ${ID_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
@@ -36,15 +36,15 @@ const fmtRange = (oldestIso: string, newestIso: string) => {
   return `${fmtDate(newest)} · ${fmtTime(oldest)}–${fmtTime(newest)}`;
 };
 const fmtDuration = (s?: number | null) => (s == null ? "" : `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`);
-export const typeLabel = (item: Submission) => (item.type === "PHOTO" ? "Photo" : "Voice note");
+export const typeLabel = (item: Submission) => (item.type === "PHOTO" ? "Foto" : "Pesan suara");
 
 type Group = { ref: string; name: string; session: number | null; items: Submission[] };
 
 type MediaFilter = "ALL" | "PHOTO" | "VOICE_NOTE";
 const MEDIA_SEGMENTS: { value: MediaFilter; label: string }[] = [
-  { value: "ALL", label: "All" },
-  { value: "PHOTO", label: "Photos" },
-  { value: "VOICE_NOTE", label: "Voice" },
+  { value: "ALL", label: "Semua" },
+  { value: "PHOTO", label: "Foto" },
+  { value: "VOICE_NOTE", label: "Suara" },
 ];
 const initialsOf = (name: string) =>
   name
@@ -134,24 +134,24 @@ function DownloadButton({ item, name, className = "" }: { item: Submission; name
     <>
       <button
         type="button"
-        aria-label={`Download ${typeLabel(item).toLowerCase()} from ${name}`}
+        aria-label={`Unduh ${typeLabel(item).toLowerCase()} dari ${name}`}
         onClick={retry}
         disabled={busy}
         className={`flex h-12 items-center gap-1.5 rounded-lg border border-border bg-bg-surface px-3 text-xs font-semibold text-text-secondary transition duration-fast ease-out hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-45 ${focusRing} ${className}`}
       >
         {busy ? <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Download className="h-4 w-4" aria-hidden="true" />}
-        {busy ? "Downloading…" : "Download"}
+        {busy ? "Mengunduh…" : "Unduh"}
       </button>
       {error && (
         <span className="flex w-full flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-bg-elevated/90 p-2">
           <span role="alert" className="text-xs text-error">
             <span className="font-semibold text-text-primary">
-              {typeLabel(item)} from {name}:{" "}
+              {typeLabel(item)} dari {name}:{" "}
             </span>
             {error}
           </span>
           <button type="button" onClick={retry} className={`min-h-12 rounded-md px-3 text-xs font-semibold transition duration-fast ${quietButton} ${focusRing}`}>
-            Retry
+            Coba lagi
           </button>
         </span>
       )}
@@ -210,7 +210,7 @@ function PhotoTile({ item, name, onPreview }: { item: Submission; name: string; 
             {errorText(error)}
           </p>
           <button type="button" onClick={load} className={`min-h-12 rounded-md px-3 text-xs font-semibold transition duration-fast ${quietButton} ${focusRing}`}>
-            Retry
+            Coba lagi
           </button>
         </div>
       ) : (
@@ -218,14 +218,14 @@ function PhotoTile({ item, name, onPreview }: { item: Submission; name: string; 
           type="button"
           onClick={onPreview}
           disabled={!url}
-          aria-label={`Preview photo from ${name}, ${fmtFull(item.created_at)}`}
+          aria-label={`Lihat foto dari ${name}, ${fmtFull(item.created_at)}`}
           className={`group block w-full text-left transition duration-fast ease-out disabled:cursor-wait ${focusRing}`}
         >
           <span className="block aspect-square w-full overflow-hidden bg-bg-elevated">
             {loading && (
               <span role="status" className="flex h-full w-full items-center justify-center text-text-muted">
                 <Loader2 className="h-5 w-5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
-                <span className="sr-only">Loading photo…</span>
+                <span className="sr-only">Memuat foto…</span>
               </span>
             )}
             {url && (
@@ -241,7 +241,7 @@ function PhotoTile({ item, name, onPreview }: { item: Submission; name: string; 
           <span className="flex items-center justify-between gap-2 px-3 py-2 text-xs">
             <span className="inline-flex items-center gap-1.5 font-semibold text-text-primary">
               <ImageIcon className="h-3.5 w-3.5 text-text-muted" aria-hidden="true" />
-              Photo
+              Foto
             </span>
             <time dateTime={item.created_at} className="font-mono tabular-nums text-text-muted">
               {fmtShort(item.created_at)}
@@ -309,7 +309,7 @@ function VoiceTile({ item, name }: { item: Submission; name: string }) {
         type="button"
         onClick={toggle}
         disabled={loading}
-        aria-label={`${playing ? "Pause" : "Play"} voice note by ${name}${duration ? `, ${item.duration_seconds} seconds` : ""}`}
+        aria-label={`${playing ? "Jeda" : "Putar"} pesan suara dari ${name}${duration ? `, ${item.duration_seconds} detik` : ""}`}
         className={`flex min-h-12 items-center gap-2 rounded-lg px-3 text-sm font-semibold transition duration-fast ease-out disabled:opacity-60 ${quietButton} ${focusRing}`}
       >
         {loading ? (
@@ -319,11 +319,11 @@ function VoiceTile({ item, name }: { item: Submission; name: string }) {
         ) : (
           <Play className="h-4 w-4" aria-hidden="true" />
         )}
-        {loading ? "Loading" : playing ? "Pause" : "Play"}
+        {loading ? "Memuat" : playing ? "Jeda" : "Putar"}
       </button>
       <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-text-primary">
         <Mic className="h-3.5 w-3.5 text-text-muted" aria-hidden="true" />
-        Voice note
+        Pesan suara
         {duration && <span className="font-mono tabular-nums text-text-muted">{duration}</span>}
       </span>
       <span className="relative flex h-8 min-w-24 flex-1 items-center justify-between gap-[3px]" aria-hidden="true">
@@ -343,7 +343,7 @@ function VoiceTile({ item, name }: { item: Submission; name: string }) {
       <DownloadButton item={item} name={name} />
       {loading && (
         <p role="status" className="sr-only">
-          Loading voice note…
+          Memuat pesan suara…
         </p>
       )}
       {error && (
@@ -363,8 +363,8 @@ function GuestGroup({ group, onPreview }: { group: Group; onPreview: (item: Subm
   const photos = group.items.filter((i) => i.type === "PHOTO");
   const voices = group.items.filter((i) => i.type === "VOICE_NOTE");
   const breakdown = [
-    photos.length ? `${photos.length} photo${photos.length === 1 ? "" : "s"}` : "",
-    voices.length ? `${voices.length} voice note${voices.length === 1 ? "" : "s"}` : "",
+    photos.length ? `${photos.length} foto` : "",
+    voices.length ? `${voices.length} pesan suara` : "",
   ]
     .filter(Boolean)
     .join(" · ");
@@ -389,10 +389,10 @@ function GuestGroup({ group, onPreview }: { group: Group; onPreview: (item: Subm
           </span>
           <span className="text-lg font-semibold text-text-primary">{group.name}</span>
           {group.session !== null && (
-            <span className="text-xs font-medium text-text-muted">Session {group.session}</span>
+            <span className="text-xs font-medium text-text-muted">Sesi {group.session}</span>
           )}
           <span className="rounded-full border border-border px-2.5 py-0.5 font-mono text-xs font-medium tabular-nums text-text-secondary">
-            {group.items.length} item{group.items.length === 1 ? "" : "s"}
+            {group.items.length} item
           </span>
           <span className="text-xs text-text-muted">{breakdown}</span>
           <span className="ml-auto font-mono text-xs tabular-nums text-text-muted">
@@ -412,7 +412,7 @@ function GuestGroup({ group, onPreview }: { group: Group; onPreview: (item: Subm
           {voices.length > 0 && (
             <div className={photos.length > 0 ? "border-t border-border pt-4" : ""}>
               <p className="mb-2 text-xs font-medium tracking-[0.04em] text-text-muted">
-                Voice note{voices.length === 1 ? "" : "s"}
+                Pesan suara
               </p>
               <div className="grid gap-2">
                 {voices.map((item) => (
@@ -429,7 +429,7 @@ function GuestGroup({ group, onPreview }: { group: Group; onPreview: (item: Subm
 
 function TimelineSkeleton() {
   return (
-    <div role="status" aria-label="Loading submissions" className="mt-6 grid animate-pulse gap-6">
+    <div role="status" aria-label="Memuat kiriman" className="mt-6 grid animate-pulse gap-6">
       {[0, 1].map((g) => (
         <div key={g} aria-hidden="true" className="rounded-3xl border border-border bg-bg-surface/90 p-5">
           <div className="flex items-center gap-3">
@@ -445,14 +445,14 @@ function TimelineSkeleton() {
           </div>
         </div>
       ))}
-      <span className="sr-only">Loading submissions…</span>
+                <span className="sr-only">Memuat kiriman…</span>
     </div>
   );
 }
 
 function AsideSkeleton() {
   return (
-    <div role="status" aria-label="Loading event" className="animate-pulse">
+              <div role="status" aria-label="Memuat acara" className="animate-pulse">
       <div aria-hidden="true">
         <div className="h-3 w-20 rounded bg-bg-elevated" />
         <div className="mt-3 h-9 w-48 rounded bg-bg-elevated" />
@@ -462,7 +462,7 @@ function AsideSkeleton() {
           <div className="min-h-12 rounded-lg bg-bg-elevated" />
         </div>
       </div>
-      <span className="sr-only">Loading event</span>
+                  <span className="sr-only">Memuat acara</span>
     </div>
   );
 }
@@ -557,24 +557,24 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
             {busy && !event ? (
               <AsideSkeleton />
             ) : error && !event ? (
-              <Status error message={errorText(error)} action={<Button secondary onClick={() => load("")}>Retry</Button>} />
+              <Status error message={errorText(error)} action={<Button secondary onClick={() => load("")}>Coba lagi</Button>} />
             ) : (
               event && (
                 <>
                   <h1 className="font-display text-3xl font-semibold tracking-tight text-text-primary">{event.title}</h1>
                   <p className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${event.status === "ACTIVE" ? "border-accent/40 bg-accent-soft text-accent" : "border-border text-text-muted"}`}>
-                    {event.status === "ACTIVE" ? "Active" : "Closed"}
+                    {event.status === "ACTIVE" ? "Aktif" : "Selesai"}
                   </p>
                   <div className="mt-6 grid gap-2">
                     <Link
                       className={`flex min-h-12 items-center rounded-lg px-3 text-sm font-semibold transition duration-fast ${quietButton} ${focusRing}`}
                       href={`/admin/events/${publicId}/access`}
                     >
-                      Access / QR
+                      Akses / QR
                     </Link>
                     {event.status === "ACTIVE" && (
                       <Button disabled={closing} onClick={close}>
-                        {closing ? "Closing…" : "Close event"}
+                        {closing ? "Menutup…" : "Tutup acara"}
                       </Button>
                     )}
                   </div>
@@ -586,9 +586,9 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
             <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
               {(
                 [
-                  { label: "Guests", value: metrics.guests },
-                  { label: "Photos", value: metrics.photos },
-                  { label: "Voice notes", value: metrics.voices },
+                  { label: "Tamu", value: metrics.guests },
+                  { label: "Foto", value: metrics.photos },
+                  { label: "Pesan suara", value: metrics.voices },
                   { label: "Media", value: metrics.media },
                 ] as const
               ).map((stat) => (
@@ -600,8 +600,8 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
             </div>
             <div className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-xs font-medium tracking-[0.04em] text-text-muted">Submissions</p>
-                <h2 className="mt-1 text-xl font-semibold text-text-primary">Newest first</h2>
+                <p className="text-xs font-medium tracking-[0.04em] text-text-muted">Kiriman</p>
+                <h2 className="mt-1 text-xl font-semibold text-text-primary">Terbaru dulu</h2>
               </div>
               <form
                 className="w-full sm:max-w-sm"
@@ -612,19 +612,19 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
               >
                 <AdminInput
                   id="guest-search"
-                  label="Search by guest name"
+                  label="Cari nama tamu"
                   type="search"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search guest name"
+                  placeholder="Cari nama tamu"
                   autoComplete="off"
                 />
                 <Button secondary className="mt-3">
-                  Search
+                  Cari
                 </Button>
               </form>
             </div>
-            <div role="group" aria-label="Filter by media type" className="mt-4 inline-flex rounded-lg border border-border bg-bg-surface p-1">
+            <div role="group" aria-label="Saring jenis media" className="mt-4 inline-flex rounded-lg border border-border bg-bg-surface p-1">
               {MEDIA_SEGMENTS.map((segment) => {
                 const selected = mediaFilter === segment.value;
                 return (
@@ -640,16 +640,16 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
                 );
               })}
             </div>
-            {error && event && <Status error message={errorText(error)} action={<Button secondary onClick={() => load()}>Retry</Button>} />}
+            {error && event && <Status error message={errorText(error)} action={<Button secondary onClick={() => load()}>Coba lagi</Button>} />}
             {busy ? (
               <TimelineSkeleton />
             ) : groups.length === 0 ? (
               <p className="mt-6 text-center text-sm text-text-muted">
                 {query
-                  ? "No matching submissions. Clear or edit the guest-name search."
+                  ? "Nggak ada kiriman yang cocok. Kosongkan atau ubah pencarian nama tamunya."
                   : mediaFilter !== "ALL"
-                    ? `No ${mediaFilter === "PHOTO" ? "photos" : "voice notes"} match this filter.`
-                    : "New photos and voice notes will appear here."}
+                    ? `Nggak ada ${mediaFilter === "PHOTO" ? "foto" : "pesan suara"} yang cocok dengan saringan ini.`
+                    : "Foto dan pesan suara baru bakal muncul di sini."}
               </p>
             ) : (
               <div className="mt-6 grid gap-6">

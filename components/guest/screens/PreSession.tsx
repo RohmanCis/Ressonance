@@ -145,7 +145,7 @@ export function PreSession({
                 <img
                   key={p.id}
                   src={p.previewUrl}
-                  alt="Unsaved draft"
+                  alt="Draf yang belum terkirim"
                   className="h-12 w-12 shrink-0 rounded-lg border border-border object-cover"
                 />
               ))}

@@ -56,47 +56,47 @@ test("sign-in lands on the event index", async ({ page }) => {
   });
   await page.goto("/admin/sign-in");
   await page.getByLabel("Email").fill("qa@test.com");
-  await page.getByLabel("Password").fill("correct-horse");
-  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.getByLabel("Kata sandi").fill("correct-horse");
+  await page.getByRole("button", { name: "Masuk" }).click();
   await expect(page).toHaveURL(/\/admin$/, { timeout: 15000 });
-  await expect(page.getByRole("heading", { name: "Your events." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Acara kamu." })).toBeVisible();
   await expect(page.getByText("Summer Party")).toBeVisible({ timeout: 15000 });
 });
 
 test("ACTIVE event is prominent; CLOSED event stays accessible", async ({ page }) => {
   await page.goto("/admin");
-  await expect(page.getByRole("heading", { name: "Your events." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Acara kamu." })).toBeVisible();
 
-  const activeSection = page.getByRole("region", { name: "Active event" });
+  const activeSection = page.getByRole("region", { name: "Acara aktif" });
   await expect(activeSection.getByRole("heading", { name: "Summer Party" })).toBeVisible();
   // FIX-9: ACTIVE is marked solely by the gold left-edge border (DESIGN.md §6).
   await expect(activeSection.locator(".border-l-accent")).toBeVisible();
-  // FIX-7: hairline-row anatomy — gold status dot + English "Active" label.
+  // FIX-7: hairline-row anatomy — gold status dot + "Aktif" label.
   await expect(activeSection.locator(".rounded-full.bg-accent")).toBeVisible();
-  await expect(activeSection.getByText("Active", { exact: true })).toBeVisible();
+  await expect(activeSection.getByText("Aktif", { exact: true })).toBeVisible();
 
-  const pastSection = page.getByRole("region", { name: "Past events" });
+  const pastSection = page.getByRole("region", { name: "Acara sebelumnya" });
   await expect(pastSection.getByText("Winter Dinner")).toBeVisible();
-  await expect(pastSection.getByText("Closed", { exact: true })).toBeVisible();
+  await expect(pastSection.getByText("Selesai", { exact: true })).toBeVisible();
 
-  // Access/QR only on the ACTIVE event; Open on both.
-  await expect(activeSection.getByRole("link", { name: "Access / QR" })).toHaveAttribute("href", `/admin/events/${ACTIVE.public_id}/access`);
-  await expect(pastSection.getByRole("link", { name: "Access / QR" })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Open" })).toHaveCount(2);
+  // Access/QR only on the ACTIVE event; Buka on both.
+  await expect(activeSection.getByRole("link", { name: "Akses / QR" })).toHaveAttribute("href", `/admin/events/${ACTIVE.public_id}/access`);
+  await expect(pastSection.getByRole("link", { name: "Akses / QR" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Buka" })).toHaveCount(2);
 });
 
 test("Open navigates to the event dashboard", async ({ page }) => {
   await page.goto("/admin");
   // Wait for client-rendered content: proves hydration before clicking Next links.
   await expect(page.getByRole("heading", { name: "Summer Party" })).toBeVisible({ timeout: 15000 });
-  await page.getByRole("region", { name: "Active event" }).getByRole("link", { name: "Open" }).click();
+  await page.getByRole("region", { name: "Acara aktif" }).getByRole("link", { name: "Buka" }).click();
   await expect(page).toHaveURL(new RegExp(`/admin/events/${ACTIVE.public_id}$`), { timeout: 15000 });
 });
 
 test("Access / QR navigates to the access page", async ({ page }) => {
   await page.goto("/admin");
   await expect(page.getByRole("heading", { name: "Summer Party" })).toBeVisible({ timeout: 15000 });
-  await page.getByRole("link", { name: "Access / QR" }).click();
+  await page.getByRole("link", { name: "Akses / QR" }).click();
   await expect(page).toHaveURL(new RegExp(`/admin/events/${ACTIVE.public_id}/access$`), { timeout: 15000 });
 });
 
@@ -107,11 +107,11 @@ test("Create new event navigates to creation and succeeds end-to-end", async ({ 
   });
   await page.goto("/admin");
   await expect(page.getByRole("heading", { name: "Summer Party" })).toBeVisible({ timeout: 15000 });
-  await page.getByRole("link", { name: "Create new event" }).click();
+  await page.getByRole("link", { name: "Buat acara baru" }).click();
   await expect(page).toHaveURL(/\/admin\/events\/new$/, { timeout: 15000 });
 
-  await page.getByLabel("Event title").fill("Summer Party");
-  await page.getByRole("button", { name: "Create event" }).click();
+  await page.getByLabel("Nama acara").fill("Summer Party");
+  await page.getByRole("button", { name: "Buat acara" }).click();
   await expect(page).toHaveURL(new RegExp(`/admin/events/${ACTIVE.public_id}$`), { timeout: 15000 });
 });
 
@@ -127,8 +127,8 @@ test("failure state offers deliberate retry and recovers", async ({ page }) => {
     }
   });
   await page.goto("/admin");
-  await expect(page.getByText("The event list could not be loaded. Retry safely.")).toBeVisible({ timeout: 15000 });
-  await page.getByRole("button", { name: "Retry" }).click();
+  await expect(page.getByText("Daftar acaranya gagal dimuat. Aman buat coba lagi.")).toBeVisible({ timeout: 15000 });
+  await page.getByRole("button", { name: "Coba lagi" }).click();
   await expect(page.getByRole("heading", { name: "Summer Party" })).toBeVisible({ timeout: 15000 });
   expect(calls).toBe(2);
 });
@@ -137,8 +137,8 @@ test("empty state points to creation", async ({ page }) => {
   await mockEvents(page, []);
   await page.goto("/admin");
   // FIX-8: quiet one-line empty state; creation entry is the header link.
-  await expect(page.getByText("No events yet. Create an event to start collecting photos and voice notes.")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Create new event" })).toHaveAttribute("href", "/admin/events/new");
+  await expect(page.getByText("Belum ada acara. Buat acara buat mulai kumpulin foto dan pesan suara.")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Buat acara baru" })).toHaveAttribute("href", "/admin/events/new");
 });
 
 test("ACTIVE_EVENT_EXISTS recovery resolves to the index, not sign-in", async ({ page }) => {
@@ -147,12 +147,12 @@ test("ACTIVE_EVENT_EXISTS recovery resolves to the index, not sign-in", async ({
     await route.fulfill(json(409, { error: { code: "ACTIVE_EVENT_EXISTS", message: "Another ACTIVE event already exists for this admin." } }));
   });
   await page.goto("/admin/events/new");
-  await page.getByLabel("Event title").fill("Duplicate Party");
-  await page.getByRole("button", { name: "Create event" }).click();
-  await expect(page.getByText("An active event already exists. Open it instead.")).toBeVisible({ timeout: 15000 });
+  await page.getByLabel("Nama acara").fill("Duplicate Party");
+  await page.getByRole("button", { name: "Buat acara" }).click();
+  await expect(page.getByText("Udah ada acara aktif. Buka yang itu aja.")).toBeVisible({ timeout: 15000 });
 
-  await page.getByRole("link", { name: "Find existing event" }).click();
+  await page.getByRole("link", { name: "Lihat acara yang ada" }).click();
   await expect(page).toHaveURL(/\/admin$/, { timeout: 30000 });
-  await expect(page.getByRole("heading", { name: "Your events." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Acara kamu." })).toBeVisible();
   await expect(page.getByText("Summer Party")).toBeVisible({ timeout: 15000 });
 });

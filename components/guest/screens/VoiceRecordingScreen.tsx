@@ -180,7 +180,7 @@ export function VoiceRecordingScreen({
             <button
               type="button"
               onClick={recording ? onStop : onRecord}
-              aria-label={recording ? "Stop recording" : "Record voice note"}
+              aria-label={recording ? "Stop rekaman" : "Rekam pesan suara"}
               className={`flex h-20 w-20 items-center justify-center rounded-full transition-transform duration-fast active:scale-[0.92] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
                 recording
                   ? "bg-error text-text-primary"

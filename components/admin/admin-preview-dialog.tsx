@@ -73,7 +73,7 @@ export function PreviewDialog({
     trapFocus(e);
   }
 
-  const label = `${typeLabel(item)} from ${name}, photo ${index + 1} of ${count}`;
+  const label = `${typeLabel(item)} dari ${name}, foto ${index + 1} dari ${count}`;
   const { busy: downloading, error: downloadError, retry: retryDownload } = useDownload(item);
 
   return (
@@ -95,7 +95,7 @@ export function PreviewDialog({
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border px-4 py-3 sm:px-6">
           <div className="min-w-0">
             <p className="font-mono text-xs font-medium tracking-[0.04em] text-text-muted">
-              {typeLabel(item)} · {index + 1} of {count}
+              {typeLabel(item)} · {index + 1} dari {count}
             </p>
             <h3 className="truncate text-lg font-semibold text-text-primary">{name}</h3>
             <time dateTime={item.created_at} className="font-mono text-xs tabular-nums text-text-muted">
@@ -104,10 +104,10 @@ export function PreviewDialog({
           </div>
           <div className="ml-auto flex items-center gap-2">
             {count > 1 && (
-              <div role="group" aria-label="Navigate photos" className="flex items-center gap-1">
+              <div role="group" aria-label="Telusuri foto" className="flex items-center gap-1">
                 <button
                   type="button"
-                  aria-label="Previous photo"
+                  aria-label="Foto sebelumnya"
                   onClick={() => onNavigate(index - 1)}
                   disabled={index === 0}
                   className={`flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-bg-surface text-text-secondary transition duration-fast ease-out hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-45 ${focusRing}`}
@@ -116,7 +116,7 @@ export function PreviewDialog({
                 </button>
                 <button
                   type="button"
-                  aria-label="Next photo"
+                  aria-label="Foto berikutnya"
                   onClick={() => onNavigate(index + 1)}
                   disabled={index === count - 1}
                   className={`flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-bg-surface text-text-secondary transition duration-fast ease-out hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-45 ${focusRing}`}
@@ -132,32 +132,32 @@ export function PreviewDialog({
               className="inline-flex items-center gap-2"
             >
               {downloading ? <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Download className="h-4 w-4" aria-hidden="true" />}
-              {downloading ? "Downloading…" : "Download"}
+              {downloading ? "Mengunduh…" : "Unduh"}
             </Button>
             <button
               type="button"
-              aria-label="Close preview"
+              aria-label="Tutup pratinjau"
               onClick={onClose}
               className={`flex h-12 items-center gap-1.5 rounded-lg border border-border bg-bg-surface px-3 text-sm font-semibold text-text-secondary transition duration-fast ease-out hover:text-text-primary ${focusRing}`}
             >
               <X className="h-4 w-4" aria-hidden="true" />
-              Close
+              Tutup
             </button>
           </div>
         </div>
         <div className="px-4 py-4 sm:px-6 sm:pb-6">
           {downloadError && (
-            <Status error message={`${typeLabel(item)} from ${name}: ${downloadError}`} action={<Button secondary onClick={retryDownload}>Retry</Button>} />
+            <Status error message={`${typeLabel(item)} dari ${name}: ${downloadError}`} action={<Button secondary onClick={retryDownload}>Coba lagi</Button>} />
           )}
           {loading ? (
             <div role="status" className="flex h-64 items-center justify-center rounded-md bg-bg-surface text-sm text-text-muted">
               <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
-              Loading media…
+              Memuat media…
             </div>
           ) : error ? (
-            <Status error message={errorText(error)} action={<Button secondary onClick={load}>Retry</Button>} />
+            <Status error message={errorText(error)} action={<Button secondary onClick={load}>Coba lagi</Button>} />
           ) : (
-            <img src={url} alt={`Photo from ${name}`} decoding="async" className="max-h-[70vh] w-full rounded-md bg-bg-surface object-contain" />
+            <img src={url} alt={`Foto dari ${name}`} decoding="async" className="max-h-[70vh] w-full rounded-md bg-bg-surface object-contain" />
           )}
         </div>
       </div>

@@ -115,7 +115,7 @@ async function startSession(page: Page) {
   await expect(page.getByRole("heading", { name: "Pilih Frame fotomu" })).toBeVisible({ timeout: 5000 });
   await page.getByRole("button", { name: "Tanpa Frame, lanjut" }).click();
   // Post-Start shows the fullscreen capture screen.
-  await expect(page.getByRole("heading", { name: "Take photos" })).toBeVisible({ timeout: 5000 });
+  await expect(page.getByRole("heading", { name: "Jepret foto" })).toBeVisible({ timeout: 5000 });
 }
 
 // The Done screen marks arrival with the receipt copy (DESIGN.md §5.6): the
@@ -131,7 +131,7 @@ function doneHeading(page: Page) {
 async function captureOnePhoto(page: Page) {
   const fileInput = page.locator('input[type="file"][accept="image/*"]');
   await fileInput.setInputFiles({ name: "test-photo.jpg", mimeType: "image/jpeg", buffer: JPEG });
-  await expect(page.getByRole("button", { name: /Photo 1/ })).toBeVisible({ timeout: 3000 });
+  await expect(page.getByRole("button", { name: /Foto 1/ })).toBeVisible({ timeout: 3000 });
 }
 
 async function advanceToVoiceScreen(page: Page) {
@@ -151,10 +151,10 @@ async function syncReviewToVoice(page: Page) {
 }
 
 async function recordAndStop(page: Page, durationMs = 1500) {
-  await page.getByRole("button", { name: "Record voice note" }).click();
+  await page.getByRole("button", { name: "Rekam pesan suara" }).click();
   await expect(page.getByText("Merekam", { exact: true })).toBeVisible({ timeout: 5000 });
   await page.waitForTimeout(durationMs);
-  await page.getByRole("button", { name: "Stop recording" }).click();
+  await page.getByRole("button", { name: "Stop rekaman" }).click();
   await expect(page.getByText("Durasi:")).toBeVisible({ timeout: 5000 });
 }
 
@@ -194,8 +194,8 @@ test.describe("Frame selection (9:16 standard, DESIGN.md §5.2)", () => {
     // The chosen frame is printed onto captures: the fullscreen viewfinder
     // shows the overlay and the confirm leads to the capture screen.
     await page.getByRole("button", { name: "Pakai Royal Gold Serif" }).click();
-    await expect(page.getByRole("heading", { name: "Take photos" })).toBeVisible({ timeout: 5000 });
-    const video = page.locator("video[aria-label='Camera preview']");
+    await expect(page.getByRole("heading", { name: "Jepret foto" })).toBeVisible({ timeout: 5000 });
+      const video = page.locator("video[aria-label='Pratinjau kamera']");
     await expect(video).toBeVisible({ timeout: 5000 });
     // The camera viewport is the bounded 9:16 photobooth box (DESIGN.md §5.3,
     // owner-ratified 2026-08-21): the video fills the box, so its bounding
@@ -244,14 +244,14 @@ test.describe("Frame selection (9:16 standard, DESIGN.md §5.2)", () => {
     // Select a real frame and enter the capture screen.
     await page.getByRole("radio").nth(0).click();
     await page.getByRole("button", { name: "Pakai Royal Gold Serif" }).click();
-    await expect(page.getByRole("heading", { name: "Take photos" })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole("heading", { name: "Jepret foto" })).toBeVisible({ timeout: 5000 });
 
     // The fake media device provides a 1280×720 landscape feed: the capture
     // must still composite to the fixed 1080×1920 output.
-    const shutter = page.getByRole("button", { name: "Take photo" });
+    const shutter = page.getByRole("button", { name: "Jepret foto" });
     await expect(shutter).toBeVisible({ timeout: 5000 });
     await shutter.click();
-    await expect(page.getByRole("button", { name: /Photo 1/ })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole("button", { name: /Foto 1/ })).toBeVisible({ timeout: 5000 });
 
     // Read the pending capture from the in-page blob and decode its JPEG
     // dimensions — must be exactly the 1080×1920 standard.
@@ -260,7 +260,7 @@ test.describe("Frame selection (9:16 standard, DESIGN.md §5.2)", () => {
         const img = new Image();
         img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight, type: "ok" });
         img.onerror = () => resolve({ w: 0, h: 0, type: "error" });
-        img.src = (document.querySelector("button[aria-label^='Photo 1'] img") as HTMLImageElement).src;
+        img.src = (document.querySelector("button[aria-label^='Foto 1'] img") as HTMLImageElement).src;
       }),
     );
     expect(dims.type).toBe("ok");
@@ -282,7 +282,7 @@ test.describe("Mobile-media QA", () => {
     mockPhotoUploadSuccess(page, session);
 
     await startSession(page);
-    await expect(page.getByRole("heading", { name: "Take photos" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Jepret foto" })).toBeVisible();
 
     // Choose file via fallback picker.
     await captureOnePhoto(page);
@@ -332,7 +332,7 @@ test.describe("Mobile-media QA", () => {
     const fileInput = page.locator('input[type="file"][accept="image/*"]');
     await fileInput.setInputFiles({ name: "bad.txt", mimeType: "text/plain", buffer: Buffer.from("not an image") });
 
-    await expect(page.getByRole("button", { name: /Photo 1/ })).toBeVisible({ timeout: 3000 });
+    await expect(page.getByRole("button", { name: /Foto 1/ })).toBeVisible({ timeout: 3000 });
     await page.getByRole("button", { name: "Lanjut →" }).click();
     await expect(page.getByRole("heading", { name: /^Foto kamu \(\d+\)$/ })).toBeVisible({ timeout: 5000 });
 
@@ -346,7 +346,7 @@ test.describe("Mobile-media QA", () => {
     await expect(page.getByRole("button", { name: "Kirim & Lanjut" })).toBeDisabled();
 
     // Retry → item back to pending → CTA unblocked.
-    await page.getByRole("button", { name: /Retry photo 1/ }).click();
+    await page.getByRole("button", { name: /Kirim ulang foto 1/ }).click();
     await expect(page.getByRole("button", { name: "Kirim & Lanjut" })).toBeEnabled({ timeout: 5000 });
   });
 
@@ -358,7 +358,7 @@ test.describe("Mobile-media QA", () => {
     // DM Mono frame counter reflects the exhausted budget (local hint).
     await expect(page.getByText("0 / 5")).toBeVisible();
     await expect(page.getByText("Batas foto untuk sesi ini sudah terpakai.")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Take photo" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "Jepret foto" })).toBeDisabled();
   });
 
   // 4. VOICE: photo sync → voice screen → permission → record → stop →
@@ -378,19 +378,19 @@ test.describe("Mobile-media QA", () => {
     // Record. (The "Allow microphone access" hint is transient — replaced by
     // "Merekam" the moment the granted fake permission resolves — so only
     // the stable recording state is asserted.)
-    await page.getByRole("button", { name: "Record voice note" }).click();
+    await page.getByRole("button", { name: "Rekam pesan suara" }).click();
     await expect(page.getByText("Merekam", { exact: true })).toBeVisible({ timeout: 5000 });
-    await expect(page.getByRole("button", { name: "Stop recording" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Stop rekaman" })).toBeVisible();
     // DM Mono elapsed timer (00:00 / 00:30).
     await expect(page.getByText(/\/ 00:30/)).toBeVisible();
 
     // Stop.
     await page.waitForTimeout(1500);
-    await page.getByRole("button", { name: "Stop recording" }).click();
+    await page.getByRole("button", { name: "Stop rekaman" }).click();
 
     // Review state.
     await expect(page.getByText("Durasi:")).toBeVisible({ timeout: 5000 });
-    await expect(page.getByRole("button", { name: "Play voice note" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Putar pesan suara" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Kirim Pesan Suara" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Rekam Ulang" })).toBeVisible();
 
@@ -465,7 +465,7 @@ test.describe("Mobile-media QA", () => {
     await startSession(page);
     await captureOnePhoto(page);
     await advanceToVoiceScreen(page);
-    await page.getByRole("button", { name: "Record voice note" }).click();
+    await page.getByRole("button", { name: "Rekam pesan suara" }).click();
     await expect(page.getByText("Merekam", { exact: true })).toBeVisible({ timeout: 5000 });
 
     // Auto-stop at 30s. Timer: at seconds>=29, finishRecording() + return 30.
@@ -489,7 +489,7 @@ test.describe("Mobile-media QA", () => {
     // Re-record.
     await expect(page.getByRole("button", { name: "Rekam Ulang" })).toBeVisible();
     await page.getByRole("button", { name: "Rekam Ulang" }).click();
-    await expect(page.getByRole("button", { name: "Record voice note" })).toBeVisible({ timeout: 3000 });
+    await expect(page.getByRole("button", { name: "Rekam pesan suara" })).toBeVisible({ timeout: 3000 });
 
     // Record again + submit → done.
     await recordAndStop(page, 1000);
@@ -519,7 +519,7 @@ test.describe("Mobile-media QA", () => {
     await expect(page.getByText("Pesan suara harus 5–30 detik. Rekam ulang di rentang itu.")).toBeVisible({ timeout: 5000 });
 
     // Audio playback retained.
-    await expect(page.getByRole("button", { name: "Play voice note" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Putar pesan suara" })).toBeVisible();
 
     // Duration retained.
     await expect(page.getByText("Durasi:")).toBeVisible();
@@ -531,7 +531,7 @@ test.describe("Mobile-media QA", () => {
     await expect(page.getByRole("button", { name: "Kirim Pesan Suara" })).toBeVisible();
 
     // "Record" (idle) button NOT shown — we're still in review-error, not idle.
-    await expect(page.getByRole("button", { name: "Record voice note" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Rekam pesan suara" })).toHaveCount(0);
   });
 
   // 8. CLOSED event
@@ -567,7 +567,7 @@ test.describe("Mobile-media QA", () => {
     // Capture a photo (pending): the local budget hint decrements.
     const fileInput = page.locator('input[type="file"][accept="image/*"]');
     await fileInput.setInputFiles({ name: "test.jpg", mimeType: "image/jpeg", buffer: JPEG });
-    await expect(page.getByRole("button", { name: /Photo 1/ })).toBeVisible({ timeout: 3000 });
+    await expect(page.getByRole("button", { name: /Foto 1/ })).toBeVisible({ timeout: 3000 });
     await expect(page.getByText("4 / 5")).toBeVisible();
 
     // Review syncs the pending photo, then the voice screen submits and
@@ -597,10 +597,10 @@ test.describe("Mobile-media QA", () => {
     await advanceToVoiceScreen(page);
 
     // Record for ~6 seconds (above the 5s threshold).
-    await page.getByRole("button", { name: "Record voice note" }).click();
+    await page.getByRole("button", { name: "Rekam pesan suara" }).click();
     await expect(page.getByText("Merekam", { exact: true })).toBeVisible({ timeout: 5000 });
     await page.waitForTimeout(6000);
-    await page.getByRole("button", { name: "Stop recording" }).click();
+    await page.getByRole("button", { name: "Stop rekaman" }).click();
 
     await expect(page.getByText("Durasi:")).toBeVisible({ timeout: 5000 });
 
@@ -636,9 +636,9 @@ test.describe("Mobile-media QA", () => {
     // Capture 2 photos via file picker.
     const fileInput = page.locator('input[type="file"][accept="image/*"]');
     await fileInput.setInputFiles({ name: "photo1.jpg", mimeType: "image/jpeg", buffer: JPEG });
-    await expect(page.getByRole("button", { name: /Photo 1/ })).toBeVisible({ timeout: 3000 });
+    await expect(page.getByRole("button", { name: /Foto 1/ })).toBeVisible({ timeout: 3000 });
     await fileInput.setInputFiles({ name: "photo2.jpg", mimeType: "image/jpeg", buffer: JPEG });
-    await expect(page.getByRole("button", { name: /Photo 2/ })).toBeVisible({ timeout: 3000 });
+    await expect(page.getByRole("button", { name: /Foto 2/ })).toBeVisible({ timeout: 3000 });
 
     // Advance to review and sync both.
     await page.getByRole("button", { name: "Lanjut →" }).click();
@@ -662,15 +662,15 @@ test.describe("Mobile-media QA", () => {
     // Capture a photo.
     const fileInput = page.locator('input[type="file"][accept="image/*"]');
     await fileInput.setInputFiles({ name: "photo1.jpg", mimeType: "image/jpeg", buffer: JPEG });
-    await expect(page.getByRole("button", { name: /Photo 1/ })).toBeVisible({ timeout: 3000 });
+    await expect(page.getByRole("button", { name: /Foto 1/ })).toBeVisible({ timeout: 3000 });
 
     // Open review overlay and delete.
-    await page.getByRole("button", { name: /Photo 1/ }).click();
-    await expect(page.getByRole("dialog", { name: "Photo review" })).toBeVisible({ timeout: 3000 });
+    await page.getByRole("button", { name: /Foto 1/ }).click();
+    await expect(page.getByRole("dialog", { name: "Tinjau foto" })).toBeVisible({ timeout: 3000 });
     await page.getByRole("button", { name: "Hapus" }).click();
 
     // Pending strip empty → no advance button and no photo thumbnails.
-    await expect(page.getByRole("button", { name: /Photo 1/ })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /Foto 1/ })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Lanjut →" })).toHaveCount(0);
   });
 
@@ -694,18 +694,18 @@ test.describe("Mobile-media QA", () => {
     // Capture a photo.
     const fileInput = page.locator('input[type="file"][accept="image/*"]');
     await fileInput.setInputFiles({ name: "photo1.jpg", mimeType: "image/jpeg", buffer: JPEG });
-    await expect(page.getByRole("button", { name: /Photo 1/ })).toBeVisible({ timeout: 3000 });
+    await expect(page.getByRole("button", { name: /Foto 1/ })).toBeVisible({ timeout: 3000 });
     await expect(page.getByText("4 / 5")).toBeVisible();
 
     // Open review and Retake.
-    await page.getByRole("button", { name: /Photo 1/ }).click();
-    const dialog = page.getByRole("dialog", { name: "Photo review" });
+    await page.getByRole("button", { name: /Foto 1/ }).click();
+    const dialog = page.getByRole("dialog", { name: "Tinjau foto" });
     await expect(dialog).toBeVisible({ timeout: 3000 });
     await dialog.getByRole("button", { name: "Ulangi" }).click();
 
     // Dialog closed, strip empty, no advance button, budget restored.
     await expect(dialog).toHaveCount(0);
-    await expect(page.getByRole("button", { name: /Photo 1/ })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /Foto 1/ })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Lanjut →" })).toHaveCount(0);
     await expect(page.getByText("5 / 5")).toBeVisible();
 
@@ -736,9 +736,9 @@ test.describe("Mobile-media QA", () => {
     // Capture 2 photos.
     const fileInput = page.locator('input[type="file"][accept="image/*"]');
     await fileInput.setInputFiles({ name: "photo1.jpg", mimeType: "image/jpeg", buffer: JPEG });
-    await expect(page.getByRole("button", { name: /Photo 1/ })).toBeVisible({ timeout: 3000 });
+    await expect(page.getByRole("button", { name: /Foto 1/ })).toBeVisible({ timeout: 3000 });
     await fileInput.setInputFiles({ name: "photo2.jpg", mimeType: "image/jpeg", buffer: JPEG });
-    await expect(page.getByRole("button", { name: /Photo 2/ })).toBeVisible({ timeout: 3000 });
+    await expect(page.getByRole("button", { name: /Foto 2/ })).toBeVisible({ timeout: 3000 });
 
     await page.getByRole("button", { name: "Lanjut →" }).click();
     await expect(page.getByRole("heading", { name: /^Foto kamu \(\d+\)$/ })).toBeVisible({ timeout: 5000 });
@@ -748,9 +748,9 @@ test.describe("Mobile-media QA", () => {
     await expect(page.getByRole("button", { name: "Mengirim foto…" })).toBeVisible({ timeout: 3000 });
 
     // No delete/retry on in-flight or confirmed items during the sync.
-    await expect(page.getByRole("button", { name: "Delete photo 1" })).toBeDisabled();
-    await expect(page.getByRole("button", { name: "Delete photo 2" })).toBeDisabled();
-    await expect(page.getByRole("button", { name: /Retry photo \d/ })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Hapus foto 1" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "Hapus foto 2" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: /Kirim ulang foto \d/ })).toHaveCount(0);
 
     // Sync completes → the deferred advance moves to the voice screen.
     await expect(page.getByRole("heading", { name: "Tinggalkan Pesan Suara" })).toBeVisible({ timeout: 5000 });

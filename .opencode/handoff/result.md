@@ -1,38 +1,41 @@
-﻿# T041 Result
+﻿# T043-R Result
 
 **Status:** COMPLETE
 
-## Files changed
+## Files changed (all in scope)
 
-- `components/guest-event-entry.tsx` (+49): fixes 1–5 (see below)
-- `hooks/use-camera.ts` (+8): fix 4b (capture teardown on dead stream)
+- `components/admin/admin-access.tsx`: "Share access"→"Bagikan akses", "Share event access."→"Bagikan akses acara.", guest-caption, scan caption, "URL publik" aria, "Salin link", "Cetak QR", "Link udah tersalin.", "Coba lagi", "Memuat detail akses", Shell eyebrow "Meja acara", offline/unavailable error copy.
+- `components/admin/admin-preview-dialog.tsx`: dialog aria + mono header "Foto · N dari M" (via typeLabel), "Telusuri foto", "Foto sebelumnya"/"Foto berikutnya", "Unduh"/"Mengunduh…", "Tutup pratinjau"/"Tutup", "Coba lagi" ×2, "Memuat media…", `Foto dari {name}` alt, `dari {name}` in status text.
+- `components/guest/screens/Capture.tsx`: "Jepret foto" (h2 + shutter), "Ganti kamera", `Sisa N dari M foto`, "Pilih foto" (aria+sr-only), "Pratinjau kamera", "Foto yang udah dijepret", `Foto N, {statusWord}` with new `photoStatusWord` map (belum terkirim/lagi dikirim/tersimpan/gagal terkirim/sesi habis), "Kirim ulang", "Tinjau foto" (sr-only h2 + img alt).
+- `components/guest/screens/PhotoReview.tsx`: "Foto yang udah dijepret", `Foto N` alt, `Hapus foto N`, `Kirim ulang foto N: gagal terkirim`.
+- `components/guest/screens/VoiceRecordingScreen.tsx`: "Stop rekaman"/"Rekam pesan suara".
+- `components/guest/audio-player.tsx` (in scope via "Play voice note" aria): "Pemutar pesan suara", "Jeda pesan suara"/"Putar pesan suara", "Geser pesan suara".
+- `components/guest-event-entry.tsx`: "Loading session usage"→"Memuat pemakaian sesi".
+- `e2e/mobile-media-qa.spec.ts`: all English aria selectors synced (Jepret foto, Foto 1/2 regex, Rekam pesan suara, Stop rekaman, Putar pesan suara, Kirim ulang foto, Hapus foto 1/2, Tinjau foto dialog, `video[aria-label='Pratinjau kamera']`, `button[aria-label^='Foto 1']`). Absence checks ("Too short"/"Keep recording…") left as-is (still valid).
+- `e2e/qr-qa.spec.ts`: "Bagikan akses acara.", "Salin link", "Cetak QR", "Link udah tersalin." ×2.
+- `e2e/print-qa.spec.ts`: "Bagikan akses acara.", "Salin link", "Cetak QR" ×2.
 
-## Fixes
-
-1. **Mic/voice-timer unmount leak** — unmount cleanup now calls `finishRecording()` + `stopVoiceTimer()` and aborts in-flight voice XHR. (Also `eslint-disable-next-line react-hooks/exhaustive-deps` added — cleanup references render-scoped functions with `[]` deps.)
-2. **syncPhotos race** — new `syncingRef` mutex; checked at entry, set before `setSyncing(true)`, cleared on the session-error early return and the normal completion path. Success/failure behavior unchanged.
-3. **start() double-submit** — `startingRef` guard (synchronous, closure-safe), set after the state guard passes, cleared on success return, end-of-try, and catch.
-4. **handleCapture / capture teardown** — `handleCapture` wraps `camera.capture()` in try/catch (fail soft). `use-camera.ts` `capture()` wraps `video.play()`; on rejection nulls `video.srcObject` and returns null instead of throwing.
-5. **Object-URL leaks** — `handleSessionExpired` revokes confirmed-photo URLs before `setPendingPhotos([])`; `onDeclineCarryOver` revokes all expired-photo URLs; `submitVoice` XHR tracked in `voiceXhrRef`, aborted on unmount + session expiry, `request.status === 0` guard prevents post-abort state clobber (e.g. expiry message overwritten by review-error).
+Not touched (per exclusions): admin-sign-in.tsx, admin-ui.tsx, admin-page-shell.tsx, component-catalog.html, smoke.spec.ts, admin-index.spec.ts, docs, hooks/use-camera.ts (renders no text).
 
 ## Validation
 
 - `npm run typecheck` — PASS
-- `npx vitest run` (alone, serialized) — PASS, 46 files / 374 tests
-- Focused test for fix #1 — SKIPPED: vitest environment is `node`, no jsdom/@testing-library in repo; adding a renderer dependency is out of scope. No existing guest-event-entry test harness.
-- E2E — not run (per contract)
+- `npx vitest run` (alone) — PASS, 46 files / 374 tests
+- E2E — NOT run (per contract; orchestrator runs after designer lane lands)
+- `git diff --check` — clean
 
 ## Failures
 
 None.
 
-## Risks
+## Risks / observations
 
-- Fix #1/#5 unmount cleanup not covered by an automated test (see above); behavior verified by code review only.
-- `syncingRef`/`startingRef` are manual ref guards — a missed reset on a future early-return path would wedge the guard. Both exit paths currently covered.
-- XHR abort relies on `status === 0` convention (per XHR spec abort fires error/abort, not load).
-- Note: repo test count is 374 (AGENTS.md baseline recorded 373) — one extra test exists upstream of this task; all pass.
+- **admin-dashboard.tsx still has English** despite "first wave done": Shell eyebrow "Event desk", Retry ×3, "Closing…"/"Close event", metric "Voice notes", "Newest first", "Search by guest name" label+placeholder, "Filter by media type" aria, empty-state strings, sr-only "Loading submissions…"/"Loading event". Outside T043-R scope — needs a lane (designer/owner) or orchestrator reconciliation. Left untouched to avoid collision.
+- `PreSession.tsx` img `alt="Unsaved draft"` (carry-over thumbnails) — outside T043-R file list; sweep gap if all guest alts must be Indonesian.
+- `e2e/guest-flow-perf.mjs` (manual perf harness, not a Playwright spec) still uses old English selectors ("Take photos", "Photo 1", "Record voice note", "Stop recording") — would break if executed against the new strings.
+- QR aria-labels ("QR code for event access"/"Printable QR code for event access") kept verbatim — "QR" loanword, e2e-asserted selectors (qr-qa/print-qa) unchanged.
+- Print-artifact caption "Scan to share your photos and voice notes." not present in admin-access markup — nothing to translate (print-qa's `toBeHidden` still passes, absent element counts as hidden).
 
 ## Next step
 
-Orchestrator: reconcile + commit. Librarian lane (DESIGN.md §5.6) separate; not touched here.
+Orchestrator: reconcile dashboard leftovers, run full e2e after designer lane lands, commit.

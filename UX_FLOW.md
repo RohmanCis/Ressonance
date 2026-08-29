@@ -42,7 +42,7 @@ QA companion to DESIGN.md (canonical design system) and docs/TECHNICAL_DESIGN.md
 
 ### 6. DONE
 
-- Quiet thank-you: event title, brief confirmation. No further actions. A new session requires Start again.
+- Thermal-print sequence (T035–T038): loading line → camera illustration → keepsake photo prints from the film slot (5s reveal) → thank-you block + settle → optional keepsake download card. Event title is sr-only. No further actions; a new session requires Start again.
 
 ## Guest Edge Cases (QA checklist)
 
@@ -51,10 +51,10 @@ QA companion to DESIGN.md (canonical design system) and docs/TECHNICAL_DESIGN.md
 | Camera denied/unsupported | Deny camera permission | File-selection fallback; pending strip, counter, Lanjut remain usable; no photo implied submitted |
 | No frame selected | Skip frame selection | Capture proceeds unframed; photos are plain 9:16 |
 | Frame asset fails | (Server/asset fault) | Capture continues unframed — never blocked |
-| Audio too short | Record < 5s, stop | "Too short" hint; server remains the authority on acceptance |
+| Audio too short | Record < 5s, stop | "Terlalu singkat" hint; server remains the authority on acceptance |
 | Audio over 30s | Keep recording | Auto-stop at 30s; review state |
 | Invalid name | Enter an invalid name on Landing | Field error; name preserved; correct and retry |
-| Session expired | Wait 30 min (or cookie cleared) | Session authority discarded; unsent photos marked "not saved"; Start prompt; explicit carry-over offered on new Start |
+| Session expired | Wait 30 min (or cookie cleared) | Session authority discarded; unsent photos marked "belum tersimpan"; Start prompt; explicit carry-over offered on new Start |
 | Event closed (before Start) | Open a CLOSED event link | Event viewable; Start and submissions disabled |
 | Event closed (after Start) | Admin closes during session | Submission actions disabled with explanation; pending captures visible but not submittable |
 | Rate limited | Rapid retries | Retry-after guidance; deliberate retry only |
@@ -62,10 +62,10 @@ QA companion to DESIGN.md (canonical design system) and docs/TECHNICAL_DESIGN.md
 
 ## Admin Flow
 
-1. **Sign-in** — email/password at `/admin/sign-in`.
-2. **Event Index** (`/admin`) — list of own events; ACTIVE event prominent; Open / Access-QR actions; create-new-event action.
-3. **Event dashboard** — event title, status, Close action (while ACTIVE), Access/QR, guest-name search, newest-first submission timeline grouped by guest session; photo preview dialog, voice playback, individual downloads.
-4. **Event creation** — title field; one ACTIVE event allowed at a time (`ACTIVE_EVENT_EXISTS` points to the existing event).
-5. **Access/QR** — public URL + QR block with copy and print.
+1. **Sign-in** — email/kata sandi at `/admin/sign-in` ("Masuk").
+2. **Event Index** (`/admin`) — list of own events; ACTIVE event prominent ("Aktif"); Buka / Akses-QR actions; "Buat acara baru" action.
+3. **Event dashboard** — event title, status ("Aktif"/"Selesai"), "Tutup acara" action (while ACTIVE), "Akses / QR", guest-name search ("Cari nama tamu"), newest-first submission timeline grouped by guest session; photo preview dialog, voice playback, individual downloads ("Unduh").
+4. **Event creation** — "Nama acara" field; one ACTIVE event allowed at a time (`ACTIVE_EVENT_EXISTS` points to the existing event).
+5. **Access/QR** — public URL + QR block with "Salin link" and "Cetak QR".
 
 Constraints (docs/TECHNICAL_DESIGN.md): all limits, validation, and authorization are backend-authoritative; media is private with short-lived signed URLs; closed events stay viewable but reject submissions; 7-day retention after CLOSED with automatic cleanup.

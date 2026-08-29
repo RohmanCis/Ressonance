@@ -31,14 +31,14 @@ test("Print QR: exactly one page, bare QR only, no chrome", async ({ page }) => 
 
   // Override window.print (no-op) so the native dialog never blocks.
   await page.evaluate(() => { (window as any).print = () => {}; });
-  await page.getByRole("button", { name: "Print QR" }).click();
+  await page.getByRole("button", { name: "Cetak QR" }).click();
 
   await page.emulateMedia({ media: "print" });
 
   // Admin chrome hidden in print.
   await expect(page.locator("header")).toBeHidden();
-  await expect(page.getByText("Share event access.", { exact: true })).toBeHidden();
-  await expect(page.getByText("Copy link", { exact: true })).toBeHidden();
+  await expect(page.getByText("Bagikan akses acara.", { exact: true })).toBeHidden();
+  await expect(page.getByText("Salin link", { exact: true })).toBeHidden();
   await expect(page.locator("#public-url")).toBeHidden();
 
   // Bare QR visible; no title/URL/instruction text on the artifact.
@@ -63,8 +63,8 @@ test("Action row clean at mobile 375px", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto(`/admin/events/${EVENT_ID}/access`, { waitUntil: "networkidle" });
 
-  const copyBtn = page.getByRole("button", { name: "Copy link" });
-  const printBtn = page.getByRole("button", { name: "Print QR" });
+  const copyBtn = page.getByRole("button", { name: "Salin link" });
+  const printBtn = page.getByRole("button", { name: "Cetak QR" });
   await expect(copyBtn).toBeVisible();
   await expect(printBtn).toBeVisible();
 

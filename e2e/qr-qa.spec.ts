@@ -20,7 +20,7 @@ test("QR renders, encodes exact public URL, copy/print intact (desktop)", async 
   await page.goto(`/admin/events/${EVENT_ID}/access`, { waitUntil: "networkidle" });
 
   // Page heading visible.
-  await expect(page.getByRole("heading", { name: "Share event access." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Bagikan akses acara." })).toBeVisible();
 
   // SVG rendered with correct accessibility.
   const svg = page.locator('svg[aria-label="QR code for event access"]');
@@ -48,8 +48,8 @@ test("QR renders, encodes exact public URL, copy/print intact (desktop)", async 
   await expect(urlInput).toHaveValue(EXPECTED_URL);
 
   // Copy + print buttons present (single Print QR action; no menu).
-  await expect(page.getByRole("button", { name: "Copy link" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Print QR" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Salin link" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Cetak QR" })).toBeVisible();
 
   // No private/secret/signed URL anywhere on page.
   const bodyText = await page.locator("body").innerText();
@@ -98,12 +98,12 @@ test("copy button provides feedback", async ({ page }) => {
   // Mock clipboard.
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
 
-  const copyBtn = page.getByRole("button", { name: "Copy link" });
+  const copyBtn = page.getByRole("button", { name: "Salin link" });
   await copyBtn.click();
 
   // Inline copied status appears, then auto-clears.
-  await expect(page.getByText("Link copied to your clipboard.")).toBeVisible({ timeout: 3000 });
-  await expect(page.getByText("Link copied to your clipboard.")).toBeHidden({ timeout: 4000 });
+  await expect(page.getByText("Link udah tersalin.")).toBeVisible({ timeout: 3000 });
+  await expect(page.getByText("Link udah tersalin.")).toBeHidden({ timeout: 4000 });
 
   // Clipboard contains the exact URL.
   const clipText = await page.evaluate(() => navigator.clipboard.readText());

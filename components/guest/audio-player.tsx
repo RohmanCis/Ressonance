@@ -44,7 +44,7 @@ export function AudioPlayer({ src, duration }: { src: string; duration: number }
         ref={audioRef}
         src={src}
         preload="metadata"
-        aria-label="Voice note playback"
+        aria-label="Pemutar pesan suara"
         className="hidden"
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
@@ -54,7 +54,7 @@ export function AudioPlayer({ src, duration }: { src: string; duration: number }
       <button
         type="button"
         onClick={toggle}
-        aria-label={playing ? "Pause voice note" : "Play voice note"}
+        aria-label={playing ? "Jeda pesan suara" : "Putar pesan suara"}
         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-accent transition-transform duration-fast active:scale-[0.92] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
       >
         {playing ? (
@@ -82,7 +82,7 @@ export function AudioPlayer({ src, duration }: { src: string; duration: number }
             if (audio) audio.currentTime = next;
             setElapsed(next);
           }}
-          aria-label="Seek voice note"
+          aria-label="Geser pesan suara"
           className="peer absolute inset-0 h-full w-full cursor-pointer opacity-0"
         />
         <span

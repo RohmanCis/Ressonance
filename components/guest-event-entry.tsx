@@ -569,7 +569,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
               {event!.title}
             </h1>
           </header>
-          <div role="status" aria-label="Loading session usage" className="mt-8 space-y-4">
+          <div role="status" aria-label="Memuat pemakaian sesi" className="mt-8 space-y-4">
             <div className="h-28 animate-pulse rounded-lg bg-bg-surface" />
             <div className="h-32 animate-pulse rounded-lg bg-bg-surface" />
             <p className="text-sm text-text-muted">Ngecek sesi kamu…</p>

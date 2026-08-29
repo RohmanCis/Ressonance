@@ -74,7 +74,7 @@ export function PhotoReview({
           <section className="relative overflow-hidden rounded-2xl bg-bg-surface">
             <div className="relative p-4">
               <p className="font-mono text-xs tracking-widest text-text-muted">HASIL JEPRETAN</p>
-              <ul className="mt-3 grid grid-cols-3 gap-2" aria-label="Captured photos">
+              <ul className="mt-3 grid grid-cols-3 gap-2" aria-label="Foto yang udah dijepret">
             {photos.map((photo, index) => (
               <li
                 key={photo.id}
@@ -84,7 +84,7 @@ export function PhotoReview({
                 <div className="relative aspect-square overflow-hidden rounded-lg border border-border bg-bg-surface">
                   <img
                     src={photo.previewUrl}
-                    alt={`Photo ${index + 1}`}
+                    alt={`Foto ${index + 1}`}
                     className="h-full w-full object-cover"
                   />
                   {photo.status === "uploading" && <PendingUploadingRing />}
@@ -101,7 +101,7 @@ export function PhotoReview({
                   type="button"
                   onClick={() => onDeletePhoto(photo.id)}
                   disabled={!canDeletePhoto(photo.status)}
-                  aria-label={`Delete photo ${index + 1}`}
+                  aria-label={`Hapus foto ${index + 1}`}
                   className="group absolute -right-1 -top-1 flex h-11 w-11 items-start justify-end rounded-full focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-45"
                 >
                   <span
@@ -115,7 +115,7 @@ export function PhotoReview({
                   <button
                     type="button"
                     onClick={() => onRetryPhoto(photo.id)}
-                    aria-label={`Retry photo ${index + 1}: ${photo.errorMessage ?? "upload failed"}`}
+                    aria-label={`Kirim ulang foto ${index + 1}: ${photo.errorMessage ?? "gagal terkirim"}`}
                     className="group absolute -left-1 -top-1 flex h-11 w-11 items-start justify-start rounded-full focus-visible:outline-none"
                   >
                     <span

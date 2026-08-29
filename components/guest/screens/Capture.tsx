@@ -16,6 +16,16 @@ type SessionData = Usage & { guest_name: string | null };
 
 const PRE_EXPIRY_WARN_SECONDS = 300;
 
+// Status → Indonesian aria word for the pending-strip thumbnails (mirrors the
+// statusPill vocabulary; uploading reads "lagi dikirim" per the T043 sweep).
+const photoStatusWord: Record<PendingPhoto["status"], string> = {
+  pending: "belum terkirim",
+  uploading: "lagi dikirim",
+  confirmed: "tersimpan",
+  error: "gagal terkirim",
+  expired: "sesi habis",
+};
+
 /**
  * CAPTURE — 3-zone photobooth studio (DESIGN.md §5.3, owner-ratified
  * 2026-08-21): minimal top bar (camera switch + DM Mono counter), isolated
@@ -98,7 +108,7 @@ export function Capture({
         className="flex h-dvh max-h-dvh w-full flex-col overflow-hidden"
       >
         <h2 id="capture-heading" ref={headingRef} tabIndex={-1} className="sr-only outline-none">
-          Take photos
+          Jepret foto
         </h2>
 
         {/* Ambient backdrop — blurred clone of the active frame art behind all
@@ -122,7 +132,7 @@ export function Capture({
                 type="button"
                 onClick={camera.switchCamera}
                 className="flex h-11 w-11 items-center justify-center rounded-full bg-bg-base/60 backdrop-blur-md border border-border/60 text-sm font-semibold text-text-primary shadow-lg transition active:scale-95 focus-visible:outline-2 focus-visible:outline-accent"
-                aria-label="Switch camera"
+                aria-label="Ganti kamera"
               >
                 <RotateCcw className="h-5 w-5" aria-hidden="true" />
               </button>
@@ -135,7 +145,7 @@ export function Capture({
           <p
             className="flex h-10 min-w-10 items-center justify-center rounded-full bg-bg-base/60 backdrop-blur-md border border-border/60 px-3 font-mono text-xs tabular-nums text-text-primary shadow-lg"
             aria-live="polite"
-            aria-label={`${budgetRemaining} of ${totalBudget} photos remaining`}
+            aria-label={`Sisa ${budgetRemaining} dari ${totalBudget} foto`}
           >
             {budgetRemaining} / {totalBudget}
           </p>
@@ -200,10 +210,10 @@ export function Capture({
             {/* Left Slot: Icon File Picker Button */}
             <div className="flex-1 flex justify-start">
               <label
-                aria-label="Choose a photo"
+                aria-label="Pilih foto"
                 className="flex h-11 w-11 items-center justify-center rounded-xl bg-bg-base/70 backdrop-blur-md border border-border/70 text-text-secondary transition active:scale-95 cursor-pointer hover:text-text-primary focus-within:outline-2 focus-within:outline-accent shadow-lg"
               >
-                <span className="sr-only">Choose a photo</span>
+                <span className="sr-only">Pilih foto</span>
                 <ImagePlus className="h-5 w-5" aria-hidden="true" />
                 <input
                   className="sr-only"
@@ -222,7 +232,7 @@ export function Capture({
                 onClick={handleShutter}
                 disabled={shutterDisabled}
                 className="h-[72px] w-[72px] shrink-0 rounded-full border-4 border-bg-base bg-accent shadow-[0_0_20px_color-mix(in_srgb,var(--accent)_45%,transparent),0_0_40px_color-mix(in_srgb,var(--accent)_20%,transparent)] transition duration-fast ease-out hover:shadow-[0_0_28px_color-mix(in_srgb,var(--accent)_65%,transparent)] active:scale-[0.92] focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-40"
-                aria-label="Take photo"
+                aria-label="Jepret foto"
               />
             </div>
 
@@ -315,7 +325,7 @@ function CameraViewfinder({
         playsInline
         muted
         className="absolute inset-0 h-full w-full object-cover"
-        aria-label="Camera preview"
+        aria-label="Pratinjau kamera"
       />
       {/* object-cover on the 9:16 asset inside the 9:16 viewport box matches the
           compositor's full-canvas draw exactly (WYSIWYG, DESIGN.md §5.3). */}
@@ -345,14 +355,14 @@ function PendingStrip({
     // the scrollport 28px of top room so the retry button's enlarged hit
     // zone (which overhangs the thumbnail upward) is not clipped by
     // overflow-x-auto (overflow-y computes to auto and clips top overhang).
-    <div className="-mt-7 flex gap-2 overflow-x-auto px-2 pt-7 pb-1 max-w-full" role="list" aria-label="Captured photos">
+    <div className="-mt-7 flex gap-2 overflow-x-auto px-2 pt-7 pb-1 max-w-full" role="list" aria-label="Foto yang udah dijepret">
       {photos.map((photo, index) => (
         <div key={photo.id} role="listitem" className="relative shrink-0 animate-develop">
           <button
             type="button"
             onClick={() => onReview(index)}
             className="relative block h-12 w-12 overflow-hidden rounded-lg border-2 border-border/80 bg-bg-surface shadow-md focus-visible:outline-2 focus-visible:outline-accent"
-            aria-label={`Photo ${index + 1}, ${photo.status}`}
+            aria-label={`Foto ${index + 1}, ${photoStatusWord[photo.status]}`}
           >
             <img src={photo.previewUrl} alt="" className="h-full w-full object-cover" />
             {photo.status === "uploading" && <PendingUploadingRing />}
@@ -368,7 +378,7 @@ function PendingStrip({
               type="button"
               onClick={() => onRetry(photo.id)}
               className="group absolute -right-1 -top-7 flex h-11 w-11 items-end justify-end focus-visible:outline-none"
-              aria-label="Retry upload"
+              aria-label="Kirim ulang"
             >
               <span
                 aria-hidden="true"
@@ -409,12 +419,12 @@ function ReviewOverlay({
         aria-labelledby="review-overlay-title"
         className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-bg-base/95 backdrop-blur-md border-0 rounded-none max-w-full max-h-full w-full h-full p-4 gap-0 outline-none translate-x-0 translate-y-0 sm:max-w-full"
       >
-        <h2 id="review-overlay-title" className="sr-only">Photo review</h2>
+        <h2 id="review-overlay-title" className="sr-only">Tinjau foto</h2>
 
         {/* Hero photo — exact 9:16, uncropped 1080×1920 composited capture.
             Status pill is absolutely positioned inside the photo box. */}
         <div className="relative aspect-[9/16] w-full max-w-[min(85vw,calc(72dvh*9/16))] overflow-hidden rounded-2xl border border-border/40 bg-bg-base shadow-[0_16px_60px_var(--overlay)] mx-auto">
-          <img src={photo.previewUrl} alt="Photo review" className="absolute inset-0 h-full w-full object-contain" />
+          <img src={photo.previewUrl} alt="Tinjau foto" className="absolute inset-0 h-full w-full object-contain" />
 
           {/* Status pill — strings verbatim (e2e/a11y locked) */}
           <p className="absolute bottom-3 left-1/2 -translate-x-1/2 flex w-fit items-center gap-2 rounded-full border border-border/60 bg-bg-elevated/70 px-3 py-1 text-xs backdrop-blur-md">

@@ -139,15 +139,15 @@ async function main() {
   // 3. Frame select → Capture (no frame)
   await flow.startTimespan({ stepName: "3. Frame select → Capture" });
   await clickByText(page, "button", "Tanpa Frame, lanjut");
-  await waitText(page, "Take photos");
+  await waitText(page, "Jepret foto");
   await flow.endTimespan();
 
   // 4. Capture: shutter ×2 (fake camera device)
   await flow.startTimespan({ stepName: "4. Capture (shutter ×2)" });
-  await clickByText(page, "button", "Take photo");
-  await waitText(page, "Photo 1");
-  await clickByText(page, "button", "Take photo");
-  await waitText(page, "Photo 2");
+  await clickByText(page, "button", "Jepret foto");
+  await waitText(page, "Foto 1");
+  await clickByText(page, "button", "Jepret foto");
+  await waitText(page, "Foto 2");
   await flow.endTimespan();
 
   // 5. Review + sync
@@ -160,10 +160,10 @@ async function main() {
 
   // 6. Voice: record 1.6s (mocked backend accepts) → submit → Done
   await flow.startTimespan({ stepName: "6. Voice record + submit → Done" });
-  await clickByText(page, "button", "Record voice note");
+  await clickByText(page, "button", "Rekam pesan suara");
   await waitText(page, "Merekam");
   await new Promise((r) => setTimeout(r, 1600));
-  await clickByText(page, "button", "Stop recording");
+  await clickByText(page, "button", "Stop rekaman");
   await waitText(page, "Durasi:");
   await clickByText(page, "button", "Kirim Pesan Suara");
   await waitTextGone(page, "Tinggalkan Pesan Suara");

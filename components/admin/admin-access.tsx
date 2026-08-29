@@ -34,7 +34,7 @@ export function AdminAccess({ publicId }: { publicId: string }) {
 
   return (
     <AuthGate>
-      <Shell eyebrow="Event desk">
+      <Shell eyebrow="Meja acara">
         {/* ponytail: page-scoped print isolation (hide chrome, neutralize Shell geometry); promote to a print stylesheet if more pages ship print artifacts. */}
         <style>{`@page { margin: 0; }
 @media print {
@@ -43,17 +43,17 @@ export function AdminAccess({ publicId }: { publicId: string }) {
   main > div { max-width: none !important; }
 }`}</style>
         <div className="mx-auto max-w-md print:hidden">
-          <AdminPageShell eyebrow="Share access" title="Share event access.">
-            <p className="mt-3 text-sm text-text-secondary leading-relaxed">Guests can scan this access card or open the public link.</p>
+          <AdminPageShell eyebrow="Bagikan akses" title="Bagikan akses acara.">
+            <p className="mt-3 text-sm text-text-secondary leading-relaxed">Tamu bisa scan kartus ini atau buka link publiknya.</p>
             {error ? (
               <Status
                 error
-                message={error === "OFFLINE" ? "Access details are unavailable offline." : "This access card is unavailable."}
-                action={<Button secondary onClick={() => window.location.reload()}>Retry</Button>}
+                message={error === "OFFLINE" ? "Detail akses nggak tersedia offline." : "Kartu akses ini nggak tersedia."}
+                action={<Button secondary onClick={() => window.location.reload()}>Coba lagi</Button>}
               />
             ) : !url ? (
               <div className="mt-8">
-                <Busy label="Loading access details" />
+                <Busy label="Memuat detail akses" />
               </div>
             ) : (
               <div className="mt-8 rounded-2xl border border-border bg-bg-surface/85 p-5 backdrop-blur-xl">
@@ -61,27 +61,27 @@ export function AdminAccess({ publicId }: { publicId: string }) {
                 <div className="mx-auto w-40">
                   <QRCodeSVG value={url} bgColor="#FFFFFF" fgColor="#000000" includeMargin aria-label="QR code for event access" className="h-full w-full" />
                 </div>
-                <p className="mt-4 text-center text-xs text-text-muted">Scan with a phone camera to open the guest page, or share the public link.</p>
+                <p className="mt-4 text-center text-xs text-text-muted">Scan pakai kamera HP buat buka halaman tamu, atau bagikan link publiknya.</p>
                 {/* Row 2: URL underline display */}
                 <input
                   id="public-url"
                   readOnly
                   value={url}
-                  aria-label="Public URL"
+                  aria-label="URL publik"
                   className="mt-5 w-full truncate border-0 border-b border-border bg-transparent rounded-none pb-1 font-mono text-xs text-text-muted pointer-events-none select-all focus:border-accent focus:outline-none"
                 />
                 {/* Row 3: actions */}
                 <div className="mt-5 flex gap-3">
                   <button type="button" onClick={copy} className={`gold-foil-btn h-12 flex-1 rounded-xl px-4 text-sm font-semibold transition duration-fast active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 ${focusRing}`}>
-                    Copy link
+                    Salin link
                   </button>
                   <button type="button" onClick={() => window.print()} className={`flex h-12 flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-bg-surface px-4 text-sm font-semibold text-text-primary transition duration-fast hover:bg-bg-elevated disabled:cursor-not-allowed disabled:opacity-45 ${focusRing}`}>
-                    Print QR
+                    Cetak QR
                   </button>
                 </div>
                 {copied && (
                   <p role="status" className="mt-3 text-center text-xs text-text-muted">
-                    Link copied to your clipboard.
+                    Link udah tersalin.
                   </p>
                 )}
               </div>

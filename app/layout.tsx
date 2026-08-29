@@ -44,7 +44,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="id"
       className={`${cormorant.variable} ${dmSans.variable} ${dmMono.variable} ${pinyon.variable}`}
     >
       <body className="font-sans">{children}</body>

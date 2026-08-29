@@ -23,9 +23,9 @@ const linkRowAction = `inline-flex min-h-10 items-center justify-center rounded-
 const rowLink = `inline-flex min-h-12 items-center text-xs font-medium text-text-secondary underline-offset-4 transition duration-fast hover:text-text-primary hover:underline ${focusRing}`;
 
 function errorText(code: string) {
-  if (code === "OFFLINE") return "You appear offline. Check your connection, then retry.";
-  if (code === "RATE_LIMITED") return "Too many requests. Try again later.";
-  return "The event list could not be loaded. Retry safely.";
+  if (code === "OFFLINE") return "Kamu lagi offline. Cek koneksimu, lalu coba lagi.";
+  if (code === "RATE_LIMITED") return "Terlalu banyak permintaan. Coba lagi nanti.";
+  return "Daftar acaranya gagal dimuat. Aman buat coba lagi.";
 }
 
 export function AdminEventIndex() {
@@ -56,28 +56,28 @@ export function AdminEventIndex() {
   const history = events?.filter((event) => event.status !== "ACTIVE") ?? [];
 
   return (
-    <Shell eyebrow="Event desk">
+    <Shell eyebrow="Meja acara">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <AdminPageShell eyebrow="Event index" title="Your events." />
+        <AdminPageShell eyebrow="Daftar acara" title="Acara kamu." />
         <Link href="/admin/events/new" className={linkGold}>
-          Create new event
+          Buat acara baru
         </Link>
       </div>
 
       {error ? (
-        <Status error message={errorText(error)} action={<Button secondary onClick={load}>Retry</Button>} />
+        <Status error message={errorText(error)} action={<Button secondary onClick={load}>Coba lagi</Button>} />
       ) : events === null ? (
         <div className="mt-8">
-          <Busy label="Loading events" />
+          <Busy label="Memuat acara" />
         </div>
       ) : events.length === 0 ? (
-        <p className="py-8 text-center text-sm text-text-muted">No events yet. Create an event to start collecting photos and voice notes.</p>
+        <p className="py-8 text-center text-sm text-text-muted">Belum ada acara. Buat acara buat mulai kumpulin foto dan pesan suara.</p>
       ) : (
         <div className="mt-8 space-y-10">
           {active && (
             <section aria-labelledby="active-event-heading">
               <h2 id="active-event-heading" className="text-xs font-medium tracking-[0.04em] text-text-muted">
-                Active event
+                Acara aktif
               </h2>
               {/* DESIGN.md §6/§2: ACTIVE hero command card — ambient gold glow behind,
                   gold left-edge marker + live dot retained (e2e-locked visual). */}
@@ -87,12 +87,12 @@ export function AdminEventIndex() {
                   <div className="min-w-0">
                     <p className="inline-flex items-center gap-1.5 text-xs font-medium text-text-muted">
                       <span aria-hidden="true" className="inline-block h-2 w-2 rounded-full bg-accent motion-safe:animate-pulse" />
-                      Active
+                      Aktif
                     </p>
                     <h3 className="mt-1.5 truncate font-display text-2xl font-semibold leading-tight tracking-tight text-text-primary">{active.title}</h3>
                     {active.created_at && (
                       <p className="mt-1.5 font-mono text-xs text-text-muted">
-                        Opened{" "}
+                        Dibuka{" "}
                         <time dateTime={active.created_at} className="tabular-nums">
                           {fmtFull(active.created_at)}
                         </time>
@@ -101,10 +101,10 @@ export function AdminEventIndex() {
                   </div>
                   <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
                     <Link href={`/admin/events/${active.public_id}`} className={linkRowAction}>
-                      Open
+                      Buka
                     </Link>
                     <Link href={`/admin/events/${active.public_id}/access`} className={linkSecondary}>
-                      Access / QR
+                      Akses / QR
                     </Link>
                   </div>
                 </div>
@@ -114,7 +114,7 @@ export function AdminEventIndex() {
           {history.length > 0 && (
             <section aria-labelledby="past-events-heading">
               <h2 id="past-events-heading" className="text-xs font-medium tracking-[0.04em] text-text-muted">
-                Past events
+                Acara sebelumnya
               </h2>
               <ul className="mt-3 grid gap-3">
                 {history.map((event) => (
@@ -124,7 +124,7 @@ export function AdminEventIndex() {
                       <p className="mt-0.5 font-mono text-xs text-text-muted">
                         {event.created_at && (
                           <>
-                            Opened{" "}
+                            Dibuka{" "}
                             <time dateTime={event.created_at} className="tabular-nums">
                               {fmtFull(event.created_at)}
                             </time>
@@ -132,7 +132,7 @@ export function AdminEventIndex() {
                         )}
                         {event.closed_at && (
                           <>
-                            {" · "}Closed{" "}
+                            {" · "}Ditutup{" "}
                             <time dateTime={event.closed_at} className="tabular-nums">
                               {fmtFull(event.closed_at)}
                             </time>
@@ -141,9 +141,9 @@ export function AdminEventIndex() {
                       </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-3">
-                      <span className="text-xs text-text-muted">Closed</span>
+                      <span className="text-xs text-text-muted">Selesai</span>
                       <Link href={`/admin/events/${event.public_id}`} className={rowLink}>
-                        Open
+                        Buka
                       </Link>
                     </div>
                   </li>

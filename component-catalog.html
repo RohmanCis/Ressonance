@@ -364,7 +364,7 @@ body {
           <p class="text-xs font-medium tracking-[0.04em] text-text-muted">Masuk acara</p>
           <h1 class="mt-3 font-display text-4xl font-semibold leading-tight tracking-tight">Rijal &amp; Cindi</h1>
         </header>
-        <div role="status" aria-label="Loading session usage" class="mt-8 space-y-4">
+        <div role="status" aria-label="Memuat pemakaian sesi" class="mt-8 space-y-4">
           <div class="h-28 animate-pulse rounded-lg bg-bg-surface"></div>
           <div class="h-32 animate-pulse rounded-lg bg-bg-surface"></div>
           <p class="text-sm text-text-muted">Ngecek sesi kamu…</p>
@@ -459,7 +459,7 @@ body {
     <div class="stage border border-border h-[660px]">
       <main class="bg-bg-base text-text-primary select-none">
         <section aria-labelledby="capture-heading" class="flex h-dvh max-h-dvh w-full flex-col overflow-hidden">
-          <h2 id="capture-heading" tabindex="-1" class="sr-only outline-none">Take photos</h2>
+          <h2 id="capture-heading" tabindex="-1" class="sr-only outline-none">Jepret foto</h2>
           <!-- ambient blurred frame backdrop -->
           <div aria-hidden="true" class="absolute inset-0 z-0 pointer-events-none">
             <div class="absolute inset-0 h-full w-full photo-ph blur-[80px] opacity-35 scale-125"></div>
@@ -468,11 +468,11 @@ body {
           <!-- ZONE 1 — top bar -->
           <div class="relative z-10 flex shrink-0 items-center justify-between gap-2 px-4 pb-2 pt-[calc(0.75rem+env(safe-area-inset-top))]">
             <div class="flex items-center">
-              <button type="button" class="flex h-11 w-11 items-center justify-center rounded-full bg-bg-base/60 backdrop-blur-md border border-border/60 text-sm font-semibold text-text-primary shadow-lg transition active:scale-95 focus-visible:outline-2 focus-visible:outline-accent" aria-label="Switch camera">
+              <button type="button" class="flex h-11 w-11 items-center justify-center rounded-full bg-bg-base/60 backdrop-blur-md border border-border/60 text-sm font-semibold text-text-primary shadow-lg transition active:scale-95 focus-visible:outline-2 focus-visible:outline-accent" aria-label="Ganti kamera">
                 <svg class="h-5 w-5" aria-hidden="true"><use href="#i-rotate"/></svg>
               </button>
             </div>
-            <p class="flex h-10 min-w-10 items-center justify-center rounded-full bg-bg-base/60 backdrop-blur-md border border-border/60 px-3 font-mono text-xs tabular-nums text-text-primary shadow-lg" aria-live="polite" aria-label="3 of 5 photos remaining">3 / 5</p>
+            <p class="flex h-10 min-w-10 items-center justify-center rounded-full bg-bg-base/60 backdrop-blur-md border border-border/60 px-3 font-mono text-xs tabular-nums text-text-primary shadow-lg" aria-live="polite" aria-label="Sisa 3 dari 5 foto">3 / 5</p>
           </div>
           <!-- ZONE 2 — 9:16 viewport -->
           <div class="relative z-10 flex min-h-0 flex-1 items-center justify-center px-2 pb-2 [container-type:size]">
@@ -487,15 +487,15 @@ body {
           <!-- ZONE 3 — bottom dock -->
           <div class="relative z-10 shrink-0 space-y-2.5 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-2">
             <div class="flex justify-center">
-              <div class="-mt-7 flex gap-2 overflow-x-auto px-2 pt-7 pb-1 max-w-full" role="list" aria-label="Captured photos">
+              <div class="-mt-7 flex gap-2 overflow-x-auto px-2 pt-7 pb-1 max-w-full" role="list" aria-label="Foto yang udah dijepret">
                 <div role="listitem" class="relative shrink-0 animate-develop">
-                  <button type="button" class="relative block h-12 w-12 overflow-hidden rounded-lg border-2 border-border/80 bg-bg-surface shadow-md focus-visible:outline-2 focus-visible:outline-accent" aria-label="Photo 1, confirmed">
+                  <button type="button" class="relative block h-12 w-12 overflow-hidden rounded-lg border-2 border-border/80 bg-bg-surface shadow-md focus-visible:outline-2 focus-visible:outline-accent" aria-label="Foto 1, tersimpan">
                     <span class="block h-full w-full object-cover photo-ph"></span>
                   </button>
                   <span class="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-success text-xs font-bold text-bg-base shadow-sm" aria-hidden="true">✓</span>
                 </div>
                 <div role="listitem" class="relative shrink-0 animate-develop">
-                  <button type="button" class="relative block h-12 w-12 overflow-hidden rounded-lg border-2 border-border/80 bg-bg-surface shadow-md focus-visible:outline-2 focus-visible:outline-accent" aria-label="Photo 2, uploading">
+                  <button type="button" class="relative block h-12 w-12 overflow-hidden rounded-lg border-2 border-border/80 bg-bg-surface shadow-md focus-visible:outline-2 focus-visible:outline-accent" aria-label="Foto 2, lagi dikirim">
                     <span class="block h-full w-full object-cover photo-ph-3"></span>
                     <span aria-hidden="true" class="pointer-events-none absolute inset-0 flex items-center justify-center bg-bg-base/40">
                       <span class="h-6 w-6 animate-spin rounded-full border-2 border-text-primary/25 border-t-accent"></span>
@@ -507,13 +507,13 @@ body {
             </div>
             <div class="flex items-center justify-between gap-3 max-w-sm mx-auto w-full">
               <div class="flex-1 flex justify-start">
-                <label aria-label="Choose a photo" class="flex h-11 w-11 items-center justify-center rounded-xl bg-bg-base/70 backdrop-blur-md border border-border/70 text-text-secondary transition active:scale-95 cursor-pointer hover:text-text-primary focus-within:outline-2 focus-within:outline-accent shadow-lg">
-                  <span class="sr-only">Choose a photo</span>
+                <label aria-label="Pilih foto" class="flex h-11 w-11 items-center justify-center rounded-xl bg-bg-base/70 backdrop-blur-md border border-border/70 text-text-secondary transition active:scale-95 cursor-pointer hover:text-text-primary focus-within:outline-2 focus-within:outline-accent shadow-lg">
+                  <span class="sr-only">Pilih foto</span>
                   <svg class="h-5 w-5" aria-hidden="true"><use href="#i-image-plus"/></svg>
                 </label>
               </div>
               <div class="flex flex-col items-center justify-center shrink-0">
-                <button type="button" class="h-[72px] w-[72px] shrink-0 rounded-full border-4 border-bg-base bg-accent shadow-[0_0_20px_color-mix(in_srgb,var(--accent)_45%,transparent),0_0_40px_color-mix(in_srgb,var(--accent)_20%,transparent)] transition duration-fast ease-out hover:shadow-[0_0_28px_color-mix(in_srgb,var(--accent)_65%,transparent)] active:scale-[0.92] focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-40" aria-label="Take photo"></button>
+                <button type="button" class="h-[72px] w-[72px] shrink-0 rounded-full border-4 border-bg-base bg-accent shadow-[0_0_20px_color-mix(in_srgb,var(--accent)_45%,transparent),0_0_40px_color-mix(in_srgb,var(--accent)_20%,transparent)] transition duration-fast ease-out hover:shadow-[0_0_28px_color-mix(in_srgb,var(--accent)_65%,transparent)] active:scale-[0.92] focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-40" aria-label="Jepret foto"></button>
               </div>
               <div class="flex-1 flex justify-end">
                 <button type="button" class="flex h-11 items-center justify-center rounded-xl bg-accent px-4 text-xs font-bold text-on-accent transition duration-fast hover:brightness-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-45 shadow-lg">Lanjut →</button>
@@ -546,7 +546,7 @@ body {
     <p class="mb-3 text-xs text-text-muted">Full-screen blurred dialog: 9:16 hero photo with status pill, Kembali / Ulangi (gold-foil) / Hapus actions. Rendered static-open.</p>
     <div class="stage border border-border h-[560px]">
       <div class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-bg-base/95 backdrop-blur-md border-0 rounded-none max-w-full max-h-full w-full h-full p-4 gap-0 outline-none translate-x-0 translate-y-0 sm:max-w-full" role="dialog" aria-modal="true" aria-labelledby="review-overlay-title">
-        <h2 id="review-overlay-title" class="sr-only">Photo review</h2>
+        <h2 id="review-overlay-title" class="sr-only">Tinjau foto</h2>
         <div class="relative aspect-[9/16] w-full max-w-[min(85vw,calc(72dvh*9/16))] overflow-hidden rounded-2xl border border-border/40 bg-bg-base shadow-[0_16px_60px_var(--overlay)] mx-auto">
           <div class="absolute inset-0 h-full w-full object-contain photo-ph"></div>
           <p class="absolute bottom-3 left-1/2 -translate-x-1/2 flex w-fit items-center gap-2 rounded-full border border-border/60 bg-bg-elevated/70 px-3 py-1 text-xs backdrop-blur-md">
@@ -579,14 +579,14 @@ body {
           <section class="relative overflow-hidden rounded-2xl bg-bg-surface">
             <div class="relative p-4">
               <p class="font-mono text-xs tracking-widest text-text-muted">HASIL JEPRETAN</p>
-              <ul class="mt-3 grid grid-cols-3 gap-2" aria-label="Captured photos">
+              <ul class="mt-3 grid grid-cols-3 gap-2" aria-label="Foto yang udah dijepret">
                 <li class="relative animate-develop">
                   <div class="relative aspect-square overflow-hidden rounded-lg border border-border bg-bg-surface">
                     <div class="h-full w-full object-cover photo-ph"></div>
                   </div>
                   <p class="mt-1 text-center font-mono text-xs tabular-nums text-text-muted">Foto 1</p>
                   <span class="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-success text-xs font-bold text-bg-base shadow-sm" aria-hidden="true">✓</span>
-                  <button type="button" aria-label="Delete photo 1" class="group absolute -right-1 -top-1 flex h-11 w-11 items-start justify-end rounded-full focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-45">
+                  <button type="button" aria-label="Hapus foto 1" class="group absolute -right-1 -top-1 flex h-11 w-11 items-start justify-end rounded-full focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-45">
                     <span aria-hidden="true" class="flex h-7 w-7 items-center justify-center rounded-full bg-error text-sm font-bold text-text-primary group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-accent">✕</span>
                   </button>
                 </li>
@@ -599,7 +599,7 @@ body {
                   </div>
                   <p class="mt-1 text-center font-mono text-xs tabular-nums text-text-muted">Foto 2</p>
                   <span class="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-text-muted text-xs font-bold text-bg-base shadow-sm" aria-hidden="true">…</span>
-                  <button type="button" aria-label="Delete photo 2" class="group absolute -right-1 -top-1 flex h-11 w-11 items-start justify-end rounded-full focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-45">
+                  <button type="button" aria-label="Hapus foto 2" class="group absolute -right-1 -top-1 flex h-11 w-11 items-start justify-end rounded-full focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-45">
                     <span aria-hidden="true" class="flex h-7 w-7 items-center justify-center rounded-full bg-error text-sm font-bold text-text-primary group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-accent">✕</span>
                   </button>
                 </li>
@@ -609,10 +609,10 @@ body {
                   </div>
                   <p class="mt-1 text-center font-mono text-xs tabular-nums text-text-muted">Foto 3</p>
                   <span class="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-error text-xs font-bold text-bg-base shadow-sm" aria-hidden="true">!</span>
-                  <button type="button" aria-label="Delete photo 3" class="group absolute -right-1 -top-1 flex h-11 w-11 items-start justify-end rounded-full focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-45">
+                  <button type="button" aria-label="Hapus foto 3" class="group absolute -right-1 -top-1 flex h-11 w-11 items-start justify-end rounded-full focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-45">
                     <span aria-hidden="true" class="flex h-7 w-7 items-center justify-center rounded-full bg-error text-sm font-bold text-text-primary group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-accent">✕</span>
                   </button>
-                  <button type="button" aria-label="Retry photo 3: upload failed" class="group absolute -left-1 -top-1 flex h-11 w-11 items-start justify-start rounded-full focus-visible:outline-none">
+                  <button type="button" aria-label="Kirim ulang foto 3: gagal terkirim" class="group absolute -left-1 -top-1 flex h-11 w-11 items-start justify-start rounded-full focus-visible:outline-none">
                     <span aria-hidden="true" class="flex h-7 w-7 items-center justify-center rounded-full border border-border bg-bg-elevated text-sm font-bold text-text-primary group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-accent">↻</span>
                   </button>
                 </li>
@@ -671,7 +671,7 @@ body {
               <span>60</span>
             </div>
           </div>
-          <button type="button" aria-label="Record voice note" class="flex h-20 w-20 items-center justify-center rounded-full transition-transform duration-fast active:scale-[0.92] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent bg-accent text-on-accent">
+          <button type="button" aria-label="Rekam pesan suara" class="flex h-20 w-20 items-center justify-center rounded-full transition-transform duration-fast active:scale-[0.92] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent bg-accent text-on-accent">
             <svg class="h-9 w-9" aria-hidden="true"><use href="#i-mic"/></svg>
           </button>
           <p class="font-mono text-xl tabular-nums text-text-primary" aria-live="off">00:00 / 00:30</p>
@@ -718,7 +718,7 @@ body {
           <span>60</span>
         </div>
       </div>
-      <button type="button" aria-label="Stop recording" class="flex h-20 w-20 items-center justify-center rounded-full transition-transform duration-fast active:scale-[0.92] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent bg-error text-text-primary">
+      <button type="button" aria-label="Stop rekaman" class="flex h-20 w-20 items-center justify-center rounded-full transition-transform duration-fast active:scale-[0.92] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent bg-error text-text-primary">
         <svg class="h-7 w-7" aria-hidden="true"><use href="#i-square"/></svg>
       </button>
       <p class="font-mono text-xl tabular-nums text-text-primary" aria-live="off">00:12 / 00:30</p>
@@ -733,7 +733,7 @@ body {
     <div class="stage border border-border bg-bg-base p-6 space-y-3 max-w-md">
       <div class="w-full space-y-3">
         <div class="flex items-center gap-3 rounded-xl border border-border/60 bg-bg-surface px-4 py-3">
-          <button type="button" aria-label="Play voice note" class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-accent transition-transform duration-fast active:scale-[0.92] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+          <button type="button" aria-label="Putar pesan suara" class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-accent transition-transform duration-fast active:scale-[0.92] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
             <svg class="h-5 w-5" aria-hidden="true"><use href="#i-play"/></svg>
           </button>
           <div class="relative flex h-11 flex-1 items-center">
@@ -753,19 +753,53 @@ body {
 
   <!-- 15 -->
   <div class="mb-10">
-    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">15. Done — completion screen + keepsake card</h3><span class="cat-label">components/guest/screens/Done.tsx · DONE</span></div>
-    <p class="mb-3 text-xs text-text-muted">One static gold check, Cormorant title, two receipt lines, optional quiet keepsake download card (§5.6 exception).</p>
-    <div class="stage border border-border bg-bg-base h-[480px]">
-      <main class="flex min-h-dvh flex-col items-center justify-center bg-bg-base px-5 pt-[calc(2rem+env(safe-area-inset-top))] pb-[calc(2rem+env(safe-area-inset-bottom))] text-center text-text-primary sm:px-8">
-        <svg class="h-10 w-10 text-accent" aria-hidden="true"><use href="#i-check-circle"/></svg>
-        <h1 tabindex="-1" class="mt-6 font-display text-4xl font-semibold leading-tight tracking-tight outline-none">Rijal &amp; Cindi</h1>
-        <p class="mt-4 max-w-sm text-sm text-text-secondary">Terima kasih — foto dan pesan suara kamu sudah kami terima.</p>
-        <p class="mt-1 max-w-sm text-sm text-text-muted">Host akan melihatnya setelah acara.</p>
-        <section class="mt-8 w-full max-w-sm rounded-xl border border-border bg-bg-surface p-6">
-          <h2 class="font-display text-xl font-semibold text-text-secondary">Simpan Kenangan Digital</h2>
-          <p class="mt-2 text-sm text-text-muted">Unduh foto kenangan berbingkai dari acara ini ke galeri kamu.</p>
-          <button type="button" class="mt-4 min-h-12 w-full rounded-lg border border-border px-4 font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Simpan ke Galeri Saya</button>
-        </section>
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">15. Done — thermal-print sequence + keepsake card</h3><span class="cat-label">components/guest/screens/Done.tsx · DONE</span></div>
+    <p class="mb-3 text-xs text-text-muted">6-phase sequence (T034): loading text (1.0s) → camera drops in (2.5s) → photo prints from the film slot via clip-path reveal (3.2s; voice chip 2s) → thank-you + photo settle at rotate(-1.5deg) (8.5s) → keepsake card (9.0s). Condition C (nothing submitted) skips the camera. Reduced motion jumps straight to the final phase. Rendered at the phase-4 settled state; ambient orbs + grain simplified.</p>
+    <div class="stage border border-border bg-bg-base h-[560px]">
+      <main class="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-bg-base px-5 pt-[calc(2rem+env(safe-area-inset-top))] pb-[calc(2rem+env(safe-area-inset-bottom))] text-center text-text-primary sm:px-8">
+        <!-- Celebration ornaments — ambient orbs + grain only (light leaks omitted) -->
+        <div aria-hidden="true" class="absolute -top-20 -right-20 h-72 w-72 rounded-full bg-accent/15 blur-[90px] pointer-events-none"></div>
+        <div aria-hidden="true" class="absolute -bottom-20 -left-20 h-80 w-80 rounded-full bg-accent/10 blur-[100px] pointer-events-none"></div>
+        <div aria-hidden="true" class="pointer-events-none absolute inset-0 film-grain"></div>
+        <div class="relative z-10 flex w-full flex-col items-center">
+          <div class="flex w-[200px] flex-col items-center">
+            <!-- DisposableCameraSVG verbatim from Done.tsx -->
+            <svg aria-hidden="true" viewBox="0 0 180 110" class="w-full h-auto" fill="none">
+              <rect x="8" y="18" width="164" height="84" rx="10" fill="var(--bg-elevated)" stroke="var(--border)" stroke-width="1" />
+              <rect x="8" y="18" width="164" height="22" rx="10" fill="#252527" />
+              <rect x="8" y="28" width="164" height="12" fill="#252527" />
+              <rect x="16" y="24" width="28" height="10" rx="3" fill="var(--accent)" opacity="0.8" />
+              <rect x="130" y="21" width="20" height="8" rx="4" fill="#3a3a3f" />
+              <rect x="110" y="24" width="14" height="10" rx="2" fill="var(--bg-base)" stroke="var(--border)" stroke-width="0.5" />
+              <circle cx="82" cy="60" r="28" fill="var(--bg-base)" stroke="var(--accent)" stroke-opacity="0.3" stroke-width="1.5" />
+              <circle r="22" fill="#111113" stroke="var(--accent)" stroke-opacity="0.15" stroke-width="1" />
+              <circle r="15" fill="#0a0a0c" stroke="var(--accent)" stroke-opacity="0.2" stroke-width="0.5" />
+              <circle r="8" fill="var(--bg-surface)" />
+              <circle cx="75" cy="53" r="3" fill="var(--accent)" opacity="0.1" />
+              <circle cx="28" cy="62" r="10" fill="#252527" stroke="var(--border)" stroke-width="1" />
+              <circle cx="28" cy="62" r="5" fill="#1a1a1d" />
+              <circle cx="145" cy="62" r="10" fill="#252527" stroke="var(--border)" stroke-width="1" />
+              <circle cx="145" cy="62" r="5" fill="#1a1a1d" />
+              <rect x="10" y="98" width="160" height="4" fill="var(--bg-base)" />
+            </svg>
+            <!-- Print slot — 200px 9:16 photo, settled rotate(-1.5deg) -->
+            <div class="relative mt-[-2px] flex w-[200px] justify-center overflow-hidden rounded-b-xl">
+              <div style="transform: rotate(-1.5deg)">
+                <span class="block w-full aspect-[9/16] object-cover photo-ph"></span>
+              </div>
+            </div>
+          </div>
+          <div class="mt-8 flex flex-col items-center">
+            <h1 tabindex="-1" class="sr-only font-display text-4xl font-semibold leading-tight tracking-tight outline-none">Rijal &amp; Cindi</h1>
+            <p class="max-w-sm text-sm text-text-secondary">Terima kasih — foto dan pesan suara kamu sudah kami terima.</p>
+            <p class="mt-1 max-w-sm text-sm text-text-muted">Host akan melihatnya setelah acara.</p>
+          </div>
+          <!-- Keepsake card (phase 5) -->
+          <section class="mt-8 w-full max-w-sm rounded-2xl border border-border bg-bg-surface/70 p-3 backdrop-blur-sm">
+            <button type="button" class="mt-3 min-h-12 w-full rounded-lg border border-border px-4 font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Simpan ke Galeri Saya</button>
+            <p class="mt-2 text-xs text-text-muted">Unduh foto kenangan berbingkai dari acara ini.</p>
+          </section>
+        </div>
       </main>
     </div>
   </div>
@@ -850,11 +884,11 @@ body {
       <div class="mx-auto w-full max-w-[90rem]">
         <header class="mb-10 flex items-center justify-between border-b border-border pb-5">
           <a href="#" class="font-display text-xl font-semibold tracking-tight text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Admin</a>
-          <span class="text-xs font-medium tracking-[0.04em] text-text-muted">Event desk</span>
+          <span class="text-xs font-medium tracking-[0.04em] text-text-muted">Meja acara</span>
         </header>
         <div>
-          <p class="text-xs font-medium tracking-[0.04em] text-text-muted">Event index</p>
-          <h1 class="mt-2 font-display text-3xl font-semibold leading-tight tracking-tight text-text-primary">Your events.</h1>
+          <p class="text-xs font-medium tracking-[0.04em] text-text-muted">Daftar acara</p>
+          <h1 class="mt-2 font-display text-3xl font-semibold leading-tight tracking-tight text-text-primary">Acara kamu.</h1>
         </div>
       </div>
     </div>
@@ -870,7 +904,7 @@ body {
         <input id="demo-email" type="email" placeholder="you@example.com" class="mt-2 text-text-primary w-full border-0 border-b border-border bg-transparent rounded-none px-0 pb-2 h-12 placeholder:text-text-muted focus:border-accent focus:outline-none" />
       </label>
       <label class="mt-4 block" for="demo-ro">
-        <span class="text-xs font-medium text-text-secondary">Read-only variant</span>
+        <span class="text-xs font-medium text-text-secondary">Varian read-only</span>
         <input id="demo-ro" type="text" readonly value="https://example.com/e/aX9kLm2" class="mt-2 w-full border-0 border-b border-border bg-transparent rounded-none px-0 pb-2 h-12 placeholder:text-text-muted focus:border-accent focus:outline-none pointer-events-none select-all text-text-muted" />
       </label>
     </div>
@@ -881,9 +915,9 @@ body {
     <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">22. Button — gold-foil default + bordered secondary</h3><span class="cat-label">admin-ui.tsx · Button</span></div>
     <p class="mb-3 text-xs text-text-muted">min-h-12, duration-fast, disabled at 45% opacity. Gold-foil for the one primary per view; bordered quiet secondary otherwise.</p>
     <div class="stage border border-border bg-bg-base p-6 flex flex-wrap gap-3">
-      <button type="button" class="gold-foil-btn active:scale-[0.98] min-h-12 h-12 rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Create event</button>
-      <button type="button" class="border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated min-h-12 h-12 rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Retry</button>
-      <button type="button" disabled class="gold-foil-btn active:scale-[0.98] min-h-12 h-12 rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Creating…</button>
+      <button type="button" class="gold-foil-btn active:scale-[0.98] min-h-12 h-12 rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Buat acara</button>
+      <button type="button" class="border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated min-h-12 h-12 rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Coba lagi</button>
+      <button type="button" disabled class="gold-foil-btn active:scale-[0.98] min-h-12 h-12 rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Membuat…</button>
     </div>
   </div>
 
@@ -892,8 +926,8 @@ body {
     <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">23. Status — error + success</h3><span class="cat-label">admin-ui.tsx · Status · role="alert" / role="status"</span></div>
     <p class="mb-3 text-xs text-text-muted">Neutral elevated block; color on text only (--error red / --success green). Appears instantly, never animates.</p>
     <div class="stage border border-border bg-bg-base p-6 space-y-2 max-w-lg">
-      <div role="alert" class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-bg-elevated/90 p-4 text-sm text-error"><span>The event list could not be loaded. Retry safely.</span></div>
-      <div role="status" class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-bg-elevated/90 p-4 text-sm text-success"><span>Created “Summer party”.</span></div>
+      <div role="alert" class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-bg-elevated/90 p-4 text-sm text-error"><span>Daftar acaranya gagal dimuat. Aman buat coba lagi.</span></div>
+      <div role="status" class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-bg-elevated/90 p-4 text-sm text-success"><span>Acara “Summer party” udah dibuat.</span></div>
     </div>
   </div>
 
@@ -902,7 +936,7 @@ body {
     <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">24. Busy skeleton</h3><span class="cat-label">admin-ui.tsx · Busy · role="status"</span></div>
     <p class="mb-3 text-xs text-text-muted">Two pulsing bars while admin data loads.</p>
     <div class="stage border border-border bg-bg-base p-6">
-      <div role="status" aria-label="Loading" class="flex animate-pulse gap-2">
+      <div role="status" aria-label="Memuat" class="flex animate-pulse gap-2">
         <div class="h-4 w-32 rounded bg-bg-surface/60"></div>
         <div class="h-3 w-48 rounded bg-bg-surface/60"></div>
       </div>
@@ -911,27 +945,41 @@ body {
 
   <!-- 25 -->
   <div class="mb-10">
-    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">25. AdminSignIn form card</h3><span class="cat-label">components/admin/admin-sign-in.tsx · /admin/sign-in</span></div>
-    <p class="mb-3 text-xs text-text-muted">Narrow --bg-surface card, two underline fields, single gold-foil submit; status region lives below the form (§6).</p>
-    <div class="stage border border-border bg-bg-base p-6">
-      <div class="mx-auto max-w-md">
-        <p class="text-xs font-medium tracking-[0.04em] text-text-muted">Admin access</p>
-        <h1 class="mt-2 font-display text-3xl font-semibold leading-tight tracking-tight text-text-primary">Open your event desk.</h1>
-        <p class="mt-3 text-sm text-text-secondary leading-relaxed">Sign in to create an event, share its access card, and review every submission.</p>
-        <form class="mt-8 rounded-2xl border border-border bg-bg-surface p-6">
-          <label class="block" for="si-email">
-            <span class="text-xs font-medium text-text-secondary">Email</span>
-            <input id="si-email" type="email" autocomplete="email" class="mt-2 text-text-primary w-full border-0 border-b border-border bg-transparent rounded-none px-0 pb-2 h-12 placeholder:text-text-muted focus:border-accent focus:outline-none" />
-          </label>
-          <div class="mt-4">
-            <label class="block" for="si-pass">
-              <span class="text-xs font-medium text-text-secondary">Password</span>
-              <input id="si-pass" type="password" autocomplete="current-password" class="mt-2 text-text-primary w-full border-0 border-b border-border bg-transparent rounded-none px-0 pb-2 h-12 placeholder:text-text-muted focus:border-accent focus:outline-none" />
-            </label>
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">25. AdminSignIn — asymmetric editorial split</h3><span class="cat-label">components/admin/admin-sign-in.tsx · /admin/sign-in</span></div>
+    <p class="mb-3 text-xs text-text-muted">Two-column editorial layout (wide copy + offset form card, single stack on mobile): rotated diamond outlines + ambient hairlines, card crop-marks, gold-foil "Masuk". Status region lives below the form (§6).</p>
+    <div class="stage border border-border bg-bg-base p-6 sm:p-10">
+      <div class="mx-auto grid w-full max-w-5xl gap-12 pt-4 sm:pt-8 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
+        <section class="relative">
+          <div aria-hidden="true" class="pointer-events-none absolute -top-12 right-4 hidden h-44 w-44 rotate-45 border border-accent/15 lg:block"></div>
+          <div aria-hidden="true" class="pointer-events-none absolute -top-12 right-4 hidden h-44 w-44 rotate-45 translate-x-6 translate-y-6 border border-accent/10 lg:block"></div>
+          <p class="text-xs font-medium tracking-[0.04em] text-text-muted">Akses admin</p>
+          <h1 class="mt-2 font-display text-3xl font-semibold leading-tight tracking-tight text-text-primary">Kelola acaramu.</h1>
+          <div aria-hidden="true" class="mt-6 flex items-center gap-3">
+            <span class="h-1.5 w-1.5 rotate-45 bg-accent/80"></span>
+            <span class="h-px w-16 bg-gradient-to-r from-accent/60 to-transparent"></span>
           </div>
-          <button type="button" class="gold-foil-btn active:scale-[0.98] min-h-12 h-12 rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent mt-6 w-full">Sign in</button>
-        </form>
-        <div role="alert" class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-bg-elevated/90 p-4 text-sm text-error"><span>Those credentials were not accepted.</span></div>
+          <p class="mt-4 max-w-sm text-sm leading-relaxed text-text-secondary">Buat acara, bagikan akses, dan lihat semua kiriman.</p>
+        </section>
+        <div class="lg:mt-16">
+          <div class="relative">
+            <span aria-hidden="true" class="pointer-events-none absolute -top-2 -left-2 h-4 w-4 border-t border-l border-accent/40"></span>
+            <span aria-hidden="true" class="pointer-events-none absolute -bottom-2 -right-2 h-4 w-4 border-b border-r border-accent/40"></span>
+            <form class="rounded-2xl border border-accent/20 bg-bg-surface/85 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_40px_color-mix(in_srgb,var(--accent)_8%,transparent)] backdrop-blur-xl sm:p-8">
+              <label class="block" for="si-email">
+                <span class="text-xs font-medium text-text-secondary">Email</span>
+                <input id="si-email" type="email" autocomplete="email" class="mt-2 text-text-primary w-full border-0 border-b border-border bg-transparent rounded-none px-0 pb-2 h-12 placeholder:text-text-muted focus:border-accent focus:outline-none" />
+              </label>
+              <div class="mt-5">
+                <label class="block" for="si-pass">
+                  <span class="text-xs font-medium text-text-secondary">Kata sandi</span>
+                  <input id="si-pass" type="password" autocomplete="current-password" class="mt-2 text-text-primary w-full border-0 border-b border-border bg-transparent rounded-none px-0 pb-2 h-12 placeholder:text-text-muted focus:border-accent focus:outline-none" />
+                </label>
+              </div>
+              <button type="button" class="gold-foil-btn active:scale-[0.98] min-h-12 h-12 rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent mt-8 w-full">Masuk</button>
+            </form>
+          </div>
+          <div role="alert" class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-bg-elevated/90 p-4 text-sm text-error"><span>Email atau kata sandinya belum cocok.</span></div>
+        </div>
       </div>
     </div>
   </div>
@@ -939,31 +987,31 @@ body {
   <!-- 26 -->
   <div class="mb-10">
     <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">26. AdminEventIndex — ACTIVE hero command card</h3><span class="cat-label">components/admin/admin-event-index.tsx · /admin</span></div>
-    <p class="mb-3 text-xs text-text-muted">Ambient gold glow, border-l-accent left edge, pulsing live dot + "Active", Cormorant title, mono timestamp, secondary Open + Access/QR (gold reserved for Create).</p>
+    <p class="mb-3 text-xs text-text-muted">Ambient gold glow, border-l-accent left edge, pulsing live dot + "Aktif", Cormorant title, mono timestamp, secondary Buka + Akses/QR (gold reserved for Create).</p>
     <div class="stage border border-border bg-bg-base p-6 sm:p-10">
       <div class="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
-          <p class="text-xs font-medium tracking-[0.04em] text-text-muted">Event index</p>
-          <h1 class="mt-2 font-display text-3xl font-semibold leading-tight tracking-tight text-text-primary">Your events.</h1>
+          <p class="text-xs font-medium tracking-[0.04em] text-text-muted">Daftar acara</p>
+          <h1 class="mt-2 font-display text-3xl font-semibold leading-tight tracking-tight text-text-primary">Acara kamu.</h1>
         </div>
-        <a href="#" class="inline-flex min-h-12 items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent gold-foil-btn h-12 active:scale-[0.98]">Create new event</a>
+        <a href="#" class="inline-flex min-h-12 items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent gold-foil-btn h-12 active:scale-[0.98]">Buat acara baru</a>
       </div>
       <section aria-labelledby="active-event-heading">
-        <h2 id="active-event-heading" class="text-xs font-medium tracking-[0.04em] text-text-muted">Active event</h2>
+        <h2 id="active-event-heading" class="text-xs font-medium tracking-[0.04em] text-text-muted">Acara aktif</h2>
         <div class="relative mt-4">
           <div aria-hidden="true" class="pointer-events-none absolute -inset-6 rounded-[2.5rem] bg-accent/10 blur-3xl"></div>
           <div class="relative flex flex-wrap items-center justify-between gap-x-6 gap-y-4 rounded-2xl border border-border border-l-2 border-l-accent bg-bg-surface p-5 sm:p-6">
             <div class="min-w-0">
               <p class="inline-flex items-center gap-1.5 text-xs font-medium text-text-muted">
                 <span aria-hidden="true" class="inline-block h-2 w-2 rounded-full bg-accent motion-safe:animate-pulse"></span>
-                Active
+                Aktif
               </p>
               <h3 class="mt-1.5 truncate font-display text-2xl font-semibold leading-tight tracking-tight text-text-primary">Rijal &amp; Cindi</h3>
-              <p class="mt-1.5 font-mono text-xs text-text-muted">Opened <time class="tabular-nums">29 Agu 2026 · 18:04</time></p>
+              <p class="mt-1.5 font-mono text-xs text-text-muted">Dibuka <time class="tabular-nums">29 Agu 2026 · 18:04</time></p>
             </div>
             <div class="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-              <a href="#" class="inline-flex min-h-10 items-center justify-center rounded-lg border border-border bg-bg-surface px-4 py-2 text-xs font-medium text-text-primary transition duration-fast hover:bg-bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Open</a>
-              <a href="#" class="inline-flex min-h-12 items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated">Access / QR</a>
+              <a href="#" class="inline-flex min-h-10 items-center justify-center rounded-lg border border-border bg-bg-surface px-4 py-2 text-xs font-medium text-text-primary transition duration-fast hover:bg-bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Buka</a>
+              <a href="#" class="inline-flex min-h-12 items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated">Akses / QR</a>
             </div>
           </div>
         </div>
@@ -974,29 +1022,29 @@ body {
   <!-- 27 -->
   <div class="mb-10">
     <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">27. AdminEventIndex — past-event hairline rows</h3><span class="cat-label">admin-event-index.tsx · /admin archive stack</span></div>
-    <p class="mb-3 text-xs text-text-muted">rounded-xl bg-bg-surface/60 cards, dual mono timestamp range, "Closed" label + quiet rowLink "Open" (no Access/QR on closed events).</p>
+    <p class="mb-3 text-xs text-text-muted">rounded-xl bg-bg-surface/60 cards, dual mono timestamp range, "Selesai" label + quiet rowLink "Buka" (no Akses/QR on closed events).</p>
     <div class="stage border border-border bg-bg-base p-6">
       <section aria-labelledby="past-events-heading" class="max-w-2xl">
-        <h2 id="past-events-heading" class="text-xs font-medium tracking-[0.04em] text-text-muted">Past events</h2>
+        <h2 id="past-events-heading" class="text-xs font-medium tracking-[0.04em] text-text-muted">Acara sebelumnya</h2>
         <ul class="mt-3 grid gap-3">
           <li class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-bg-surface/60 px-4 py-4">
             <div class="min-w-0">
               <p class="truncate font-display text-lg font-semibold text-text-primary">Bima &amp; Sarah</p>
-              <p class="mt-0.5 font-mono text-xs text-text-muted">Opened <time class="tabular-nums">12 Jul 2026 · 17:30</time> · Closed <time class="tabular-nums">12 Jul 2026 · 23:10</time></p>
+              <p class="mt-0.5 font-mono text-xs text-text-muted">Dibuka <time class="tabular-nums">12 Jul 2026 · 17:30</time> · Ditutup <time class="tabular-nums">12 Jul 2026 · 23:10</time></p>
             </div>
             <div class="flex shrink-0 items-center gap-3">
-              <span class="text-xs text-text-muted">Closed</span>
-              <a href="#" class="inline-flex min-h-12 items-center text-xs font-medium text-text-secondary underline-offset-4 transition duration-fast hover:text-text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Open</a>
+              <span class="text-xs text-text-muted">Selesai</span>
+              <a href="#" class="inline-flex min-h-12 items-center text-xs font-medium text-text-secondary underline-offset-4 transition duration-fast hover:text-text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Buka</a>
             </div>
           </li>
           <li class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-bg-surface/60 px-4 py-4">
             <div class="min-w-0">
               <p class="truncate font-display text-lg font-semibold text-text-primary">Alya Sweet Seventeen</p>
-              <p class="mt-0.5 font-mono text-xs text-text-muted">Opened <time class="tabular-nums">2 Mei 2026 · 19:00</time> · Closed <time class="tabular-nums">3 Mei 2026 · 00:15</time></p>
+              <p class="mt-0.5 font-mono text-xs text-text-muted">Dibuka <time class="tabular-nums">2 Mei 2026 · 19:00</time> · Ditutup <time class="tabular-nums">3 Mei 2026 · 00:15</time></p>
             </div>
             <div class="flex shrink-0 items-center gap-3">
-              <span class="text-xs text-text-muted">Closed</span>
-              <a href="#" class="inline-flex min-h-12 items-center text-xs font-medium text-text-secondary underline-offset-4 transition duration-fast hover:text-text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Open</a>
+              <span class="text-xs text-text-muted">Selesai</span>
+              <a href="#" class="inline-flex min-h-12 items-center text-xs font-medium text-text-secondary underline-offset-4 transition duration-fast hover:text-text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Buka</a>
             </div>
           </li>
         </ul>
@@ -1007,15 +1055,15 @@ body {
   <!-- 28 -->
   <div class="mb-10">
     <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">28. AdminDashboard — aside (status pill + actions)</h3><span class="cat-label">components/admin/admin-dashboard.tsx · /admin/events/[public_id]</span></div>
-    <p class="mb-3 text-xs text-text-muted">Cormorant title, Active/Closed status pill (accent-soft + gold text only when ACTIVE), Access/QR quiet button, gold-foil "Close event".</p>
+    <p class="mb-3 text-xs text-text-muted">Cormorant title, Aktif/Selesai status pill (accent-soft + gold text only when ACTIVE), Akses/QR quiet button, gold-foil "Tutup acara".</p>
     <div class="stage border border-border bg-bg-base p-6 max-w-xs">
       <h1 class="font-display text-3xl font-semibold tracking-tight text-text-primary">Rijal &amp; Cindi</h1>
-      <p class="mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold border-accent/40 bg-accent-soft text-accent">Active</p>
+      <p class="mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold border-accent/40 bg-accent-soft text-accent">Aktif</p>
       <div class="mt-6 grid gap-2">
-        <a class="flex min-h-12 items-center rounded-lg px-3 text-sm font-semibold transition duration-fast border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" href="#">Access / QR</a>
-        <button type="button" class="gold-foil-btn active:scale-[0.98] min-h-12 h-12 rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Close event</button>
+        <a class="flex min-h-12 items-center rounded-lg px-3 text-sm font-semibold transition duration-fast border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" href="#">Akses / QR</a>
+        <button type="button" class="gold-foil-btn active:scale-[0.98] min-h-12 h-12 rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Tutup acara</button>
       </div>
-      <p class="mt-8 inline-flex rounded-full border px-3 py-1 text-xs font-semibold border-border text-text-muted">Closed</p>
+      <p class="mt-8 inline-flex rounded-full border px-3 py-1 text-xs font-semibold border-border text-text-muted">Selesai</p>
       <span class="block mt-1 text-[10px] text-text-muted">closed variant</span>
     </div>
   </div>
@@ -1026,9 +1074,9 @@ body {
     <p class="mb-3 text-xs text-text-muted">DM Mono tabular values, xs muted labels; derived client-side from items only — zero state renders identically.</p>
     <div class="stage border border-border bg-bg-base p-6">
       <div class="grid grid-cols-2 gap-3 sm:grid-cols-4 max-w-2xl">
-        <div class="rounded-xl border border-border bg-bg-surface p-4"><p class="font-mono text-2xl tabular-nums text-text-primary">14</p><p class="mt-1 text-xs text-text-muted">Guests</p></div>
-        <div class="rounded-xl border border-border bg-bg-surface p-4"><p class="font-mono text-2xl tabular-nums text-text-primary">38</p><p class="mt-1 text-xs text-text-muted">Photos</p></div>
-        <div class="rounded-xl border border-border bg-bg-surface p-4"><p class="font-mono text-2xl tabular-nums text-text-primary">11</p><p class="mt-1 text-xs text-text-muted">Voice notes</p></div>
+        <div class="rounded-xl border border-border bg-bg-surface p-4"><p class="font-mono text-2xl tabular-nums text-text-primary">14</p><p class="mt-1 text-xs text-text-muted">Tamu</p></div>
+        <div class="rounded-xl border border-border bg-bg-surface p-4"><p class="font-mono text-2xl tabular-nums text-text-primary">38</p><p class="mt-1 text-xs text-text-muted">Foto</p></div>
+        <div class="rounded-xl border border-border bg-bg-surface p-4"><p class="font-mono text-2xl tabular-nums text-text-primary">11</p><p class="mt-1 text-xs text-text-muted">Pesan suara</p></div>
         <div class="rounded-xl border border-border bg-bg-surface p-4"><p class="font-mono text-2xl tabular-nums text-text-primary">49</p><p class="mt-1 text-xs text-text-muted">Media</p></div>
       </div>
     </div>
@@ -1041,21 +1089,21 @@ body {
     <div class="stage border border-border bg-bg-base p-6 max-w-2xl">
       <div class="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p class="text-xs font-medium tracking-[0.04em] text-text-muted">Submissions</p>
-          <h2 class="mt-1 text-xl font-semibold text-text-primary">Newest first</h2>
+          <p class="text-xs font-medium tracking-[0.04em] text-text-muted">Kiriman</p>
+          <h2 class="mt-1 text-xl font-semibold text-text-primary">Terbaru dulu</h2>
         </div>
         <form class="w-full sm:max-w-sm">
           <label class="block" for="guest-search">
-            <span class="text-xs font-medium text-text-secondary">Search by guest name</span>
-            <input id="guest-search" type="search" placeholder="Search guest name" autocomplete="off" class="mt-2 text-text-primary w-full border-0 border-b border-border bg-transparent rounded-none px-0 pb-2 h-12 placeholder:text-text-muted focus:border-accent focus:outline-none" />
+            <span class="text-xs font-medium text-text-secondary">Cari nama tamu</span>
+            <input id="guest-search" type="search" placeholder="Cari nama tamu" autocomplete="off" class="mt-2 text-text-primary w-full border-0 border-b border-border bg-transparent rounded-none px-0 pb-2 h-12 placeholder:text-text-muted focus:border-accent focus:outline-none" />
           </label>
-          <button type="button" class="border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated min-h-12 h-12 rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent mt-3">Search</button>
+          <button type="button" class="border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated min-h-12 h-12 rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent mt-3">Cari</button>
         </form>
       </div>
-      <div role="group" aria-label="Filter by media type" class="mt-4 inline-flex rounded-lg border border-border bg-bg-surface p-1">
-        <button type="button" aria-pressed="true" class="min-h-11 rounded-md px-4 text-sm font-semibold transition duration-fast bg-bg-elevated text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">All</button>
-        <button type="button" aria-pressed="false" class="min-h-11 rounded-md px-4 text-sm font-semibold transition duration-fast text-text-secondary hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Photos</button>
-        <button type="button" aria-pressed="false" class="min-h-11 rounded-md px-4 text-sm font-semibold transition duration-fast text-text-secondary hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Voice</button>
+      <div role="group" aria-label="Saring jenis media" class="mt-4 inline-flex rounded-lg border border-border bg-bg-surface p-1">
+        <button type="button" aria-pressed="true" class="min-h-11 rounded-md px-4 text-sm font-semibold transition duration-fast bg-bg-elevated text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Semua</button>
+        <button type="button" aria-pressed="false" class="min-h-11 rounded-md px-4 text-sm font-semibold transition duration-fast text-text-secondary hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Foto</button>
+        <button type="button" aria-pressed="false" class="min-h-11 rounded-md px-4 text-sm font-semibold transition duration-fast text-text-secondary hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Suara</button>
       </div>
     </div>
   </div>
@@ -1071,41 +1119,41 @@ body {
             <svg class="h-4 w-4 shrink-0 text-text-muted" aria-hidden="true"><use href="#i-chev-down"/></svg>
             <span aria-hidden="true" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bg-elevated text-xs font-semibold text-text-secondary">AN</span>
             <span class="text-lg font-semibold text-text-primary">Andi Nugraha</span>
-            <span class="text-xs font-medium text-text-muted">Session 2</span>
-            <span class="rounded-full border border-border px-2.5 py-0.5 font-mono text-xs font-medium tabular-nums text-text-secondary">4 items</span>
-            <span class="text-xs text-text-muted">3 photos · 1 voice note</span>
+            <span class="text-xs font-medium text-text-muted">Sesi 2</span>
+            <span class="rounded-full border border-border px-2.5 py-0.5 font-mono text-xs font-medium tabular-nums text-text-secondary">4 item</span>
+            <span class="text-xs text-text-muted">3 foto · 1 pesan suara</span>
             <span class="ml-auto font-mono text-xs tabular-nums text-text-muted">29 Agu 2026 · 19:42–20:05</span>
           </button>
         </h3>
         <div class="mt-4 grid gap-4">
           <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             <div class="relative overflow-hidden rounded-lg border border-border bg-bg-surface">
-              <button type="button" aria-label="Preview photo from Andi Nugraha, 29 Agu 2026 · 20:05" class="group block w-full text-left transition duration-fast ease-out disabled:cursor-wait focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+              <button type="button" aria-label="Lihat foto dari Andi Nugraha, 29 Agu 2026 · 20:05" class="group block w-full text-left transition duration-fast ease-out disabled:cursor-wait focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                 <span class="block aspect-square w-full overflow-hidden bg-bg-elevated">
                   <span class="block h-full w-full object-cover transition-transform duration-base ease-out motion-reduce:transition-none motion-safe:group-hover:scale-[1.03] photo-ph"></span>
                 </span>
                 <span class="flex items-center justify-between gap-2 px-3 py-2 text-xs">
                   <span class="inline-flex items-center gap-1.5 font-semibold text-text-primary">
                     <svg class="h-3.5 w-3.5 text-text-muted" aria-hidden="true"><use href="#i-image"/></svg>
-                    Photo
+                    Foto
                   </span>
                   <time class="font-mono tabular-nums text-text-muted">29 Agu 2026 · 20:05</time>
                 </span>
               </button>
-              <button type="button" aria-label="Download photo from Andi Nugraha" class="flex h-12 items-center gap-1.5 rounded-lg border border-border bg-bg-surface px-3 text-xs font-semibold text-text-secondary transition duration-fast ease-out hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent absolute right-2 top-2">
+              <button type="button" aria-label="Unduh foto dari Andi Nugraha" class="flex h-12 items-center gap-1.5 rounded-lg border border-border bg-bg-surface px-3 text-xs font-semibold text-text-secondary transition duration-fast ease-out hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent absolute right-2 top-2">
                 <svg class="h-4 w-4" aria-hidden="true"><use href="#i-download"/></svg>
-                Download
+                Unduh
               </button>
             </div>
             <div class="relative overflow-hidden rounded-lg border border-border bg-bg-surface">
-              <button type="button" aria-label="Preview photo from Andi Nugraha, 29 Agu 2026 · 19:58" class="group block w-full text-left transition duration-fast ease-out disabled:cursor-wait focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+              <button type="button" aria-label="Lihat foto dari Andi Nugraha, 29 Agu 2026 · 19:58" class="group block w-full text-left transition duration-fast ease-out disabled:cursor-wait focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                 <span class="block aspect-square w-full overflow-hidden bg-bg-elevated">
                   <span class="block h-full w-full object-cover transition-transform duration-base ease-out motion-reduce:transition-none motion-safe:group-hover:scale-[1.03] photo-ph-2"></span>
                 </span>
                 <span class="flex items-center justify-between gap-2 px-3 py-2 text-xs">
                   <span class="inline-flex items-center gap-1.5 font-semibold text-text-primary">
                     <svg class="h-3.5 w-3.5 text-text-muted" aria-hidden="true"><use href="#i-image"/></svg>
-                    Photo
+                    Foto
                   </span>
                   <time class="font-mono tabular-nums text-text-muted">29 Agu 2026 · 19:58</time>
                 </span>
@@ -1120,16 +1168,16 @@ body {
   <!-- 32 -->
   <div class="mb-10">
     <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">32. VoiceTile (24 static bars + scaleX progress)</h3><span class="cat-label">admin-dashboard.tsx · elevated player tile</span></div>
-    <p class="mb-3 text-xs text-text-muted">rounded-2xl tile: play/pause quiet button, mic + mono duration, decorative waveform (aria-hidden) with gold scaleX fill, mono timestamp, Download.</p>
+    <p class="mb-3 text-xs text-text-muted">rounded-2xl tile: play/pause quiet button, mic + mono duration, decorative waveform (aria-hidden) with gold scaleX fill, mono timestamp, Unduh.</p>
     <div class="stage border border-border bg-bg-base p-6">
       <div class="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-border bg-bg-surface/90 p-4 max-w-2xl">
-        <button type="button" aria-label="Play voice note by Andi Nugraha, 18 seconds" class="flex min-h-12 items-center gap-2 rounded-lg px-3 text-sm font-semibold transition duration-fast ease-out disabled:opacity-60 border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+        <button type="button" aria-label="Putar pesan suara dari Andi Nugraha, 18 detik" class="flex min-h-12 items-center gap-2 rounded-lg px-3 text-sm font-semibold transition duration-fast ease-out disabled:opacity-60 border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
           <svg class="h-4 w-4" aria-hidden="true"><use href="#i-play"/></svg>
-          Play
+          Putar
         </button>
         <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-text-primary">
           <svg class="h-3.5 w-3.5 text-text-muted" aria-hidden="true"><use href="#i-mic"/></svg>
-          Voice note
+          Pesan suara
           <span class="font-mono tabular-nums text-text-muted">0:18</span>
         </span>
         <span class="relative flex h-8 min-w-24 flex-1 items-center justify-between gap-[3px]" aria-hidden="true">
@@ -1139,9 +1187,9 @@ body {
           </span>
         </span>
         <time class="font-mono text-xs tabular-nums text-text-muted">29 Agu 2026 · 20:01</time>
-        <button type="button" aria-label="Download voice note from Andi Nugraha" class="flex h-12 items-center gap-1.5 rounded-lg border border-border bg-bg-surface px-3 text-xs font-semibold text-text-secondary transition duration-fast ease-out hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+        <button type="button" aria-label="Unduh pesan suara dari Andi Nugraha" class="flex h-12 items-center gap-1.5 rounded-lg border border-border bg-bg-surface px-3 text-xs font-semibold text-text-secondary transition duration-fast ease-out hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
           <svg class="h-4 w-4" aria-hidden="true"><use href="#i-download"/></svg>
-          Download
+          Unduh
         </button>
       </div>
     </div>
@@ -1152,7 +1200,7 @@ body {
     <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">33. TimelineSkeleton + AsideSkeleton</h3><span class="cat-label">admin-dashboard.tsx · loading states</span></div>
     <p class="mb-3 text-xs text-text-muted">Pulse skeletons matching group-card and aside anatomy — no layout jump.</p>
     <div class="stage border border-border bg-bg-base p-6 grid gap-8 lg:grid-cols-[18rem_1fr]">
-      <div role="status" aria-label="Loading event" class="animate-pulse">
+      <div role="status" aria-label="Memuat acara" class="animate-pulse">
         <div aria-hidden="true">
           <div class="h-3 w-20 rounded bg-bg-elevated"></div>
           <div class="mt-3 h-9 w-48 rounded bg-bg-elevated"></div>
@@ -1162,9 +1210,9 @@ body {
             <div class="min-h-12 rounded-lg bg-bg-elevated"></div>
           </div>
         </div>
-        <span class="sr-only">Loading event</span>
+        <span class="sr-only">Memuat acara</span>
       </div>
-      <div role="status" aria-label="Loading submissions" class="grid animate-pulse gap-6 max-w-2xl">
+      <div role="status" aria-label="Memuat kiriman" class="grid animate-pulse gap-6 max-w-2xl">
         <div aria-hidden="true" class="rounded-3xl border border-border bg-bg-surface/90 p-5">
           <div class="flex items-center gap-3">
             <div class="h-9 w-9 rounded-full bg-bg-elevated"></div>
@@ -1179,7 +1227,7 @@ body {
             <div class="aspect-square rounded-lg bg-bg-elevated"></div>
           </div>
         </div>
-        <span class="sr-only">Loading submissions…</span>
+        <span class="sr-only">Memuat kiriman…</span>
       </div>
     </div>
   </div>
@@ -1187,32 +1235,32 @@ body {
   <!-- 34 -->
   <div class="mb-10">
     <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">34. PreviewDialog (open state)</h3><span class="cat-label">components/admin/admin-preview-dialog.tsx · dashboard lightbox</span></div>
-    <p class="mb-3 text-xs text-text-muted">--overlay scrim, bg-elevated rounded-2xl panel, header with mono label / nav chevrons / Download / Close, contained photo. Rendered static-open.</p>
+    <p class="mb-3 text-xs text-text-muted">--overlay scrim, bg-elevated rounded-2xl panel, header with mono label / nav chevrons / Unduh / Tutup, contained photo. Rendered static-open.</p>
     <div class="stage border border-border h-[560px]">
       <div class="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4 transition-opacity duration-base ease-out motion-reduce:transition-none opacity-100">
-        <div role="dialog" aria-modal="true" aria-label="Photo from Andi Nugraha, photo 1 of 3" tabindex="-1" class="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-border bg-bg-elevated shadow-2xl transition duration-base ease-out motion-reduce:transition-none focus:outline-none scale-100 opacity-100">
+        <div role="dialog" aria-modal="true" aria-label="Foto dari Andi Nugraha, foto 1 dari 3" tabindex="-1" class="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-border bg-bg-elevated shadow-2xl transition duration-base ease-out motion-reduce:transition-none focus:outline-none scale-100 opacity-100">
           <div class="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border px-4 py-3 sm:px-6">
             <div class="min-w-0">
-              <p class="font-mono text-xs font-medium tracking-[0.04em] text-text-muted">Photo · 1 of 3</p>
+              <p class="font-mono text-xs font-medium tracking-[0.04em] text-text-muted">Foto · 1 dari 3</p>
               <h3 class="truncate text-lg font-semibold text-text-primary">Andi Nugraha</h3>
               <time class="font-mono text-xs tabular-nums text-text-muted">29 Agu 2026 · 20:05</time>
             </div>
             <div class="ml-auto flex items-center gap-2">
-              <div role="group" aria-label="Navigate photos" class="flex items-center gap-1">
-                <button type="button" aria-label="Previous photo" disabled class="flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-bg-surface text-text-secondary transition duration-fast ease-out hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+              <div role="group" aria-label="Telusuri foto" class="flex items-center gap-1">
+                <button type="button" aria-label="Foto sebelumnya" disabled class="flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-bg-surface text-text-secondary transition duration-fast ease-out hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                   <svg class="h-4 w-4" aria-hidden="true"><use href="#i-chev-left"/></svg>
                 </button>
-                <button type="button" aria-label="Next photo" class="flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-bg-surface text-text-secondary transition duration-fast ease-out hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+                <button type="button" aria-label="Foto berikutnya" class="flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-bg-surface text-text-secondary transition duration-fast ease-out hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                   <svg class="h-4 w-4" aria-hidden="true"><use href="#i-chev-right"/></svg>
                 </button>
               </div>
               <button type="button" class="border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated min-h-12 h-12 rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent inline-flex items-center gap-2">
                 <svg class="h-4 w-4" aria-hidden="true"><use href="#i-download"/></svg>
-                Download
+                Unduh
               </button>
-              <button type="button" aria-label="Close preview" class="flex h-12 items-center gap-1.5 rounded-lg border border-border bg-bg-surface px-3 text-sm font-semibold text-text-secondary transition duration-fast ease-out hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+              <button type="button" aria-label="Tutup pratinjau" class="flex h-12 items-center gap-1.5 rounded-lg border border-border bg-bg-surface px-3 text-sm font-semibold text-text-secondary transition duration-fast ease-out hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                 <svg class="h-4 w-4" aria-hidden="true"><use href="#i-x"/></svg>
-                Close
+                Tutup
               </button>
             </div>
           </div>
@@ -1227,12 +1275,12 @@ body {
   <!-- 35 -->
   <div class="mb-10">
     <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">35. AdminAccess — QR card</h3><span class="cat-label">components/admin/admin-access.tsx · /admin/events/[public_id]/access</span></div>
-    <p class="mb-3 text-xs text-text-muted">160px QR (white bg / black fg — placeholder grid), mono underline URL, gold-foil Copy + secondary Print QR. Print artifact is a bare 80mm QR, margin-0.</p>
+    <p class="mb-3 text-xs text-text-muted">160px QR (white bg / black fg — placeholder grid), mono underline URL, gold-foil Salin link + secondary Cetak QR. Print artifact is a bare 80mm QR, margin-0.</p>
     <div class="stage border border-border bg-bg-base p-6">
       <div class="mx-auto max-w-md">
-        <p class="text-xs font-medium tracking-[0.04em] text-text-muted">Share access</p>
-        <h1 class="mt-2 font-display text-3xl font-semibold leading-tight tracking-tight text-text-primary">Share event access.</h1>
-        <p class="mt-3 text-sm text-text-secondary leading-relaxed">Guests can scan this access card or open the public link.</p>
+        <p class="text-xs font-medium tracking-[0.04em] text-text-muted">Bagikan akses</p>
+        <h1 class="mt-2 font-display text-3xl font-semibold leading-tight tracking-tight text-text-primary">Bagikan akses acara.</h1>
+        <p class="mt-3 text-sm text-text-secondary leading-relaxed">Tamu bisa scan kartus ini atau buka link publiknya.</p>
         <div class="mt-8 rounded-2xl border border-border bg-bg-surface/85 p-5 backdrop-blur-xl">
           <div class="mx-auto w-40">
             <div class="h-40 w-40 bg-white p-2 grid grid-cols-6 grid-rows-6 gap-0.5" role="img" aria-label="QR code for event access">
@@ -1244,13 +1292,13 @@ body {
               <span class="bg-black"></span><span></span><span class="bg-black"></span><span class="bg-black"></span><span></span><span class="bg-black"></span>
             </div>
           </div>
-          <p class="mt-4 text-center text-xs text-text-muted">Scan with a phone camera to open the guest page, or share the public link.</p>
-          <input id="public-url" readonly value="https://guestbook.example.com/e/aX9kLm2vQ7" aria-label="Public URL" class="mt-5 w-full truncate border-0 border-b border-border bg-transparent rounded-none pb-1 font-mono text-xs text-text-muted pointer-events-none select-all focus:border-accent focus:outline-none" />
+          <p class="mt-4 text-center text-xs text-text-muted">Scan pakai kamera HP buat buka halaman tamu, atau bagikan link publiknya.</p>
+          <input id="public-url" readonly value="https://guestbook.example.com/e/aX9kLm2vQ7" aria-label="URL publik" class="mt-5 w-full truncate border-0 border-b border-border bg-transparent rounded-none pb-1 font-mono text-xs text-text-muted pointer-events-none select-all focus:border-accent focus:outline-none" />
           <div class="mt-5 flex gap-3">
-            <button type="button" class="gold-foil-btn h-12 flex-1 rounded-xl px-4 text-sm font-semibold transition duration-fast active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Copy link</button>
-            <button type="button" class="flex h-12 flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-bg-surface px-4 text-sm font-semibold text-text-primary transition duration-fast hover:bg-bg-elevated disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Print QR</button>
+            <button type="button" class="gold-foil-btn h-12 flex-1 rounded-xl px-4 text-sm font-semibold transition duration-fast active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Salin link</button>
+            <button type="button" class="flex h-12 flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-bg-surface px-4 text-sm font-semibold text-text-primary transition duration-fast hover:bg-bg-elevated disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Cetak QR</button>
           </div>
-          <p role="status" class="mt-3 text-center text-xs text-text-muted">Link copied to your clipboard.</p>
+          <p role="status" class="mt-3 text-center text-xs text-text-muted">Link udah tersalin.</p>
         </div>
       </div>
     </div>
@@ -1294,8 +1342,8 @@ body {
     <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">38. quietButton pattern</h3><span class="cat-label">admin-dashboard.tsx · quietButton const</span></div>
     <p class="mb-3 text-xs text-text-muted">border-border bg-bg-surface hover:bg-bg-elevated — the shared non-primary action anatomy (aside links, retry buttons, play buttons).</p>
     <div class="stage border border-border bg-bg-base p-6 flex flex-wrap gap-3">
-      <button type="button" class="min-h-12 rounded-md px-3 text-xs font-semibold transition duration-fast border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Retry</button>
-      <a href="#" class="flex min-h-12 items-center rounded-lg px-3 text-sm font-semibold transition duration-fast border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Access / QR</a>
+      <button type="button" class="min-h-12 rounded-md px-3 text-xs font-semibold transition duration-fast border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Coba lagi</button>
+      <a href="#" class="flex min-h-12 items-center rounded-lg px-3 text-sm font-semibold transition duration-fast border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Akses / QR</a>
     </div>
   </div>
 

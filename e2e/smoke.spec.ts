@@ -8,8 +8,8 @@ const LIVE = process.env.PLAYWRIGHT_LIVE === "1";
 test("admin sign-in surface renders", async ({ page }) => {
   await page.goto("/admin/sign-in");
   await expect(page.getByLabel("Email")).toBeVisible();
-  await expect(page.getByLabel("Password")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
+  await expect(page.getByLabel("Kata sandi")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Masuk" })).toBeVisible();
 });
 
 test("admin index redirects to sign-in (dashboard routing)", async ({ page }) => {
