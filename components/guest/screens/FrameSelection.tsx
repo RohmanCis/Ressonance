@@ -94,7 +94,7 @@ export function FrameSelection({
       {/* Header */}
       <header className="relative z-10 w-full shrink-0 px-5 pt-[calc(1.25rem+env(safe-area-inset-top))] text-center">
         <p className="truncate font-script text-2xl text-accent drop-shadow-sm">
-          {eventTitle || "Wedding Keepsake"}
+          {eventTitle}
         </p>
 
         <div

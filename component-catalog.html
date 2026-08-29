@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>QR Guest Photo &amp; Voicebook — Component Catalog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;700&family=Pinyon+Script&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        'bg-base': 'var(--bg-base)',
+        'bg-surface': 'var(--bg-surface)',
+        'bg-elevated': 'var(--bg-elevated)',
+        'text-primary': 'var(--text-primary)',
+        'text-secondary': 'var(--text-secondary)',
+        'text-muted': 'var(--text-muted)',
+        accent: 'var(--accent)',
+        'accent-soft': 'var(--accent-soft)',
+        error: 'var(--error)',
+        success: 'var(--success)',
+        border: 'var(--border)',
+        overlay: 'var(--overlay)',
+        'on-accent': 'var(--on-accent)',
+        background: 'var(--bg-elevated)'
+      },
+      fontFamily: {
+        display: ['"Cormorant Garamond"', 'Georgia', 'Cambria', '"Times New Roman"', 'serif'],
+        sans: ['"DM Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['"DM Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+        script: ['"Pinyon Script"', 'cursive']
+      },
+      borderRadius: {
+        sm: 'calc(var(--radius) - 4px)',
+        md: 'calc(var(--radius) - 2px)',
+        lg: 'var(--radius)',
+        xl: 'calc(var(--radius) + 4px)'
+      },
+      transitionDuration: {
+        fast: 'var(--motion-fast)',
+        base: 'var(--motion-base)',
+        slow: 'var(--motion-slow)'
+      }
+    }
+  }
+};
+</script>
+<style>
+/* === app/globals.css — :root tokens verbatim (DESIGN.md §2 + §4) === */
+:root {
+  /* Deep Espresso palette — Luxury Analog Keepsake Edition (owner-ratified 2026-08-21). */
+  --bg-base: #14110f;
+  --bg-surface: #1c1815;
+  --bg-elevated: #28221e;
+  --text-primary: #f7f2ea;
+  --text-secondary: #d4cec3;
+  --text-muted: #9a8f82;
+  --accent: #d4af37;
+  --accent-soft: rgba(212, 175, 55, 0.14);
+  --accent-foil-light: #f0d97a; /* gold-foil button gradient highlight (DESIGN.md §2) */
+  --accent-foil-dark: #b8912a;  /* gold-foil button gradient deep shade (DESIGN.md §2) */
+  --error: #c0564f;
+  --success: #7da37a;
+  --border: rgba(247, 242, 234, 0.12);
+  --overlay: rgba(0, 0, 0, 0.6);
+  --on-accent: #14110f;      /* text on gold fills (DESIGN.md §2) */
+  --motion-fast: 150ms;
+  --motion-base: 250ms;
+  --motion-slow: 350ms;
+  --motion-develop: 800ms;
+  --radius: 0.625rem;
+}
+
+* { border-color: var(--border); }
+
+body {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+}
+
+/* DESIGN.md §4 — verbatim */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}
+
+/* Film Grain Overlay — verbatim */
+.film-grain {
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.06'/%3E%3C/svg%3E");
+}
+
+/* Ambient Floating Lights (Candlelight effect) — verbatim */
+@keyframes float-ambient-1 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.25;
+  }
+  50% {
+    transform: translate(30px, 40px) scale(1.15);
+    opacity: 0.4;
+  }
+}
+
+@keyframes float-ambient-2 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1.1);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translate(-35px, -30px) scale(0.95);
+    opacity: 0.35;
+  }
+}
+
+.animate-ambient-1 {
+  animation: float-ambient-1 12s ease-in-out infinite;
+}
+
+.animate-ambient-2 {
+  animation: float-ambient-2 15s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-ambient-1,
+  .animate-ambient-2 {
+    animation: none;
+  }
+}
+
+/* .scrollbar-hide — verbatim */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* .gold-foil-btn — verbatim */
+.gold-foil-btn {
+  background: linear-gradient(
+    135deg,
+    var(--accent-foil-dark) 0%,
+    var(--accent) 35%,
+    var(--accent-foil-light) 50%,
+    var(--accent) 65%,
+    var(--accent-foil-dark) 100%
+  );
+  color: var(--on-accent);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 4px 14px rgba(212, 175, 55, 0.25);
+}
+.gold-foil-btn:hover {
+  filter: brightness(1.08);
+}
+.gold-foil-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Luxury Analog keyframes — verbatim */
+@keyframes spin-tape {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes wave-pulse {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+@keyframes polaroid-develop {
+  from { opacity: 0; transform: scale(1.04); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* @theme animation utilities — the CDN has no @theme block, so these are
+   declared as plain classes with identical output (globals.css lines 46-48). */
+.animate-spin-tape { animation: spin-tape 2s linear infinite; }
+.animate-wave-pulse { animation: wave-pulse 900ms ease-in-out infinite; }
+.animate-develop { animation: polaroid-develop 800ms ease-out both; }
+
+/* === Catalog-only stage chrome (NOT part of the design system) === */
+.stage { position: relative; overflow: hidden; border-radius: calc(var(--radius) + 4px); }
+.stage .min-h-dvh { min-height: 100%; }
+.stage .h-dvh, .stage .max-h-dvh { height: 100%; max-height: 100%; }
+.stage .max-h-\[58dvh\] { max-height: 58%; }
+.stage .max-h-\[52dvh\] { max-height: 52%; }
+.stage .fixed { position: absolute; }
+.cat-label { font-family: "DM Mono", ui-monospace, monospace; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+.photo-ph { background: linear-gradient(160deg, #3a3129 0%, #28221e 55%, #1c1815 100%); }
+.photo-ph-2 { background: linear-gradient(200deg, #4a3f30 0%, #33291f 60%, #1c1815 100%); }
+.photo-ph-3 { background: linear-gradient(120deg, #2e2620 0%, #241e19 60%, #1a1512 100%); }
+.frame-art { border: 1.5px solid rgba(212,175,55,0.55); border-radius: calc(var(--radius) - 2px); position: relative; }
+.frame-art::after { content: ""; position: absolute; inset: 8%; border: 1px solid rgba(212,175,55,0.35); border-radius: 2px; }
+</style>
+</head>
+<body class="font-sans antialiased">
+
+<!-- lucide icon stand-ins: inline SVG sprite, stroke-based like lucide-react -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></symbol>
+    <symbol id="i-circle-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.9" y1="4.9" x2="19.1" y2="19.1"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
+    <symbol id="i-check-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9.5"/></symbol>
+    <symbol id="i-rotate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></symbol>
+    <symbol id="i-image-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-4.35-4.35a1 1 0 0 0-1.41 0L6 20"/><line x1="16" y1="5" x2="22" y2="5"/><line x1="19" y1="2" x2="19" y2="8"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="22"/></symbol>
+    <symbol id="i-square" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></symbol>
+    <symbol id="i-chev-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></symbol>
+    <symbol id="i-chev-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></symbol>
+    <symbol id="i-chev-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></symbol>
+    <symbol id="i-loader" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-4.35-4.35a1 1 0 0 0-1.41 0L6 20"/></symbol>
+  </defs>
+</svg>
+
+<div class="mx-auto max-w-5xl px-6 py-12">
+
+  <header class="mb-4">
+    <p class="font-script text-3xl text-accent">Component catalog</p>
+    <h1 class="mt-2 font-display text-4xl font-semibold leading-tight tracking-tight text-text-primary">QR Guest Photo &amp; Voicebook</h1>
+    <div aria-hidden="true" class="flex items-center gap-3 my-4">
+      <span class="h-px w-12 bg-gradient-to-r from-transparent to-accent/60"></span>
+      <span class="h-1.5 w-1.5 rotate-45 bg-accent/80"></span>
+      <span class="h-px w-12 bg-gradient-to-l from-transparent to-accent/60"></span>
+    </div>
+    <p class="text-sm text-text-secondary max-w-xl leading-relaxed">Live static renders of every UI component, using the project's exact Tailwind class strings and globals.css tokens. Deep Espresso palette — Luxury Analog Keepsake Edition (DESIGN.md root, locked). External deps: Google Fonts + Tailwind CDN only.</p>
+  </header>
+
+  <!-- ============================================================ -->
+  <h2 class="mt-16 mb-2 font-display text-3xl font-semibold tracking-tight text-text-primary">Guest Flow Components</h2>
+  <p class="mb-8 text-sm text-text-muted">/e/[public_id] — sequential flow: PRE_SESSION → FRAME_SELECT → CAPTURE → PHOTO_REVIEW → VOICE → DONE.</p>
+
+  <!-- 1 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">1. AmbientBackdrop</h3><span class="cat-label">components/guest/ambient-backdrop.tsx · PreSession shell + admin Shell</span></div>
+    <p class="mb-3 text-xs text-text-muted">Two blurred gold orbs + film grain behind page content (DESIGN.md §2 ambient gold).</p>
+    <div class="stage border border-border bg-bg-base h-40">
+      <div aria-hidden="true" class="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent/20 blur-[100px] animate-ambient-1"></div>
+      <div aria-hidden="true" class="pointer-events-none absolute -bottom-24 -left-24 h-[420px] w-[420px] rounded-full bg-accent/15 blur-[110px] animate-ambient-2"></div>
+      <div aria-hidden="true" class="pointer-events-none absolute inset-0 film-grain"></div>
+      <p class="absolute inset-0 flex items-center justify-center text-xs text-text-muted">orbs animate (12s / 15s loops), grain is a static SVG-noise overlay</p>
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">2. PreSession — Shell + Card + form</h3><span class="cat-label">components/guest/screens/PreSession.tsx · PRE_SESSION</span></div>
+    <p class="mb-3 text-xs text-text-muted">Landing card: Pinyon eyebrow, Cormorant title, gold divider, underline name field, gold-foil Start.</p>
+    <div class="stage border border-border h-[580px]">
+      <main class="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-bg-base px-4 py-8 pb-[calc(2rem+env(safe-area-inset-bottom))] text-text-primary sm:px-6">
+        <div aria-hidden="true" class="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent/20 blur-[100px] animate-ambient-1"></div>
+        <div aria-hidden="true" class="pointer-events-none absolute -bottom-24 -left-24 h-[420px] w-[420px] rounded-full bg-accent/15 blur-[110px] animate-ambient-2"></div>
+        <div aria-hidden="true" class="pointer-events-none absolute inset-0 film-grain"></div>
+        <div class="relative z-10 w-full flex justify-center">
+          <div class="relative w-full max-w-[30rem] rounded-2xl border border-accent/20 bg-bg-surface/85 p-6 sm:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_40px_color-mix(in_srgb,var(--accent)_8%,transparent)] backdrop-blur-xl">
+            <header class="text-center">
+              <p class="font-script text-3xl sm:text-4xl text-accent tracking-wide drop-shadow-[0_2px_10px_color-mix(in_srgb,var(--accent)_30%,transparent)]">Ada cerita buat kamu</p>
+              <h1 class="mt-2 font-display text-4xl sm:text-5xl font-normal leading-tight tracking-tight text-text-primary">Rijal &amp; Cindi</h1>
+              <div aria-hidden="true" class="flex items-center justify-center gap-3 my-4">
+                <span class="h-px w-12 bg-gradient-to-r from-transparent to-accent/60"></span>
+                <span class="h-1.5 w-1.5 rotate-45 bg-accent/80"></span>
+                <span class="h-px w-12 bg-gradient-to-l from-transparent to-accent/60"></span>
+              </div>
+              <p class="text-xs sm:text-sm text-text-secondary leading-relaxed max-w-xs mx-auto">Jepret momennya, pilih Frame favorit, lalu tinggalin pesan.</p>
+            </header>
+            <form class="mt-8 space-y-5">
+              <div class="space-y-1.5">
+                <div class="flex justify-between items-baseline">
+                  <label for="guest-name" class="text-xs font-medium text-text-secondary">Namamu</label>
+                  <span class="rounded-full border border-border px-2.5 py-1 text-[11px] font-medium text-text-muted">Boleh dikosongkan</span>
+                </div>
+                <input id="guest-name" placeholder="Contoh: Andi" class="h-12 w-full rounded-none border-0 border-b border-border bg-transparent px-0 pb-2 text-sm text-text-primary placeholder:text-text-muted/50 focus:border-accent focus:outline-none" />
+                <p class="text-[11px] text-text-muted pt-0.5">Namamu akan muncul di foto dan pesan suara.</p>
+              </div>
+              <div class="pt-2 space-y-3">
+                <button type="button" class="gold-foil-btn h-12 w-full rounded-xl text-sm font-semibold transition duration-fast hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40">Mulai yuk</button>
+                <div class="flex items-center justify-center gap-2 text-[11px] text-text-muted">
+                  <svg class="h-3.5 w-3.5 shrink-0" aria-hidden="true"><use href="#i-clock"/></svg>
+                  <span>30 menit untuk abadikan momenmu.</span>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">3. PreSession Status block</h3><span class="cat-label">PreSession.tsx · role="alert" · closed / not-found / failed</span></div>
+    <p class="mb-3 text-xs text-text-muted">Quiet bordered block on --bg-elevated; optional gold "Coba Lagi" retry action.</p>
+    <div class="stage border border-border bg-bg-base p-6 grid gap-4 sm:grid-cols-2">
+      <section role="alert" class="rounded-xl border border-border bg-bg-elevated/90 p-4 text-center">
+        <h2 class="font-display text-lg font-semibold text-text-primary">Acara ini sudah selesai</h2>
+        <p class="mt-1.5 text-xs text-text-secondary leading-relaxed">Acaranya sudah selesai, jadi foto dan pesan baru nggak bisa dikirim lagi.</p>
+      </section>
+      <section role="alert" class="rounded-xl border border-border bg-bg-elevated/90 p-4 text-center">
+        <h2 class="font-display text-lg font-semibold text-text-primary">Acaranya nggak ketemu</h2>
+        <p class="mt-1.5 text-xs text-text-secondary leading-relaxed">Coba cek lagi QR atau link yang kamu buka.</p>
+        <button type="button" class="mt-4 h-12 rounded-lg bg-accent px-5 text-xs font-semibold text-on-accent transition duration-fast hover:brightness-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Coba Lagi</button>
+      </section>
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">4. PreSession carry-over prompt</h3><span class="cat-label">PreSession.tsx · role="alert" · expired pending photos</span></div>
+    <p class="mb-3 text-xs text-text-muted">Elevated glass block with draft thumbnails and a quiet decline link.</p>
+    <div class="stage border border-border bg-bg-base p-6">
+      <div role="alert" class="rounded-xl border border-border bg-bg-elevated/80 p-4 backdrop-blur-sm max-w-md mx-auto">
+        <h2 class="font-display text-lg font-semibold text-text-primary">Ada foto yang belum sempat terkirim</h2>
+        <p class="mt-1.5 text-xs text-text-secondary leading-relaxed">Ada 3 foto yang masih tersimpan di sini. Bawa ke sesi baru biar tetap bisa dikirim.</p>
+        <div class="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          <div class="h-12 w-12 shrink-0 rounded-lg border border-border object-cover photo-ph"></div>
+          <div class="h-12 w-12 shrink-0 rounded-lg border border-border object-cover photo-ph-2"></div>
+          <div class="h-12 w-12 shrink-0 rounded-lg border border-border object-cover photo-ph-3"></div>
+        </div>
+        <button type="button" class="mt-3 inline-flex min-h-12 items-center text-xs text-text-muted underline underline-offset-4 hover:text-text-primary transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Hapus foto sebelumnya</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">5. PreSession Skeleton</h3><span class="cat-label">PreSession.tsx · state "loading"</span></div>
+    <p class="mb-3 text-xs text-text-muted">Pulse skeleton inside the landing card while the event loads.</p>
+    <div class="stage border border-border bg-bg-base p-6">
+      <div class="relative w-full max-w-[30rem] mx-auto rounded-2xl border border-accent/20 bg-bg-surface/85 p-6 sm:p-8">
+        <div class="space-y-4 text-center py-4" aria-hidden="true">
+          <div class="h-6 w-32 mx-auto animate-pulse rounded bg-bg-elevated"></div>
+          <div class="h-10 w-3/4 mx-auto animate-pulse rounded bg-bg-elevated"></div>
+          <div class="h-4 w-1/2 mx-auto animate-pulse rounded bg-bg-elevated"></div>
+          <div class="mt-8 h-12 w-full animate-pulse rounded-xl bg-bg-elevated"></div>
+          <div class="h-12 w-full animate-pulse rounded-xl bg-bg-elevated"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">6. Post-session-loading skeleton</h3><span class="cat-label">components/guest-event-entry.tsx (inline) · after Start</span></div>
+    <p class="mb-3 text-xs text-text-muted">Eyebrow + Cormorant title with two pulsing panels while session usage loads.</p>
+    <div class="stage border border-border bg-bg-base p-6">
+      <div class="mx-auto w-full max-w-[30rem]">
+        <header>
+          <p class="text-xs font-medium tracking-[0.04em] text-text-muted">Masuk acara</p>
+          <h1 class="mt-3 font-display text-4xl font-semibold leading-tight tracking-tight">Rijal &amp; Cindi</h1>
+        </header>
+        <div role="status" aria-label="Loading session usage" class="mt-8 space-y-4">
+          <div class="h-28 animate-pulse rounded-lg bg-bg-surface"></div>
+          <div class="h-32 animate-pulse rounded-lg bg-bg-surface"></div>
+          <p class="text-sm text-text-muted">Ngecek sesi kamu…</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">7. FrameSelection — header + carousel + bottom band</h3><span class="cat-label">components/guest/screens/FrameSelection.tsx · FRAME_SELECT</span></div>
+    <p class="mb-3 text-xs text-text-muted">Viewport-locked: script eyebrow, hairline ◆ divider, 9:16 snap cards (radio group), indicator dots, gold confirm + quiet skip link. Frame art shown as bordered placeholders.</p>
+    <div class="stage border border-border h-[640px]">
+      <main class="relative flex h-dvh max-h-dvh w-full max-w-full flex-col overflow-hidden bg-bg-base text-text-primary select-none">
+        <div aria-hidden="true" class="pointer-events-none absolute inset-0 overflow-hidden">
+          <div class="absolute -right-24 -top-20 h-80 w-80 rounded-full bg-accent/15 blur-[100px]"></div>
+          <div class="absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-accent/10 blur-[110px]"></div>
+          <div class="film-grain absolute inset-0"></div>
+        </div>
+        <header class="relative z-10 w-full shrink-0 px-5 pt-[calc(1.25rem+env(safe-area-inset-top))] text-center">
+          <p class="truncate font-script text-2xl text-accent drop-shadow-sm">Rijal &amp; Cindi</p>
+          <div aria-hidden="true" class="mx-auto mt-2 flex items-center justify-center gap-3">
+            <span class="h-px w-10 bg-accent/50"></span>
+            <span class="text-accent text-xs">◆</span>
+            <span class="h-px w-10 bg-accent/50"></span>
+          </div>
+          <h1 id="frame-heading" tabindex="-1" class="mt-2 font-display text-3xl font-normal leading-tight tracking-tight text-text-primary outline-none sm:text-4xl">Pilih Frame fotomu</h1>
+          <p class="mt-2 text-sm text-text-secondary">Pilih Frame yang paling kamu suka.</p>
+        </header>
+        <section class="relative z-10 flex min-h-0 flex-1 items-center justify-center overflow-hidden py-3">
+          <div role="radiogroup" aria-labelledby="frame-heading" class="scrollbar-hide flex h-full max-h-[58dvh] w-full max-w-full snap-x snap-mandatory items-center justify-start gap-4 overflow-x-auto overscroll-x-contain px-8 py-4 touch-pan-x sm:justify-center">
+            <button type="button" role="radio" aria-checked="true" aria-label="Royal Gold Serif" class="group relative flex h-full shrink-0 snap-center flex-col items-center justify-center outline-none">
+              <div class="relative aspect-[9/16] h-[calc(100%-2rem)] max-h-[52dvh] overflow-hidden rounded-2xl border-2 bg-bg-surface/90 p-1.5 transition-[transform,opacity,border-color,box-shadow] duration-fast group-focus-visible:ring-2 group-focus-visible:ring-accent group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-bg-base scale-[1.02] border-accent bg-accent-soft shadow-[0_0_30px_color-mix(in_srgb,var(--accent)_35%,transparent)] ring-1 ring-accent">
+                <div class="pointer-events-none h-full w-full rounded-xl object-contain frame-art"></div>
+                <span aria-hidden="true" class="absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full bg-accent text-on-accent shadow-lg">
+                  <svg class="h-4 w-4" style="stroke-width:3" aria-hidden="true"><use href="#i-check"/></svg>
+                </span>
+              </div>
+              <span class="mt-3 flex min-h-5 items-center justify-center text-sm font-medium transition-colors font-semibold text-accent">Royal Gold Serif</span>
+            </button>
+            <button type="button" role="radio" aria-checked="false" aria-label="Botanical Romance" class="group relative flex h-full shrink-0 snap-center flex-col items-center justify-center outline-none">
+              <div class="relative aspect-[9/16] h-[calc(100%-2rem)] max-h-[52dvh] overflow-hidden rounded-2xl border-2 bg-bg-surface/90 p-1.5 transition-[transform,opacity,border-color,box-shadow] duration-fast group-focus-visible:ring-2 group-focus-visible:ring-accent group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-bg-base border-border/60 opacity-55 hover:border-text-secondary hover:opacity-90">
+                <div class="pointer-events-none h-full w-full rounded-xl object-contain photo-ph"></div>
+              </div>
+              <span class="mt-3 flex min-h-5 items-center justify-center text-sm font-medium transition-colors text-text-secondary">Botanical Romance</span>
+            </button>
+            <button type="button" role="radio" aria-checked="false" aria-label="Modern Editorial" class="group relative flex h-full shrink-0 snap-center flex-col items-center justify-center outline-none">
+              <div class="relative aspect-[9/16] h-[calc(100%-2rem)] max-h-[52dvh] overflow-hidden rounded-2xl border-2 bg-bg-surface/90 p-1.5 transition-[transform,opacity,border-color,box-shadow] duration-fast group-focus-visible:ring-2 group-focus-visible:ring-accent group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-bg-base border-border/60 opacity-55 hover:border-text-secondary hover:opacity-90">
+                <div class="pointer-events-none h-full w-full rounded-xl object-contain photo-ph-2"></div>
+              </div>
+              <span class="mt-3 flex min-h-5 items-center justify-center text-sm font-medium transition-colors text-text-secondary">Modern Editorial</span>
+            </button>
+          </div>
+        </section>
+        <div aria-hidden="true" class="relative z-10 flex shrink-0 items-center justify-center gap-2 pb-3">
+          <span class="relative block h-2 w-5 overflow-hidden rounded-full">
+            <span class="absolute left-0 top-0 h-2 w-2 rounded-full bg-text-muted/40"></span>
+            <span class="absolute inset-0 origin-left rounded-full bg-accent transition-transform duration-[var(--motion-base)]" style="transform: scaleX(1)"></span>
+          </span>
+          <span class="relative block h-2 w-5 overflow-hidden rounded-full">
+            <span class="absolute left-0 top-0 h-2 w-2 rounded-full bg-text-muted/40"></span>
+            <span class="absolute inset-0 origin-left rounded-full bg-accent transition-transform duration-[var(--motion-base)]" style="transform: scaleX(0)"></span>
+          </span>
+          <span class="relative block h-2 w-5 overflow-hidden rounded-full">
+            <span class="absolute left-0 top-0 h-2 w-2 rounded-full bg-text-muted/40"></span>
+            <span class="absolute inset-0 origin-left rounded-full bg-accent transition-transform duration-[var(--motion-base)]" style="transform: scaleX(0)"></span>
+          </span>
+        </div>
+        <div class="relative z-10 mx-auto w-full max-w-md shrink-0 space-y-2.5 px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:px-8">
+          <button type="button" class="gold-foil-btn flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold shadow-lg transition duration-fast hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40">
+            <svg class="h-4 w-4" aria-hidden="true"><use href="#i-camera"/></svg>
+            <span>Pakai Royal Gold Serif</span>
+          </button>
+          <button type="button" class="flex min-h-12 w-full items-center justify-center gap-2 text-center text-xs font-medium text-text-muted underline underline-offset-4 transition-colors hover:text-text-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+            <svg class="h-3.5 w-3.5" aria-hidden="true"><use href="#i-circle-off"/></svg>
+            <span>Tanpa Frame, lanjut</span>
+          </button>
+          <div class="flex items-center justify-center gap-2 pt-1 text-[11px] text-text-muted">
+            <span aria-hidden="true" class="h-px w-6 bg-border"></span>
+            <span>30 menit untuk abadikan momenmu.</span>
+            <span aria-hidden="true" class="h-px w-6 bg-border"></span>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- 8 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">8. Capture — 3-zone photobooth studio</h3><span class="cat-label">components/guest/screens/Capture.tsx · CAPTURE</span></div>
+    <p class="mb-3 text-xs text-text-muted">Top bar (camera switch + DM Mono N/M pill), isolated 9:16 viewfinder box (compositor-exact WYSIWYG), bottom dock (icon file picker / 72px gold shutter / Lanjut). Live video + frame overlay shown as placeholders.</p>
+    <div class="stage border border-border h-[660px]">
+      <main class="bg-bg-base text-text-primary select-none">
+        <section aria-labelledby="capture-heading" class="flex h-dvh max-h-dvh w-full flex-col overflow-hidden">
+          <h2 id="capture-heading" tabindex="-1" class="sr-only outline-none">Take photos</h2>
+          <!-- ambient blurred frame backdrop -->
+          <div aria-hidden="true" class="absolute inset-0 z-0 pointer-events-none">
+            <div class="absolute inset-0 h-full w-full photo-ph blur-[80px] opacity-35 scale-125"></div>
+            <div class="absolute inset-0 bg-bg-base/40"></div>
+          </div>
+          <!-- ZONE 1 — top bar -->
+          <div class="relative z-10 flex shrink-0 items-center justify-between gap-2 px-4 pb-2 pt-[calc(0.75rem+env(safe-area-inset-top))]">
+            <div class="flex items-center">
+              <button type="button" class="flex h-11 w-11 items-center justify-center rounded-full bg-bg-base/60 backdrop-blur-md border border-border/60 text-sm font-semibold text-text-primary shadow-lg transition active:scale-95 focus-visible:outline-2 focus-visible:outline-accent" aria-label="Switch camera">
+                <svg class="h-5 w-5" aria-hidden="true"><use href="#i-rotate"/></svg>
+              </button>
+            </div>
+            <p class="flex h-10 min-w-10 items-center justify-center rounded-full bg-bg-base/60 backdrop-blur-md border border-border/60 px-3 font-mono text-xs tabular-nums text-text-primary shadow-lg" aria-live="polite" aria-label="3 of 5 photos remaining">3 / 5</p>
+          </div>
+          <!-- ZONE 2 — 9:16 viewport -->
+          <div class="relative z-10 flex min-h-0 flex-1 items-center justify-center px-2 pb-2 [container-type:size]">
+            <div class="relative aspect-[9/16] w-[min(100cqw,calc(100cqh*9/16))] overflow-hidden rounded-2xl shadow-[0_10px_50px_var(--overlay)]">
+              <div class="absolute inset-0 bg-bg-base overflow-hidden">
+                <div class="absolute inset-0 h-full w-full object-cover photo-ph-2"></div>
+                <div class="pointer-events-none absolute inset-0 h-full w-full object-cover frame-art" aria-hidden="true"></div>
+              </div>
+              <div aria-hidden="true" class="pointer-events-none absolute inset-0 bg-text-primary transition-opacity duration-fast z-20 opacity-0"></div>
+            </div>
+          </div>
+          <!-- ZONE 3 — bottom dock -->
+          <div class="relative z-10 shrink-0 space-y-2.5 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-2">
+            <div class="flex justify-center">
+              <div class="-mt-7 flex gap-2 overflow-x-auto px-2 pt-7 pb-1 max-w-full" role="list" aria-label="Captured photos">
+                <div role="listitem" class="relative shrink-0 animate-develop">
+                  <button type="button" class="relative block h-12 w-12 overflow-hidden rounded-lg border-2 border-border/80 bg-bg-surface shadow-md focus-visible:outline-2 focus-visible:outline-accent" aria-label="Photo 1, confirmed">
+                    <span class="block h-full w-full object-cover photo-ph"></span>
+                  </button>
+                  <span class="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-success text-xs font-bold text-bg-base shadow-sm" aria-hidden="true">✓</span>
+                </div>
+                <div role="listitem" class="relative shrink-0 animate-develop">
+                  <button type="button" class="relative block h-12 w-12 overflow-hidden rounded-lg border-2 border-border/80 bg-bg-surface shadow-md focus-visible:outline-2 focus-visible:outline-accent" aria-label="Photo 2, uploading">
+                    <span class="block h-full w-full object-cover photo-ph-3"></span>
+                    <span aria-hidden="true" class="pointer-events-none absolute inset-0 flex items-center justify-center bg-bg-base/40">
+                      <span class="h-6 w-6 animate-spin rounded-full border-2 border-text-primary/25 border-t-accent"></span>
+                    </span>
+                  </button>
+                  <span class="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-text-muted text-xs font-bold text-bg-base shadow-sm" aria-hidden="true">…</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center justify-between gap-3 max-w-sm mx-auto w-full">
+              <div class="flex-1 flex justify-start">
+                <label aria-label="Choose a photo" class="flex h-11 w-11 items-center justify-center rounded-xl bg-bg-base/70 backdrop-blur-md border border-border/70 text-text-secondary transition active:scale-95 cursor-pointer hover:text-text-primary focus-within:outline-2 focus-within:outline-accent shadow-lg">
+                  <span class="sr-only">Choose a photo</span>
+                  <svg class="h-5 w-5" aria-hidden="true"><use href="#i-image-plus"/></svg>
+                </label>
+              </div>
+              <div class="flex flex-col items-center justify-center shrink-0">
+                <button type="button" class="h-[72px] w-[72px] shrink-0 rounded-full border-4 border-bg-base bg-accent shadow-[0_0_20px_color-mix(in_srgb,var(--accent)_45%,transparent),0_0_40px_color-mix(in_srgb,var(--accent)_20%,transparent)] transition duration-fast ease-out hover:shadow-[0_0_28px_color-mix(in_srgb,var(--accent)_65%,transparent)] active:scale-[0.92] focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-40" aria-label="Take photo"></button>
+              </div>
+              <div class="flex-1 flex justify-end">
+                <button type="button" class="flex h-11 items-center justify-center rounded-xl bg-accent px-4 text-xs font-bold text-on-accent transition duration-fast hover:brightness-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-45 shadow-lg">Lanjut →</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- 9 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">9. Capture status banners</h3><span class="cat-label">Capture.tsx · in-flow under top bar · closed event + pre-expiry</span></div>
+    <p class="mb-3 text-xs text-text-muted">Muted elevated banners; role="alert" for closed, role="status" for expiry. No gold (§2 gold rule).</p>
+    <div class="stage border border-border bg-bg-base p-4 space-y-2 max-w-md">
+      <div role="alert" class="rounded-xl border border-border bg-bg-elevated/95 backdrop-blur-md p-3 shadow-xl">
+        <p class="text-sm font-semibold text-text-secondary">Acara sudah selesai</p>
+        <p class="text-xs text-text-secondary">Sesimu masih bisa dilihat, tapi kiriman baru nggak diterima lagi.</p>
+      </div>
+      <div role="status" class="rounded-xl border border-border bg-bg-elevated/95 backdrop-blur-md p-3 shadow-xl">
+        <p class="text-xs font-medium text-text-primary">Sesi kamu habis dalam 4 menit. Kirim fotonya biar tersimpan.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">10. ReviewOverlay (open state)</h3><span class="cat-label">Capture.tsx · shadcn Dialog · full-size photo review</span></div>
+    <p class="mb-3 text-xs text-text-muted">Full-screen blurred dialog: 9:16 hero photo with status pill, Kembali / Ulangi (gold-foil) / Hapus actions. Rendered static-open.</p>
+    <div class="stage border border-border h-[560px]">
+      <div class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-bg-base/95 backdrop-blur-md border-0 rounded-none max-w-full max-h-full w-full h-full p-4 gap-0 outline-none translate-x-0 translate-y-0 sm:max-w-full" role="dialog" aria-modal="true" aria-labelledby="review-overlay-title">
+        <h2 id="review-overlay-title" class="sr-only">Photo review</h2>
+        <div class="relative aspect-[9/16] w-full max-w-[min(85vw,calc(72dvh*9/16))] overflow-hidden rounded-2xl border border-border/40 bg-bg-base shadow-[0_16px_60px_var(--overlay)] mx-auto">
+          <div class="absolute inset-0 h-full w-full object-contain photo-ph"></div>
+          <p class="absolute bottom-3 left-1/2 -translate-x-1/2 flex w-fit items-center gap-2 rounded-full border border-border/60 bg-bg-elevated/70 px-3 py-1 text-xs backdrop-blur-md">
+            <span aria-hidden="true" class="h-1.5 w-1.5 rounded-full bg-accent"></span>
+            <span class="font-medium text-text-primary">Tersimpan</span>
+          </p>
+        </div>
+        <div class="flex gap-2.5 w-full max-w-[min(85vw,calc(72dvh*9/16))] mx-auto mt-4 pb-[calc(env(safe-area-inset-bottom)+0.5rem)]">
+          <button type="button" aria-label="Kembali" class="flex-1 h-12 rounded-xl border border-border bg-bg-surface/80 text-xs font-semibold text-text-primary transition active:scale-95 hover:bg-bg-elevated focus-visible:outline-2 focus-visible:outline-accent">Kembali</button>
+          <button type="button" aria-label="Ulangi" class="flex-1 h-12 rounded-xl gold-foil-btn text-xs font-bold transition active:scale-95 hover:brightness-105 focus-visible:outline-2 focus-visible:outline-accent">Ulangi</button>
+          <button type="button" aria-label="Hapus" class="flex-1 h-12 rounded-xl border border-error/30 bg-error/10 text-xs font-semibold text-error transition active:scale-95 hover:bg-error/20 focus-visible:outline-2 focus-visible:outline-accent">Hapus</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 11 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">11. PhotoReview — header + HASIL JEPRETAN grid</h3><span class="cat-label">components/guest/screens/PhotoReview.tsx · PHOTO_REVIEW</span></div>
+    <p class="mb-3 text-xs text-text-muted">Analog film-grain surface, 3-col grid, per-item delete (✕) + retry (↻) chips, mono "Foto N" labels, gold sync CTA.</p>
+    <div class="stage border border-border bg-bg-base">
+      <main class="flex min-h-dvh flex-col bg-bg-base text-text-primary">
+        <header class="border-b border-border px-5 pb-5 pt-[calc(2rem+env(safe-area-inset-top))] sm:px-8">
+          <p class="truncate text-xs font-medium tracking-[0.04em] text-text-muted">Rijal &amp; Cindi</p>
+          <h1 tabindex="-1" class="mt-3 font-mono text-3xl font-semibold leading-tight tracking-tight tabular-nums outline-none">Foto kamu (3)</h1>
+          <p class="mt-2 text-sm text-text-secondary">Hapus yang nggak diinginkan sebelum dikirim.</p>
+          <p role="status" class="mt-3 rounded-lg border border-border bg-bg-elevated/90 px-3 py-2 text-xs text-text-secondary">Sesi kamu habis dalam 4 menit. Kirim fotonya biar tersimpan.</p>
+        </header>
+        <div class="flex-1 px-5 py-6 sm:px-8">
+          <section class="relative overflow-hidden rounded-2xl bg-bg-surface">
+            <div class="relative p-4">
+              <p class="font-mono text-xs tracking-widest text-text-muted">HASIL JEPRETAN</p>
+              <ul class="mt-3 grid grid-cols-3 gap-2" aria-label="Captured photos">
+                <li class="relative animate-develop">
+                  <div class="relative aspect-square overflow-hidden rounded-lg border border-border bg-bg-surface">
+                    <div class="h-full w-full object-cover photo-ph"></div>
+                  </div>
+                  <p class="mt-1 text-center font-mono text-xs tabular-nums text-text-muted">Foto 1</p>
+                  <span class="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-success text-xs font-bold text-bg-base shadow-sm" aria-hidden="true">✓</span>
+                  <button type="button" aria-label="Delete photo 1" class="group absolute -right-1 -top-1 flex h-11 w-11 items-start justify-end rounded-full focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-45">
+                    <span aria-hidden="true" class="flex h-7 w-7 items-center justify-center rounded-full bg-error text-sm font-bold text-text-primary group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-accent">✕</span>
+                  </button>
+                </li>
+                <li class="relative animate-develop" style="animation-delay:60ms">
+                  <div class="relative aspect-square overflow-hidden rounded-lg border border-border bg-bg-surface">
+                    <div class="h-full w-full object-cover photo-ph-2"></div>
+                    <span aria-hidden="true" class="pointer-events-none absolute inset-0 flex items-center justify-center bg-bg-base/40">
+                      <span class="h-6 w-6 animate-spin rounded-full border-2 border-text-primary/25 border-t-accent"></span>
+                    </span>
+                  </div>
+                  <p class="mt-1 text-center font-mono text-xs tabular-nums text-text-muted">Foto 2</p>
+                  <span class="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-text-muted text-xs font-bold text-bg-base shadow-sm" aria-hidden="true">…</span>
+                  <button type="button" aria-label="Delete photo 2" class="group absolute -right-1 -top-1 flex h-11 w-11 items-start justify-end rounded-full focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-45">
+                    <span aria-hidden="true" class="flex h-7 w-7 items-center justify-center rounded-full bg-error text-sm font-bold text-text-primary group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-accent">✕</span>
+                  </button>
+                </li>
+                <li class="relative animate-develop" style="animation-delay:120ms">
+                  <div class="relative aspect-square overflow-hidden rounded-lg border border-border bg-bg-surface">
+                    <div class="h-full w-full object-cover photo-ph-3"></div>
+                  </div>
+                  <p class="mt-1 text-center font-mono text-xs tabular-nums text-text-muted">Foto 3</p>
+                  <span class="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-error text-xs font-bold text-bg-base shadow-sm" aria-hidden="true">!</span>
+                  <button type="button" aria-label="Delete photo 3" class="group absolute -right-1 -top-1 flex h-11 w-11 items-start justify-end rounded-full focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-45">
+                    <span aria-hidden="true" class="flex h-7 w-7 items-center justify-center rounded-full bg-error text-sm font-bold text-text-primary group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-accent">✕</span>
+                  </button>
+                  <button type="button" aria-label="Retry photo 3: upload failed" class="group absolute -left-1 -top-1 flex h-11 w-11 items-start justify-start rounded-full focus-visible:outline-none">
+                    <span aria-hidden="true" class="flex h-7 w-7 items-center justify-center rounded-full border border-border bg-bg-elevated text-sm font-bold text-text-primary group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-accent">↻</span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+            <div aria-hidden="true" class="pointer-events-none absolute inset-0 film-grain"></div>
+          </section>
+          <p role="alert" class="mt-4 text-sm text-text-secondary">1 foto nggak tersimpan. Ulangi kirim atau hapus dulu sebelum lanjut.</p>
+        </div>
+        <div class="space-y-2 px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:px-8">
+          <button type="button" disabled class="gold-foil-btn min-h-12 w-full rounded-lg px-4 font-semibold transition duration-fast ease-out disabled:cursor-not-allowed disabled:opacity-45">Kirim &amp; Lanjut</button>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- 12 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">12. VoiceRecordingScreen — idle (Cassette + mic)</h3><span class="cat-label">components/guest/screens/VoiceRecordingScreen.tsx · VOICE</span></div>
+    <p class="mb-3 text-xs text-text-muted">Cassette visual (spools + level bars, static when idle), gold mic button, DM Mono timer, skip link.</p>
+    <div class="stage border border-border bg-bg-base h-[560px]">
+      <main class="flex min-h-dvh flex-col bg-bg-base text-text-primary">
+        <header class="px-5 pt-[calc(2rem+env(safe-area-inset-top))] sm:px-8">
+          <p class="truncate text-xs font-medium tracking-[0.04em] text-text-muted">Rijal &amp; Cindi</p>
+          <h1 tabindex="-1" class="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight outline-none sm:text-4xl">Tinggalkan Pesan Suara</h1>
+          <p class="mt-2 text-sm text-text-secondary">Satu pesan suara, maksimal 30 detik, buat yang punya hajat.</p>
+        </header>
+        <div class="flex flex-1 flex-col items-center justify-center gap-4 px-5 py-6">
+          <!-- Cassette (idle: bars squashed, spools still) -->
+          <div aria-hidden="true" class="w-full max-w-xs rounded-xl border border-border bg-bg-surface px-6 py-5 shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
+            <div class="flex items-center justify-between gap-4">
+              <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-border bg-bg-elevated">
+                <span class="relative block h-8 w-8 rounded-full border border-border bg-bg-base">
+                  <span class="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-border"></span>
+                  <span class="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-border"></span>
+                  <span class="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent"></span>
+                </span>
+              </span>
+              <div class="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-md border border-border bg-bg-base px-3">
+                <span class="h-8 w-1.5 origin-center rounded-full bg-accent scale-y-[0.3]"></span>
+                <span class="h-8 w-1.5 origin-center rounded-full bg-accent scale-y-[0.3]"></span>
+                <span class="h-8 w-1.5 origin-center rounded-full bg-accent scale-y-[0.3]"></span>
+                <span class="h-8 w-1.5 origin-center rounded-full bg-accent scale-y-[0.3]"></span>
+                <span class="h-8 w-1.5 origin-center rounded-full bg-accent scale-y-[0.3]"></span>
+              </div>
+              <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-border bg-bg-elevated">
+                <span class="relative block h-8 w-8 rounded-full border border-border bg-bg-base">
+                  <span class="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-border"></span>
+                  <span class="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-border"></span>
+                  <span class="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent"></span>
+                </span>
+              </span>
+            </div>
+            <div class="mt-3 flex items-center justify-between font-mono text-[0.6rem] tracking-[0.2em] text-text-muted">
+              <span>SIDE A</span>
+              <span>60</span>
+            </div>
+          </div>
+          <button type="button" aria-label="Record voice note" class="flex h-20 w-20 items-center justify-center rounded-full transition-transform duration-fast active:scale-[0.92] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent bg-accent text-on-accent">
+            <svg class="h-9 w-9" aria-hidden="true"><use href="#i-mic"/></svg>
+          </button>
+          <p class="font-mono text-xl tabular-nums text-text-primary" aria-live="off">00:00 / 00:30</p>
+          <p class="max-w-sm text-center text-sm text-text-muted">Browser bakal minta izin mikrofon setelah kamu tekan rekam.</p>
+        </div>
+        <div class="space-y-2 px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:px-8">
+          <button type="button" class="min-h-12 w-full rounded-md px-4 text-sm font-semibold text-text-secondary transition-colors duration-fast hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Lewati — Kirim Foto Saja</button>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- 13 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">13. VoiceRecordingScreen — recording state</h3><span class="cat-label">VoiceRecordingScreen.tsx · voiceState "recording"</span></div>
+    <p class="mb-3 text-xs text-text-muted">Spools spin (spin-tape), level bars pulse (wave-pulse), error-red stop button, "Merekam" status.</p>
+    <div class="stage border border-border bg-bg-base p-6 flex flex-col items-center gap-4">
+      <div aria-hidden="true" class="w-full max-w-xs rounded-xl border border-border bg-bg-surface px-6 py-5 shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
+        <div class="flex items-center justify-between gap-4">
+          <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-border bg-bg-elevated animate-spin-tape">
+            <span class="relative block h-8 w-8 rounded-full border border-border bg-bg-base">
+              <span class="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-border"></span>
+              <span class="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-border"></span>
+              <span class="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent"></span>
+            </span>
+          </span>
+          <div class="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-md border border-border bg-bg-base px-3">
+            <span class="h-8 w-1.5 origin-center rounded-full bg-accent animate-wave-pulse" style="animation-delay:0ms"></span>
+            <span class="h-8 w-1.5 origin-center rounded-full bg-accent animate-wave-pulse" style="animation-delay:120ms"></span>
+            <span class="h-8 w-1.5 origin-center rounded-full bg-accent animate-wave-pulse" style="animation-delay:240ms"></span>
+            <span class="h-8 w-1.5 origin-center rounded-full bg-accent animate-wave-pulse" style="animation-delay:360ms"></span>
+            <span class="h-8 w-1.5 origin-center rounded-full bg-accent animate-wave-pulse" style="animation-delay:480ms"></span>
+          </div>
+          <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-border bg-bg-elevated animate-spin-tape">
+            <span class="relative block h-8 w-8 rounded-full border border-border bg-bg-base">
+              <span class="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-border"></span>
+              <span class="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-border"></span>
+              <span class="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent"></span>
+            </span>
+          </span>
+        </div>
+        <div class="mt-3 flex items-center justify-between font-mono text-[0.6rem] tracking-[0.2em] text-text-muted">
+          <span>SIDE A</span>
+          <span>60</span>
+        </div>
+      </div>
+      <button type="button" aria-label="Stop recording" class="flex h-20 w-20 items-center justify-center rounded-full transition-transform duration-fast active:scale-[0.92] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent bg-error text-text-primary">
+        <svg class="h-7 w-7" aria-hidden="true"><use href="#i-square"/></svg>
+      </button>
+      <p class="font-mono text-xl tabular-nums text-text-primary" aria-live="off">00:12 / 00:30</p>
+      <p role="status" class="text-sm font-semibold text-text-primary">Merekam</p>
+    </div>
+  </div>
+
+  <!-- 14 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">14. VoiceRecordingScreen — review state + AudioPlayer</h3><span class="cat-label">VoiceRecordingScreen.tsx + guest/audio-player.tsx · voiceState "review"</span></div>
+    <p class="mb-3 text-xs text-text-muted">Custom player (gold play, accent scaleX seek over hairline track, DM Mono elapsed/total), duration readout, gold submit + Rekam Ulang.</p>
+    <div class="stage border border-border bg-bg-base p-6 space-y-3 max-w-md">
+      <div class="w-full space-y-3">
+        <div class="flex items-center gap-3 rounded-xl border border-border/60 bg-bg-surface px-4 py-3">
+          <button type="button" aria-label="Play voice note" class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-accent transition-transform duration-fast active:scale-[0.92] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+            <svg class="h-5 w-5" aria-hidden="true"><use href="#i-play"/></svg>
+          </button>
+          <div class="relative flex h-11 flex-1 items-center">
+            <span class="block h-1 w-full overflow-hidden rounded-full bg-border">
+              <span class="block h-full w-full origin-left rounded-full bg-accent transition-transform duration-fast motion-reduce:transition-none" style="transform: scaleX(0.4)"></span>
+            </span>
+          </div>
+          <span class="shrink-0 font-mono text-xs tabular-nums text-text-muted">0:07 / 0:18</span>
+        </div>
+        <p class="text-center text-sm text-text-muted">Durasi: <span class="font-mono tabular-nums">18s</span></p>
+      </div>
+      <button type="button" class="gold-foil-btn min-h-12 w-full rounded-lg px-4 font-semibold transition duration-fast ease-out disabled:cursor-not-allowed disabled:opacity-45">Kirim Pesan Suara</button>
+      <button type="button" class="min-h-12 w-full rounded-lg border border-border bg-bg-surface px-4 font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-45">Rekam Ulang</button>
+      <button type="button" class="min-h-12 w-full rounded-md px-4 text-sm font-semibold text-text-secondary transition-colors duration-fast hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Lewati — Kirim Foto Saja</button>
+    </div>
+  </div>
+
+  <!-- 15 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">15. Done — completion screen + keepsake card</h3><span class="cat-label">components/guest/screens/Done.tsx · DONE</span></div>
+    <p class="mb-3 text-xs text-text-muted">One static gold check, Cormorant title, two receipt lines, optional quiet keepsake download card (§5.6 exception).</p>
+    <div class="stage border border-border bg-bg-base h-[480px]">
+      <main class="flex min-h-dvh flex-col items-center justify-center bg-bg-base px-5 pt-[calc(2rem+env(safe-area-inset-top))] pb-[calc(2rem+env(safe-area-inset-bottom))] text-center text-text-primary sm:px-8">
+        <svg class="h-10 w-10 text-accent" aria-hidden="true"><use href="#i-check-circle"/></svg>
+        <h1 tabindex="-1" class="mt-6 font-display text-4xl font-semibold leading-tight tracking-tight outline-none">Rijal &amp; Cindi</h1>
+        <p class="mt-4 max-w-sm text-sm text-text-secondary">Terima kasih — foto dan pesan suara kamu sudah kami terima.</p>
+        <p class="mt-1 max-w-sm text-sm text-text-muted">Host akan melihatnya setelah acara.</p>
+        <section class="mt-8 w-full max-w-sm rounded-xl border border-border bg-bg-surface p-6">
+          <h2 class="font-display text-xl font-semibold text-text-secondary">Simpan Kenangan Digital</h2>
+          <p class="mt-2 text-sm text-text-muted">Unduh foto kenangan berbingkai dari acara ini ke galeri kamu.</p>
+          <button type="button" class="mt-4 min-h-12 w-full rounded-lg border border-border px-4 font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Simpan ke Galeri Saya</button>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- 16 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">16. ExpiryHint</h3><span class="cat-label">components/guest/screens/expiry-hint.tsx · PhotoReview + Voice headers</span></div>
+    <p class="mb-3 text-xs text-text-muted">Pre-expiry UX hint (≤5 min left); muted elevated block, gold-rule compliant. Server expires_at stays authoritative.</p>
+    <div class="stage border border-border bg-bg-base p-6 max-w-md">
+      <p role="status" class="rounded-lg border border-border bg-bg-elevated/90 px-3 py-2 text-xs text-text-secondary">Sesi kamu habis dalam 3 menit. Kirim pesan suaramu biar tersimpan.</p>
+    </div>
+  </div>
+
+  <!-- 17 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">17. PendingStatusBadge — all 5 states</h3><span class="cat-label">components/guest/pending-status-badge.tsx · Capture strip + PhotoReview grid</span></div>
+    <p class="mb-3 text-xs text-text-muted">aria-hidden corner chip. pending → renders nothing (shown as bare thumb); uploading "…" bg-text-muted; confirmed "✓" bg-success; error "!" bg-error; expired "✕" bg-text-muted.</p>
+    <div class="stage border border-border bg-bg-base p-6 flex flex-wrap items-start gap-6">
+      <div class="relative shrink-0">
+        <div class="block h-12 w-12 overflow-hidden rounded-lg border-2 border-border/80 bg-bg-surface shadow-md"><span class="block h-full w-full photo-ph"></span></div>
+        <p class="mt-2 text-center font-mono text-[10px] text-text-muted">pending (none)</p>
+      </div>
+      <div class="relative shrink-0">
+        <div class="block h-12 w-12 overflow-hidden rounded-lg border-2 border-border/80 bg-bg-surface shadow-md"><span class="block h-full w-full photo-ph-2"></span></div>
+        <span class="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-text-muted text-xs font-bold text-bg-base shadow-sm" aria-hidden="true">…</span>
+        <p class="mt-2 text-center font-mono text-[10px] text-text-muted">uploading</p>
+      </div>
+      <div class="relative shrink-0">
+        <div class="block h-12 w-12 overflow-hidden rounded-lg border-2 border-border/80 bg-bg-surface shadow-md"><span class="block h-full w-full photo-ph-3"></span></div>
+        <span class="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-success text-xs font-bold text-bg-base shadow-sm" aria-hidden="true">✓</span>
+        <p class="mt-2 text-center font-mono text-[10px] text-text-muted">confirmed</p>
+      </div>
+      <div class="relative shrink-0">
+        <div class="block h-12 w-12 overflow-hidden rounded-lg border-2 border-border/80 bg-bg-surface shadow-md"><span class="block h-full w-full photo-ph"></span></div>
+        <span class="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-error text-xs font-bold text-bg-base shadow-sm" aria-hidden="true">!</span>
+        <p class="mt-2 text-center font-mono text-[10px] text-text-muted">error</p>
+      </div>
+      <div class="relative shrink-0">
+        <div class="block h-12 w-12 overflow-hidden rounded-lg border-2 border-border/80 bg-bg-surface shadow-md"><span class="block h-full w-full photo-ph-2"></span></div>
+        <span class="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-text-muted text-xs font-bold text-bg-base shadow-sm" aria-hidden="true">✕</span>
+        <p class="mt-2 text-center font-mono text-[10px] text-text-muted">expired</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 18 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">18. PendingUploadingRing</h3><span class="cat-label">pending-status-badge.tsx · thumbnail overlay spinner</span></div>
+    <p class="mb-3 text-xs text-text-muted">Dim wash + gold-tipped spinner over the thumbnail; transform-only motion, reduced-motion zeroed.</p>
+    <div class="stage border border-border bg-bg-base p-6 flex justify-center">
+      <div class="relative h-12 w-12 overflow-hidden rounded-lg border-2 border-border/80 bg-bg-surface shadow-md">
+        <span class="block h-full w-full photo-ph-3"></span>
+        <span aria-hidden="true" class="pointer-events-none absolute inset-0 flex items-center justify-center bg-bg-base/40">
+          <span class="h-6 w-6 animate-spin rounded-full border-2 border-text-primary/25 border-t-accent"></span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 19 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">19. statusPill — ReviewOverlay status labels</h3><span class="cat-label">pending-status-badge.tsx · statusPillDotClass + statusPillLabel (e2e-locked strings)</span></div>
+    <p class="mb-3 text-xs text-text-muted">Dot + label pill: accent dot for pending/uploading/confirmed, error dot for error/expired, muted otherwise.</p>
+    <div class="stage border border-border bg-bg-base p-6 flex flex-wrap gap-3">
+      <p class="flex w-fit items-center gap-2 rounded-full border border-border/60 bg-bg-elevated/70 px-3 py-1 text-xs backdrop-blur-md"><span aria-hidden="true" class="h-1.5 w-1.5 rounded-full bg-text-muted"></span><span class="font-medium text-text-primary">Belum terkirim</span></p>
+      <p class="flex w-fit items-center gap-2 rounded-full border border-border/60 bg-bg-elevated/70 px-3 py-1 text-xs backdrop-blur-md"><span aria-hidden="true" class="h-1.5 w-1.5 rounded-full bg-accent"></span><span class="font-medium text-text-primary">Ngirim…</span></p>
+      <p class="flex w-fit items-center gap-2 rounded-full border border-border/60 bg-bg-elevated/70 px-3 py-1 text-xs backdrop-blur-md"><span aria-hidden="true" class="h-1.5 w-1.5 rounded-full bg-accent"></span><span class="font-medium text-text-primary">Tersimpan</span></p>
+      <p class="flex w-fit items-center gap-2 rounded-full border border-border/60 bg-bg-elevated/70 px-3 py-1 text-xs backdrop-blur-md"><span aria-hidden="true" class="h-1.5 w-1.5 rounded-full bg-error"></span><span class="font-medium text-text-primary">Belum tersimpan</span></p>
+      <p class="flex w-fit items-center gap-2 rounded-full border border-border/60 bg-bg-elevated/70 px-3 py-1 text-xs backdrop-blur-md"><span aria-hidden="true" class="h-1.5 w-1.5 rounded-full bg-error"></span><span class="font-medium text-text-primary">Belum tersimpan — sesi habis</span></p>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 class="mt-16 mb-2 font-display text-3xl font-semibold tracking-tight text-text-primary">Admin Components</h2>
+  <p class="mb-8 text-sm text-text-muted">/admin/* — same dark tokens, data-dense, gold reserved for the single primary action per view (DESIGN.md §6).</p>
+
+  <!-- 20 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">20. Shell + AdminPageShell</h3><span class="cat-label">components/admin/admin-ui.tsx + admin-page-shell.tsx · every admin page</span></div>
+    <p class="mb-3 text-xs text-text-muted">Hairline header (Cormorant brand link + muted eyebrow), then page-level eyebrow + Cormorant 3xl title.</p>
+    <div class="stage border border-border bg-bg-base px-5 py-6 sm:px-8">
+      <div class="mx-auto w-full max-w-[90rem]">
+        <header class="mb-10 flex items-center justify-between border-b border-border pb-5">
+          <a href="#" class="font-display text-xl font-semibold tracking-tight text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Admin</a>
+          <span class="text-xs font-medium tracking-[0.04em] text-text-muted">Event desk</span>
+        </header>
+        <div>
+          <p class="text-xs font-medium tracking-[0.04em] text-text-muted">Event index</p>
+          <h1 class="mt-2 font-display text-3xl font-semibold leading-tight tracking-tight text-text-primary">Your events.</h1>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 21 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">21. AdminInput (underline)</h3><span class="cat-label">components/admin/admin-input.tsx · sign-in / create / search</span></div>
+    <p class="mb-3 text-xs text-text-muted">Shares the guest underline anatomy: border-0 border-b, transparent bg, focus:border-accent, no animated borders (§4).</p>
+    <div class="stage border border-border bg-bg-surface p-6 max-w-md">
+      <label class="block" for="demo-email">
+        <span class="text-xs font-medium text-text-secondary">Email</span>
+        <input id="demo-email" type="email" placeholder="you@example.com" class="mt-2 text-text-primary w-full border-0 border-b border-border bg-transparent rounded-none px-0 pb-2 h-12 placeholder:text-text-muted focus:border-accent focus:outline-none" />
+      </label>
+      <label class="mt-4 block" for="demo-ro">
+        <span class="text-xs font-medium text-text-secondary">Read-only variant</span>
+        <input id="demo-ro" type="text" readonly value="https://example.com/e/aX9kLm2" class="mt-2 w-full border-0 border-b border-border bg-transparent rounded-none px-0 pb-2 h-12 placeholder:text-text-muted focus:border-accent focus:outline-none pointer-events-none select-all text-text-muted" />
+      </label>
+    </div>
+  </div>
+
+  <!-- 22 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">22. Button — gold-foil default + bordered secondary</h3><span class="cat-label">admin-ui.tsx · Button</span></div>
+    <p class="mb-3 text-xs text-text-muted">min-h-12, duration-fast, disabled at 45% opacity. Gold-foil for the one primary per view; bordered quiet secondary otherwise.</p>
+    <div class="stage border border-border bg-bg-base p-6 flex flex-wrap gap-3">
+      <button type="button" class="gold-foil-btn active:scale-[0.98] min-h-12 h-12 rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Create event</button>
+      <button type="button" class="border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated min-h-12 h-12 rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Retry</button>
+      <button type="button" disabled class="gold-foil-btn active:scale-[0.98] min-h-12 h-12 rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Creating…</button>
+    </div>
+  </div>
+
+  <!-- 23 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">23. Status — error + success</h3><span class="cat-label">admin-ui.tsx · Status · role="alert" / role="status"</span></div>
+    <p class="mb-3 text-xs text-text-muted">Neutral elevated block; color on text only (--error red / --success green). Appears instantly, never animates.</p>
+    <div class="stage border border-border bg-bg-base p-6 space-y-2 max-w-lg">
+      <div role="alert" class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-bg-elevated/90 p-4 text-sm text-error"><span>The event list could not be loaded. Retry safely.</span></div>
+      <div role="status" class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-bg-elevated/90 p-4 text-sm text-success"><span>Created “Summer party”.</span></div>
+    </div>
+  </div>
+
+  <!-- 24 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">24. Busy skeleton</h3><span class="cat-label">admin-ui.tsx · Busy · role="status"</span></div>
+    <p class="mb-3 text-xs text-text-muted">Two pulsing bars while admin data loads.</p>
+    <div class="stage border border-border bg-bg-base p-6">
+      <div role="status" aria-label="Loading" class="flex animate-pulse gap-2">
+        <div class="h-4 w-32 rounded bg-bg-surface/60"></div>
+        <div class="h-3 w-48 rounded bg-bg-surface/60"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 25 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">25. AdminSignIn form card</h3><span class="cat-label">components/admin/admin-sign-in.tsx · /admin/sign-in</span></div>
+    <p class="mb-3 text-xs text-text-muted">Narrow --bg-surface card, two underline fields, single gold-foil submit; status region lives below the form (§6).</p>
+    <div class="stage border border-border bg-bg-base p-6">
+      <div class="mx-auto max-w-md">
+        <p class="text-xs font-medium tracking-[0.04em] text-text-muted">Admin access</p>
+        <h1 class="mt-2 font-display text-3xl font-semibold leading-tight tracking-tight text-text-primary">Open your event desk.</h1>
+        <p class="mt-3 text-sm text-text-secondary leading-relaxed">Sign in to create an event, share its access card, and review every submission.</p>
+        <form class="mt-8 rounded-2xl border border-border bg-bg-surface p-6">
+          <label class="block" for="si-email">
+            <span class="text-xs font-medium text-text-secondary">Email</span>
+            <input id="si-email" type="email" autocomplete="email" class="mt-2 text-text-primary w-full border-0 border-b border-border bg-transparent rounded-none px-0 pb-2 h-12 placeholder:text-text-muted focus:border-accent focus:outline-none" />
+          </label>
+          <div class="mt-4">
+            <label class="block" for="si-pass">
+              <span class="text-xs font-medium text-text-secondary">Password</span>
+              <input id="si-pass" type="password" autocomplete="current-password" class="mt-2 text-text-primary w-full border-0 border-b border-border bg-transparent rounded-none px-0 pb-2 h-12 placeholder:text-text-muted focus:border-accent focus:outline-none" />
+            </label>
+          </div>
+          <button type="button" class="gold-foil-btn active:scale-[0.98] min-h-12 h-12 rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent mt-6 w-full">Sign in</button>
+        </form>
+        <div role="alert" class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-bg-elevated/90 p-4 text-sm text-error"><span>Those credentials were not accepted.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 26 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">26. AdminEventIndex — ACTIVE hero command card</h3><span class="cat-label">components/admin/admin-event-index.tsx · /admin</span></div>
+    <p class="mb-3 text-xs text-text-muted">Ambient gold glow, border-l-accent left edge, pulsing live dot + "Active", Cormorant title, mono timestamp, secondary Open + Access/QR (gold reserved for Create).</p>
+    <div class="stage border border-border bg-bg-base p-6 sm:p-10">
+      <div class="flex flex-wrap items-end justify-between gap-4 mb-8">
+        <div>
+          <p class="text-xs font-medium tracking-[0.04em] text-text-muted">Event index</p>
+          <h1 class="mt-2 font-display text-3xl font-semibold leading-tight tracking-tight text-text-primary">Your events.</h1>
+        </div>
+        <a href="#" class="inline-flex min-h-12 items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent gold-foil-btn h-12 active:scale-[0.98]">Create new event</a>
+      </div>
+      <section aria-labelledby="active-event-heading">
+        <h2 id="active-event-heading" class="text-xs font-medium tracking-[0.04em] text-text-muted">Active event</h2>
+        <div class="relative mt-4">
+          <div aria-hidden="true" class="pointer-events-none absolute -inset-6 rounded-[2.5rem] bg-accent/10 blur-3xl"></div>
+          <div class="relative flex flex-wrap items-center justify-between gap-x-6 gap-y-4 rounded-2xl border border-border border-l-2 border-l-accent bg-bg-surface p-5 sm:p-6">
+            <div class="min-w-0">
+              <p class="inline-flex items-center gap-1.5 text-xs font-medium text-text-muted">
+                <span aria-hidden="true" class="inline-block h-2 w-2 rounded-full bg-accent motion-safe:animate-pulse"></span>
+                Active
+              </p>
+              <h3 class="mt-1.5 truncate font-display text-2xl font-semibold leading-tight tracking-tight text-text-primary">Rijal &amp; Cindi</h3>
+              <p class="mt-1.5 font-mono text-xs text-text-muted">Opened <time class="tabular-nums">29 Agu 2026 · 18:04</time></p>
+            </div>
+            <div class="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+              <a href="#" class="inline-flex min-h-10 items-center justify-center rounded-lg border border-border bg-bg-surface px-4 py-2 text-xs font-medium text-text-primary transition duration-fast hover:bg-bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Open</a>
+              <a href="#" class="inline-flex min-h-12 items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated">Access / QR</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- 27 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">27. AdminEventIndex — past-event hairline rows</h3><span class="cat-label">admin-event-index.tsx · /admin archive stack</span></div>
+    <p class="mb-3 text-xs text-text-muted">rounded-xl bg-bg-surface/60 cards, dual mono timestamp range, "Closed" label + quiet rowLink "Open" (no Access/QR on closed events).</p>
+    <div class="stage border border-border bg-bg-base p-6">
+      <section aria-labelledby="past-events-heading" class="max-w-2xl">
+        <h2 id="past-events-heading" class="text-xs font-medium tracking-[0.04em] text-text-muted">Past events</h2>
+        <ul class="mt-3 grid gap-3">
+          <li class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-bg-surface/60 px-4 py-4">
+            <div class="min-w-0">
+              <p class="truncate font-display text-lg font-semibold text-text-primary">Bima &amp; Sarah</p>
+              <p class="mt-0.5 font-mono text-xs text-text-muted">Opened <time class="tabular-nums">12 Jul 2026 · 17:30</time> · Closed <time class="tabular-nums">12 Jul 2026 · 23:10</time></p>
+            </div>
+            <div class="flex shrink-0 items-center gap-3">
+              <span class="text-xs text-text-muted">Closed</span>
+              <a href="#" class="inline-flex min-h-12 items-center text-xs font-medium text-text-secondary underline-offset-4 transition duration-fast hover:text-text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Open</a>
+            </div>
+          </li>
+          <li class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-bg-surface/60 px-4 py-4">
+            <div class="min-w-0">
+              <p class="truncate font-display text-lg font-semibold text-text-primary">Alya Sweet Seventeen</p>
+              <p class="mt-0.5 font-mono text-xs text-text-muted">Opened <time class="tabular-nums">2 Mei 2026 · 19:00</time> · Closed <time class="tabular-nums">3 Mei 2026 · 00:15</time></p>
+            </div>
+            <div class="flex shrink-0 items-center gap-3">
+              <span class="text-xs text-text-muted">Closed</span>
+              <a href="#" class="inline-flex min-h-12 items-center text-xs font-medium text-text-secondary underline-offset-4 transition duration-fast hover:text-text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Open</a>
+            </div>
+          </li>
+        </ul>
+      </section>
+    </div>
+  </div>
+
+  <!-- 28 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">28. AdminDashboard — aside (status pill + actions)</h3><span class="cat-label">components/admin/admin-dashboard.tsx · /admin/events/[public_id]</span></div>
+    <p class="mb-3 text-xs text-text-muted">Cormorant title, Active/Closed status pill (accent-soft + gold text only when ACTIVE), Access/QR quiet button, gold-foil "Close event".</p>
+    <div class="stage border border-border bg-bg-base p-6 max-w-xs">
+      <h1 class="font-display text-3xl font-semibold tracking-tight text-text-primary">Rijal &amp; Cindi</h1>
+      <p class="mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold border-accent/40 bg-accent-soft text-accent">Active</p>
+      <div class="mt-6 grid gap-2">
+        <a class="flex min-h-12 items-center rounded-lg px-3 text-sm font-semibold transition duration-fast border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" href="#">Access / QR</a>
+        <button type="button" class="gold-foil-btn active:scale-[0.98] min-h-12 h-12 rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Close event</button>
+      </div>
+      <p class="mt-8 inline-flex rounded-full border px-3 py-1 text-xs font-semibold border-border text-text-muted">Closed</p>
+      <span class="block mt-1 text-[10px] text-text-muted">closed variant</span>
+    </div>
+  </div>
+
+  <!-- 29 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">29. Metric stat cards ×4</h3><span class="cat-label">admin-dashboard.tsx · metrics strip</span></div>
+    <p class="mb-3 text-xs text-text-muted">DM Mono tabular values, xs muted labels; derived client-side from items only — zero state renders identically.</p>
+    <div class="stage border border-border bg-bg-base p-6">
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-4 max-w-2xl">
+        <div class="rounded-xl border border-border bg-bg-surface p-4"><p class="font-mono text-2xl tabular-nums text-text-primary">14</p><p class="mt-1 text-xs text-text-muted">Guests</p></div>
+        <div class="rounded-xl border border-border bg-bg-surface p-4"><p class="font-mono text-2xl tabular-nums text-text-primary">38</p><p class="mt-1 text-xs text-text-muted">Photos</p></div>
+        <div class="rounded-xl border border-border bg-bg-surface p-4"><p class="font-mono text-2xl tabular-nums text-text-primary">11</p><p class="mt-1 text-xs text-text-muted">Voice notes</p></div>
+        <div class="rounded-xl border border-border bg-bg-surface p-4"><p class="font-mono text-2xl tabular-nums text-text-primary">49</p><p class="mt-1 text-xs text-text-muted">Media</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 30 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">30. Search form + media filter segmented control</h3><span class="cat-label">admin-dashboard.tsx · submissions toolbar</span></div>
+    <p class="mb-3 text-xs text-text-muted">Underline search + secondary Search button; aria-pressed segments — active is bg-bg-elevated, never gold.</p>
+    <div class="stage border border-border bg-bg-base p-6 max-w-2xl">
+      <div class="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p class="text-xs font-medium tracking-[0.04em] text-text-muted">Submissions</p>
+          <h2 class="mt-1 text-xl font-semibold text-text-primary">Newest first</h2>
+        </div>
+        <form class="w-full sm:max-w-sm">
+          <label class="block" for="guest-search">
+            <span class="text-xs font-medium text-text-secondary">Search by guest name</span>
+            <input id="guest-search" type="search" placeholder="Search guest name" autocomplete="off" class="mt-2 text-text-primary w-full border-0 border-b border-border bg-transparent rounded-none px-0 pb-2 h-12 placeholder:text-text-muted focus:border-accent focus:outline-none" />
+          </label>
+          <button type="button" class="border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated min-h-12 h-12 rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent mt-3">Search</button>
+        </form>
+      </div>
+      <div role="group" aria-label="Filter by media type" class="mt-4 inline-flex rounded-lg border border-border bg-bg-surface p-1">
+        <button type="button" aria-pressed="true" class="min-h-11 rounded-md px-4 text-sm font-semibold transition duration-fast bg-bg-elevated text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">All</button>
+        <button type="button" aria-pressed="false" class="min-h-11 rounded-md px-4 text-sm font-semibold transition duration-fast text-text-secondary hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Photos</button>
+        <button type="button" aria-pressed="false" class="min-h-11 rounded-md px-4 text-sm font-semibold transition duration-fast text-text-secondary hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Voice</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 31 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">31. GuestGroup + PhotoTile + DownloadButton</h3><span class="cat-label">admin-dashboard.tsx · grouped submissions</span></div>
+    <p class="mb-3 text-xs text-text-muted">rounded-3xl ambient glass group card: chevron, neutral initials avatar, name, session badge, mono count pill, breakdown, time range. Photo tiles hover-scale the image only.</p>
+    <div class="stage border border-border bg-bg-base p-6">
+      <section class="rounded-3xl border border-border bg-bg-surface/90 p-5 backdrop-blur-sm max-w-2xl">
+        <h3>
+          <button type="button" aria-expanded="true" class="flex w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-md py-1 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+            <svg class="h-4 w-4 shrink-0 text-text-muted" aria-hidden="true"><use href="#i-chev-down"/></svg>
+            <span aria-hidden="true" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bg-elevated text-xs font-semibold text-text-secondary">AN</span>
+            <span class="text-lg font-semibold text-text-primary">Andi Nugraha</span>
+            <span class="text-xs font-medium text-text-muted">Session 2</span>
+            <span class="rounded-full border border-border px-2.5 py-0.5 font-mono text-xs font-medium tabular-nums text-text-secondary">4 items</span>
+            <span class="text-xs text-text-muted">3 photos · 1 voice note</span>
+            <span class="ml-auto font-mono text-xs tabular-nums text-text-muted">29 Agu 2026 · 19:42–20:05</span>
+          </button>
+        </h3>
+        <div class="mt-4 grid gap-4">
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            <div class="relative overflow-hidden rounded-lg border border-border bg-bg-surface">
+              <button type="button" aria-label="Preview photo from Andi Nugraha, 29 Agu 2026 · 20:05" class="group block w-full text-left transition duration-fast ease-out disabled:cursor-wait focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+                <span class="block aspect-square w-full overflow-hidden bg-bg-elevated">
+                  <span class="block h-full w-full object-cover transition-transform duration-base ease-out motion-reduce:transition-none motion-safe:group-hover:scale-[1.03] photo-ph"></span>
+                </span>
+                <span class="flex items-center justify-between gap-2 px-3 py-2 text-xs">
+                  <span class="inline-flex items-center gap-1.5 font-semibold text-text-primary">
+                    <svg class="h-3.5 w-3.5 text-text-muted" aria-hidden="true"><use href="#i-image"/></svg>
+                    Photo
+                  </span>
+                  <time class="font-mono tabular-nums text-text-muted">29 Agu 2026 · 20:05</time>
+                </span>
+              </button>
+              <button type="button" aria-label="Download photo from Andi Nugraha" class="flex h-12 items-center gap-1.5 rounded-lg border border-border bg-bg-surface px-3 text-xs font-semibold text-text-secondary transition duration-fast ease-out hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent absolute right-2 top-2">
+                <svg class="h-4 w-4" aria-hidden="true"><use href="#i-download"/></svg>
+                Download
+              </button>
+            </div>
+            <div class="relative overflow-hidden rounded-lg border border-border bg-bg-surface">
+              <button type="button" aria-label="Preview photo from Andi Nugraha, 29 Agu 2026 · 19:58" class="group block w-full text-left transition duration-fast ease-out disabled:cursor-wait focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+                <span class="block aspect-square w-full overflow-hidden bg-bg-elevated">
+                  <span class="block h-full w-full object-cover transition-transform duration-base ease-out motion-reduce:transition-none motion-safe:group-hover:scale-[1.03] photo-ph-2"></span>
+                </span>
+                <span class="flex items-center justify-between gap-2 px-3 py-2 text-xs">
+                  <span class="inline-flex items-center gap-1.5 font-semibold text-text-primary">
+                    <svg class="h-3.5 w-3.5 text-text-muted" aria-hidden="true"><use href="#i-image"/></svg>
+                    Photo
+                  </span>
+                  <time class="font-mono tabular-nums text-text-muted">29 Agu 2026 · 19:58</time>
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- 32 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">32. VoiceTile (24 static bars + scaleX progress)</h3><span class="cat-label">admin-dashboard.tsx · elevated player tile</span></div>
+    <p class="mb-3 text-xs text-text-muted">rounded-2xl tile: play/pause quiet button, mic + mono duration, decorative waveform (aria-hidden) with gold scaleX fill, mono timestamp, Download.</p>
+    <div class="stage border border-border bg-bg-base p-6">
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-border bg-bg-surface/90 p-4 max-w-2xl">
+        <button type="button" aria-label="Play voice note by Andi Nugraha, 18 seconds" class="flex min-h-12 items-center gap-2 rounded-lg px-3 text-sm font-semibold transition duration-fast ease-out disabled:opacity-60 border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+          <svg class="h-4 w-4" aria-hidden="true"><use href="#i-play"/></svg>
+          Play
+        </button>
+        <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-text-primary">
+          <svg class="h-3.5 w-3.5 text-text-muted" aria-hidden="true"><use href="#i-mic"/></svg>
+          Voice note
+          <span class="font-mono tabular-nums text-text-muted">0:18</span>
+        </span>
+        <span class="relative flex h-8 min-w-24 flex-1 items-center justify-between gap-[3px]" aria-hidden="true">
+          <span class="w-[3px] shrink-0 rounded-full bg-text-muted/30" style="height:35%"></span><span class="w-[3px] shrink-0 rounded-full bg-text-muted/30" style="height:60%"></span><span class="w-[3px] shrink-0 rounded-full bg-text-muted/30" style="height:45%"></span><span class="w-[3px] shrink-0 rounded-full bg-text-muted/30" style="height:80%"></span><span class="w-[3px] shrink-0 rounded-full bg-text-muted/30" style="height:100%"></span><span class="w-[3px] shrink-0 rounded-full bg-text-muted/30" style="height:70%"></span><span class="w-[3px] shrink-0 rounded-full bg-text-muted/30" style="height:50%"></span><span class="w-[3px] shrink-0 rounded-full bg-text-muted/30" style="height:90%"></span><span class="w-[3px] shrink-0 rounded-full bg-text-muted/30" style="height:65%"></span><span class="w-[3px] shrink-0 rounded-full bg-text-muted/30" style="height:40%"></span><span class="w-[3px] shrink-0 rounded-full bg-text-muted/30" style="height:75%"></span><span class="w-[3px] shrink-0 rounded-full bg-text-muted/30" style="height:55%"></span><span class="w-[3px] shrink-0 rounded-full bg-text-muted/30" style="height:85%"></span><span class="w-[3px] shrink-0 rounded-full bg-text-muted/30" style="height:50%"></span><span class="w-[3px] shrink-0 rounded-full bg-text-muted/30" style="height:30%"></span><span class="w-[3px] shrink-0 rounded-full bg-text-muted/30" style="height:62%"></span><span class="w-[3px] shrink-0 rounded-full bg-text-muted/30" style="height:90%"></span><span class="w-[3px] shrink-0 rounded-full bg-text-muted/30" style="height:70%"></span><span class="w-[3px] shrink-0 rounded-full bg-text-muted/30" style="height:45%"></span><span class="w-[3px] shrink-0 rounded-full bg-text-muted/30" style="height:66%"></span><span class="w-[3px] shrink-0 rounded-full bg-text-muted/30" style="height:82%"></span><span class="w-[3px] shrink-0 rounded-full bg-text-muted/30" style="height:52%"></span><span class="w-[3px] shrink-0 rounded-full bg-text-muted/30" style="height:36%"></span><span class="w-[3px] shrink-0 rounded-full bg-text-muted/30" style="height:58%"></span>
+          <span class="pointer-events-none absolute inset-x-0 top-1/2 h-1 -translate-y-1/2">
+            <span class="block h-full w-full origin-left rounded-full bg-accent transition-transform duration-[var(--motion-base)]" style="transform: scaleX(0.4)"></span>
+          </span>
+        </span>
+        <time class="font-mono text-xs tabular-nums text-text-muted">29 Agu 2026 · 20:01</time>
+        <button type="button" aria-label="Download voice note from Andi Nugraha" class="flex h-12 items-center gap-1.5 rounded-lg border border-border bg-bg-surface px-3 text-xs font-semibold text-text-secondary transition duration-fast ease-out hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+          <svg class="h-4 w-4" aria-hidden="true"><use href="#i-download"/></svg>
+          Download
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 33 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">33. TimelineSkeleton + AsideSkeleton</h3><span class="cat-label">admin-dashboard.tsx · loading states</span></div>
+    <p class="mb-3 text-xs text-text-muted">Pulse skeletons matching group-card and aside anatomy — no layout jump.</p>
+    <div class="stage border border-border bg-bg-base p-6 grid gap-8 lg:grid-cols-[18rem_1fr]">
+      <div role="status" aria-label="Loading event" class="animate-pulse">
+        <div aria-hidden="true">
+          <div class="h-3 w-20 rounded bg-bg-elevated"></div>
+          <div class="mt-3 h-9 w-48 rounded bg-bg-elevated"></div>
+          <div class="mt-3 h-6 w-16 rounded-full bg-bg-elevated"></div>
+          <div class="mt-6 grid gap-2">
+            <div class="min-h-12 rounded-lg bg-bg-elevated"></div>
+            <div class="min-h-12 rounded-lg bg-bg-elevated"></div>
+          </div>
+        </div>
+        <span class="sr-only">Loading event</span>
+      </div>
+      <div role="status" aria-label="Loading submissions" class="grid animate-pulse gap-6 max-w-2xl">
+        <div aria-hidden="true" class="rounded-3xl border border-border bg-bg-surface/90 p-5">
+          <div class="flex items-center gap-3">
+            <div class="h-9 w-9 rounded-full bg-bg-elevated"></div>
+            <div class="h-6 w-36 rounded bg-bg-elevated"></div>
+            <div class="h-5 w-16 rounded-full bg-bg-elevated"></div>
+            <div class="ml-auto h-4 w-28 rounded bg-bg-elevated"></div>
+          </div>
+          <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            <div class="aspect-square rounded-lg bg-bg-elevated"></div>
+            <div class="aspect-square rounded-lg bg-bg-elevated"></div>
+            <div class="aspect-square rounded-lg bg-bg-elevated"></div>
+            <div class="aspect-square rounded-lg bg-bg-elevated"></div>
+          </div>
+        </div>
+        <span class="sr-only">Loading submissions…</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 34 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">34. PreviewDialog (open state)</h3><span class="cat-label">components/admin/admin-preview-dialog.tsx · dashboard lightbox</span></div>
+    <p class="mb-3 text-xs text-text-muted">--overlay scrim, bg-elevated rounded-2xl panel, header with mono label / nav chevrons / Download / Close, contained photo. Rendered static-open.</p>
+    <div class="stage border border-border h-[560px]">
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4 transition-opacity duration-base ease-out motion-reduce:transition-none opacity-100">
+        <div role="dialog" aria-modal="true" aria-label="Photo from Andi Nugraha, photo 1 of 3" tabindex="-1" class="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-border bg-bg-elevated shadow-2xl transition duration-base ease-out motion-reduce:transition-none focus:outline-none scale-100 opacity-100">
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border px-4 py-3 sm:px-6">
+            <div class="min-w-0">
+              <p class="font-mono text-xs font-medium tracking-[0.04em] text-text-muted">Photo · 1 of 3</p>
+              <h3 class="truncate text-lg font-semibold text-text-primary">Andi Nugraha</h3>
+              <time class="font-mono text-xs tabular-nums text-text-muted">29 Agu 2026 · 20:05</time>
+            </div>
+            <div class="ml-auto flex items-center gap-2">
+              <div role="group" aria-label="Navigate photos" class="flex items-center gap-1">
+                <button type="button" aria-label="Previous photo" disabled class="flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-bg-surface text-text-secondary transition duration-fast ease-out hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+                  <svg class="h-4 w-4" aria-hidden="true"><use href="#i-chev-left"/></svg>
+                </button>
+                <button type="button" aria-label="Next photo" class="flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-bg-surface text-text-secondary transition duration-fast ease-out hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+                  <svg class="h-4 w-4" aria-hidden="true"><use href="#i-chev-right"/></svg>
+                </button>
+              </div>
+              <button type="button" class="border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated min-h-12 h-12 rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent inline-flex items-center gap-2">
+                <svg class="h-4 w-4" aria-hidden="true"><use href="#i-download"/></svg>
+                Download
+              </button>
+              <button type="button" aria-label="Close preview" class="flex h-12 items-center gap-1.5 rounded-lg border border-border bg-bg-surface px-3 text-sm font-semibold text-text-secondary transition duration-fast ease-out hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+                <svg class="h-4 w-4" aria-hidden="true"><use href="#i-x"/></svg>
+                Close
+              </button>
+            </div>
+          </div>
+          <div class="px-4 py-4 sm:px-6 sm:pb-6">
+            <div class="max-h-[70vh] w-full rounded-md bg-bg-surface object-contain photo-ph h-64 flex items-center justify-center"><svg class="h-8 w-8 text-text-muted" aria-hidden="true"><use href="#i-image"/></svg></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 35 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">35. AdminAccess — QR card</h3><span class="cat-label">components/admin/admin-access.tsx · /admin/events/[public_id]/access</span></div>
+    <p class="mb-3 text-xs text-text-muted">160px QR (white bg / black fg — placeholder grid), mono underline URL, gold-foil Copy + secondary Print QR. Print artifact is a bare 80mm QR, margin-0.</p>
+    <div class="stage border border-border bg-bg-base p-6">
+      <div class="mx-auto max-w-md">
+        <p class="text-xs font-medium tracking-[0.04em] text-text-muted">Share access</p>
+        <h1 class="mt-2 font-display text-3xl font-semibold leading-tight tracking-tight text-text-primary">Share event access.</h1>
+        <p class="mt-3 text-sm text-text-secondary leading-relaxed">Guests can scan this access card or open the public link.</p>
+        <div class="mt-8 rounded-2xl border border-border bg-bg-surface/85 p-5 backdrop-blur-xl">
+          <div class="mx-auto w-40">
+            <div class="h-40 w-40 bg-white p-2 grid grid-cols-6 grid-rows-6 gap-0.5" role="img" aria-label="QR code for event access">
+              <span class="bg-black col-span-2 row-span-2"></span><span class="bg-black"></span><span></span><span class="bg-black col-span-2 row-span-2"></span>
+              <span class="bg-black"></span><span></span><span class="bg-black"></span>
+              <span></span><span class="bg-black"></span><span></span><span class="bg-black"></span><span></span><span class="bg-black"></span>
+              <span class="bg-black col-span-2 row-span-2"></span><span></span><span class="bg-black"></span><span></span><span class="bg-black"></span>
+              <span></span><span class="bg-black"></span><span></span><span class="bg-black"></span>
+              <span class="bg-black"></span><span></span><span class="bg-black"></span><span class="bg-black"></span><span></span><span class="bg-black"></span>
+            </div>
+          </div>
+          <p class="mt-4 text-center text-xs text-text-muted">Scan with a phone camera to open the guest page, or share the public link.</p>
+          <input id="public-url" readonly value="https://guestbook.example.com/e/aX9kLm2vQ7" aria-label="Public URL" class="mt-5 w-full truncate border-0 border-b border-border bg-transparent rounded-none pb-1 font-mono text-xs text-text-muted pointer-events-none select-all focus:border-accent focus:outline-none" />
+          <div class="mt-5 flex gap-3">
+            <button type="button" class="gold-foil-btn h-12 flex-1 rounded-xl px-4 text-sm font-semibold transition duration-fast active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Copy link</button>
+            <button type="button" class="flex h-12 flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-bg-surface px-4 text-sm font-semibold text-text-primary transition duration-fast hover:bg-bg-elevated disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Print QR</button>
+          </div>
+          <p role="status" class="mt-3 text-center text-xs text-text-muted">Link copied to your clipboard.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 class="mt-16 mb-2 font-display text-3xl font-semibold tracking-tight text-text-primary">Shared / UI Primitives</h2>
+  <p class="mb-8 text-sm text-text-muted">Cross-cutting patterns used by both surfaces.</p>
+
+  <!-- 36 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">36. Dialog / DialogContent (shadcn)</h3><span class="cat-label">components/ui/dialog.tsx · base for guest ReviewOverlay</span></div>
+    <p class="mb-3 text-xs text-text-muted">Default shadcn anatomy: bg-black/50 overlay + centered rounded-lg bordered panel with absolute X close. The app overrides heavily (ReviewOverlay goes full-screen); shown here in stock form.</p>
+    <div class="stage border border-border h-72">
+      <div class="fixed inset-0 z-50 bg-black/50"></div>
+      <div class="fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border bg-background p-6 shadow-lg duration-200 outline-none sm:max-w-lg">
+        <div class="flex flex-col gap-2 text-center sm:text-left">
+          <h2 class="text-lg leading-none font-semibold">Dialog title</h2>
+          <p class="text-sm text-text-muted">Dialog description text on the elevated surface.</p>
+        </div>
+        <button type="button" class="absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:outline-hidden" aria-label="Close">
+          <svg class="h-4 w-4" aria-hidden="true"><use href="#i-x"/></svg>
+          <span class="sr-only">Close</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 37 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">37. focus-ring pattern</h3><span class="cat-label">focusRing const · all admin + guest interactive elements</span></div>
+    <p class="mb-3 text-xs text-text-muted">focus-visible:outline-2 outline-offset-2 outline-accent — the one gold-permitted non-action surface (§2). Tab to see it.</p>
+    <div class="stage border border-border bg-bg-base p-6 flex flex-wrap gap-3">
+      <button type="button" class="min-h-12 rounded-lg border border-border bg-bg-surface px-4 text-sm font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Focus me (keyboard)</button>
+      <a href="#" class="inline-flex min-h-12 items-center rounded-lg px-4 text-sm font-semibold text-text-primary border border-border bg-bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Link variant</a>
+    </div>
+  </div>
+
+  <!-- 38 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">38. quietButton pattern</h3><span class="cat-label">admin-dashboard.tsx · quietButton const</span></div>
+    <p class="mb-3 text-xs text-text-muted">border-border bg-bg-surface hover:bg-bg-elevated — the shared non-primary action anatomy (aside links, retry buttons, play buttons).</p>
+    <div class="stage border border-border bg-bg-base p-6 flex flex-wrap gap-3">
+      <button type="button" class="min-h-12 rounded-md px-3 text-xs font-semibold transition duration-fast border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Retry</button>
+      <a href="#" class="flex min-h-12 items-center rounded-lg px-3 text-sm font-semibold transition duration-fast border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Access / QR</a>
+    </div>
+  </div>
+
+  <!-- 39 -->
+  <div class="mb-10">
+    <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1"><h3 class="text-lg font-semibold text-text-primary">39. Gold divider — both variants</h3><span class="cat-label">PreSession.tsx (gradient diamond) · FrameSelection.tsx (hairline ◆)</span></div>
+    <p class="mb-3 text-xs text-text-muted">Decorative gold separators under script/Cormorant headings; aria-hidden.</p>
+    <div class="stage border border-border bg-bg-base p-6 grid gap-8 sm:grid-cols-2 text-center">
+      <div>
+        <div aria-hidden="true" class="flex items-center justify-center gap-3 my-4">
+          <span class="h-px w-12 bg-gradient-to-r from-transparent to-accent/60"></span>
+          <span class="h-1.5 w-1.5 rotate-45 bg-accent/80"></span>
+          <span class="h-px w-12 bg-gradient-to-l from-transparent to-accent/60"></span>
+        </div>
+        <p class="text-[10px] text-text-muted font-mono">PreSession variant</p>
+      </div>
+      <div>
+        <div aria-hidden="true" class="mx-auto mt-2 flex items-center justify-center gap-3">
+          <span class="h-px w-10 bg-accent/50"></span>
+          <span class="text-accent text-xs">◆</span>
+          <span class="h-px w-10 bg-accent/50"></span>
+        </div>
+        <p class="mt-3 text-[10px] text-text-muted font-mono">FrameSelection variant</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 class="mt-16 mb-2 font-display text-3xl font-semibold tracking-tight text-text-primary">Pages &amp; Their Components</h2>
+  <p class="mb-6 text-sm text-text-muted">Route → component map.</p>
+  <div class="overflow-x-auto rounded-xl border border-border">
+    <table class="w-full text-left text-sm">
+      <thead>
+        <tr class="border-b border-border bg-bg-surface">
+          <th class="px-4 py-3 font-mono text-xs font-medium tracking-[0.04em] text-text-muted">Page / Screen</th>
+          <th class="px-4 py-3 font-mono text-xs font-medium tracking-[0.04em] text-text-muted">Components used</th>
+        </tr>
+      </thead>
+      <tbody class="text-text-secondary">
+        <tr class="border-b border-border">
+          <td class="px-4 py-3 font-mono text-xs text-text-primary">/</td>
+          <td class="px-4 py-3 text-xs">Static scaffold — no components.</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="px-4 py-3 font-mono text-xs text-text-primary">/e/[public_id]</td>
+          <td class="px-4 py-3 text-xs">GuestEventEntry state machine renders per state: PreSession (Shell/Card/Status/Skeleton/carry-over) → FrameSelection → post-session-loading skeleton (inline) → Capture (top bar, 9:16 viewfinder, bottom dock, PendingStrip, ReviewOverlay dialog) → PhotoReview (film-grain grid, delete/retry chips) → VoiceRecordingScreen (Cassette, mic, timer, review) → Done (keepsake card). Shared: AudioPlayer, PendingStatusBadge, PendingUploadingRing, statusPill, ExpiryHint, AmbientBackdrop.</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="px-4 py-3 font-mono text-xs text-text-primary">/admin/sign-in</td>
+          <td class="px-4 py-3 text-xs">AdminSignIn (Shell, AdminPageShell, AdminInput ×2, Button gold-foil, Status error below form), AmbientBackdrop via Shell.</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="px-4 py-3 font-mono text-xs text-text-primary">/admin</td>
+          <td class="px-4 py-3 text-xs">AdminEventIndex (Shell, AdminPageShell, linkGold Create, ACTIVE hero card w/ glow + pulse dot, past-event rows, linkRowAction/rowLink, Status, Busy).</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="px-4 py-3 font-mono text-xs text-text-primary">/admin/events/new</td>
+          <td class="px-4 py-3 text-xs">AdminCreateEvent (AuthGate, Shell, AdminPageShell, AdminInput, Button, Status).</td>
+        </tr>
+        <tr class="border-b border-border">
+          <td class="px-4 py-3 font-mono text-xs text-text-primary">/admin/events/[public_id]</td>
+          <td class="px-4 py-3 text-xs">AdminDashboard (Shell, aside w/ status pill, metric stat cards ×4, search form + AdminInput, segmented media filter, GuestGroup, PhotoTile, VoiceTile, DownloadButton, TimelineSkeleton, AsideSkeleton, Status) + PreviewDialog (lazy).</td>
+        </tr>
+        <tr>
+          <td class="px-4 py-3 font-mono text-xs text-text-primary">/admin/events/[public_id]/access</td>
+          <td class="px-4 py-3 text-xs">AdminAccess (AuthGate, Shell, AdminPageShell, QR card: 160px QR + mono underline URL + Copy/Print actions, Status, Busy) + print-only bare 80mm QR.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer class="mt-16 border-t border-border pt-6 pb-4">
+    <p class="text-xs text-text-muted font-mono">QR Guest Photo &amp; Voicebook · component catalog · tokens verbatim from app/globals.css · classes verbatim from components/*</p>
+  </footer>
+
+</div>
+</body>
+</html>

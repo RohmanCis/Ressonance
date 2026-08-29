@@ -3,9 +3,6 @@ import { DEFAULT_FRAME_ID, FRAMES, FRAME_OUTPUT, FRAME_ASPECT_RATIO } from "@/li
 
 const REAL_FRAMES = FRAMES.filter((f) => f.id !== DEFAULT_FRAME_ID);
 const EXPECTED_IDS = ["royal-gold", "botanical-romance", "modern-editorial", "wedding-crimson", "flower"];
-// Frames whose typography is baked into the asset (owner-approved exception,
-// 2026-08-21): no dynamic event-title layer, everything else is dynamic.
-const BAKED_TEXT_FRAMES = new Set(["wedding-crimson"]);
 
 describe("frame registry invariants", () => {
   it("enforces a single 9:16 standard", () => {
@@ -49,25 +46,9 @@ describe("curated wedding template registry (Dynamic Frame Engine)", () => {
     ]);
   });
 
-  it("gives every dynamic template an event-title text layer with a valid schema", () => {
+  it("registers no text layers on any frame (owner decision 2026-08-29: no event-title stamp on captured photos)", () => {
     for (const frame of REAL_FRAMES) {
-      const dynamic = !BAKED_TEXT_FRAMES.has(frame.id);
-      expect(frame.textLayers.length).toBe(dynamic ? 1 : 0);
-      for (const layer of frame.textLayers) {
-        expect(layer.text).toBe("eventTitle");
-        expect(["--font-pinyon", "--font-cormorant", "--font-dm-mono"]).toContain(layer.fontVar);
-        expect(["cursive", "serif", "monospace"]).toContain(layer.fallback);
-        expect(layer.sizePx).toBeGreaterThan(0);
-        expect(layer.yRatio).toBeGreaterThan(0);
-        expect(layer.yRatio).toBeLessThan(1);
-        expect(layer.color).toMatch(/^#[0-9a-f]{6}$/i);
-        expect(layer.fontWeight ?? 400).toBeGreaterThanOrEqual(400);
-      }
+      expect(frame.textLayers).toEqual([]);
     }
-  });
-
-  it("assigns the three approved display fonts one distinct role", () => {
-    const vars = REAL_FRAMES.flatMap((f) => f.textLayers.map((l) => l.fontVar));
-    expect(new Set(vars).size).toBe(3);
   });
 });

@@ -143,6 +143,34 @@ describe("GET /api/admin/events/{public_id}/submissions", () => {
     ]);
   });
 
+  it("matches guest_name case-insensitively and by substring", async () => {
+    const ci = await GET(makeRequest("evt-1", "?guest_name=aNA"), { params: Promise.resolve({ public_id: "evt-1" }) });
+    expect(ci.status).toBe(200);
+    const ciBody = await ci.json();
+    expect(ciBody.submissions.map((s: { id: string }) => s.id)).toEqual(["photo-2"]);
+
+    const partial = await GET(makeRequest("evt-1", "?guest_name=ant"), { params: Promise.resolve({ public_id: "evt-1" }) });
+    expect(partial.status).toBe(200);
+    const partialBody = await partial.json();
+    expect(partialBody.submissions.map((s: { id: string }) => s.id)).toEqual(["voice-1", "photo-1"]);
+  });
+
+  it("treats user-typed LIKE wildcards literally", async () => {
+    state.sessions.push({ id: "session-3", event_id: "event-1", guest_name: "An_a", public_ref: "ref-s3" });
+    state.photos.push({
+      id: "photo-3",
+      guest_session_id: "session-3",
+      storage_key: "events/e1/sessions/s3/photos/k4.jpg",
+      mime_type: "image/jpeg",
+      file_size: 400,
+      created_at: "2026-08-11T12:17:00Z",
+    });
+    const res = await GET(makeRequest("evt-1", "?guest_name=An_a"), { params: Promise.resolve({ public_id: "evt-1" }) });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.submissions.map((s: { id: string }) => s.id)).toEqual(["photo-3"]);
+  });
+
   it("returns an empty list when no submissions match the filter", async () => {
     const res = await GET(makeRequest("evt-1", "?guest_name=Nobody"), { params: Promise.resolve({ public_id: "evt-1" }) });
     expect(res.status).toBe(200);

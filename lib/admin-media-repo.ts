@@ -139,7 +139,8 @@ export async function getSessionEventId(
 
 /**
  * List all photo/voice submissions for an event, newest first, as a unified
- * metadata array. Optional guest_name filters to sessions with that name.
+ * metadata array. Optional guest_name filters to sessions whose name contains
+ * it case-insensitively (ILIKE; user-typed %/_ are matched literally).
  * Never returns storage_key or a public/signed URL.
  */
 export async function listSubmissions(
@@ -151,7 +152,10 @@ export async function listSubmissions(
     .from("guest_sessions")
     .select("id, guest_name, public_ref")
     .eq("event_id", eventId);
-  if (guestName) sessionQuery = sessionQuery.eq("guest_name", guestName);
+  if (guestName) {
+    const pattern = guestName.replace(/[\\%_]/g, "\\$&");
+    sessionQuery = sessionQuery.ilike("guest_name", `%${pattern}%`);
+  }
   const { data: sessions, error: sessionError } = await sessionQuery;
   if (sessionError) throw sessionError;
 

@@ -173,3 +173,79 @@ body {
   to { opacity: 1; transform: scale(1); }
 }
 
+/* Done screen disposable-camera sequence (DESIGN.md §5.6, T034). */
+@keyframes camera-drop {
+  0%   { transform: translateY(-40px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+/* Thermal-print reveal: the keepsake photo prints downward out of the film
+   slot via clip-path (no translateY), then settles at a slight rotation. */
+@keyframes thermal-print {
+  0%   { clip-path: inset(0 0 100% 0); }
+  100% { clip-path: inset(0 0 0% 0); }
+}
+
+@keyframes thermal-settle {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-1.5deg); }
+}
+
+@keyframes fade-up {
+  0%   { transform: translateY(12px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes loading-dots {
+  0%, 100% { opacity: 0.2; }
+  50%      { opacity: 1; }
+}
+
+/* Done screen warm film light leaks (phase 4, owner-ratified analog palette). */
+@keyframes leak-left {
+  0%   { opacity: 0; transform: translateX(-20px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+@keyframes leak-right {
+  0%   { opacity: 0; transform: translateX(20px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+.animate-camera-drop { animation: camera-drop 0.6s ease-out forwards; }
+.animate-thermal-print { animation: thermal-print 5s linear forwards; }
+.animate-thermal-print-fast { animation: thermal-print 2s linear forwards; }
+.animate-thermal-settle { animation: thermal-settle 0.3s ease-out forwards; }
+.animate-fade-up     { animation: fade-up 0.5s ease-out forwards; }
+.animate-leak-left  { animation: leak-left  1.2s ease-out forwards; }
+.animate-leak-right { animation: leak-right 1.5s ease-out forwards; }
+
+/* Done screen: camera+photo assembly rises 24px when the print completes
+   and the thank-you text fades in (phase 4). */
+@keyframes slide-up-settle {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(-24px); }
+}
+.animate-slide-up-settle {
+  animation: slide-up-settle 0.6s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-camera-drop,
+  .animate-thermal-print,
+  .animate-thermal-print-fast,
+  .animate-thermal-settle,
+  .animate-fade-up {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .animate-slide-up-settle { animation: none; transform: translateY(-24px); }
+  /* Leaks: no motion, but stay dimmer than the fully-faded-in end state. */
+  .animate-leak-left,
+  .animate-leak-right {
+    animation: none;
+    opacity: 0.6;
+    transform: none;
+  }
+}
+

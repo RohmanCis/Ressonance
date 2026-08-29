@@ -1,16 +1,15 @@
 /**
  * Frame registry + dynamic text-layer schema for the guest photo capture flow.
  *
- * Frames are static PNG overlays under /public/frames plus optional dynamic
- * text layers rendered onto the 1080×1920 canvas at shutter time. Selection
- * is a client-side UX concern only; uploads still use the existing
- * single-photo endpoint unchanged.
+ * Frames are static PNG overlays under /public/frames. Selection is a
+ * client-side UX concern only; uploads still use the existing single-photo
+ * endpoint unchanged.
  *
  * Asset standard (owner decision, 2026-08-17): every frame asset is
  * 1080×1920 (9:16) PNG with a true alpha channel and a fully transparent
- * central photo area — no baked background, no baked photo content, and no
- * baked text: names are dynamic layers (Hybrid Dynamic Frame Engine,
- * 2026-08-21) so one asset serves any event title.
+ * central photo area — no baked background and no baked photo content. Text
+ * stamp removed (owner decision, 2026-08-29): no frame registers a dynamic
+ * event-title layer, so captured photos carry the frame artwork only.
  */
 
 /**
@@ -66,55 +65,23 @@ export const FRAMES: Frame[] = [
     id: "royal-gold",
     label: "Royal Gold Serif",
     src: "/frames/royal-gold.png",
-    textLayers: [
-      {
-        text: "eventTitle",
-        fontVar: "--font-cormorant",
-        fallback: "serif",
-        fontStyle: "italic",
-        fontWeight: 500,
-        sizePx: 96,
-        yRatio: 0.875,
-        color: "#d4af37",
-      },
-    ],
+    textLayers: [],
   },
   {
     id: "botanical-romance",
     label: "Botanical Romance",
     src: "/frames/botanical-romance.png",
-    textLayers: [
-      {
-        text: "eventTitle",
-        fontVar: "--font-pinyon",
-        fallback: "cursive",
-        fontWeight: 400,
-        sizePx: 124,
-        yRatio: 0.845,
-        color: "#f7f2ea",
-      },
-    ],
+    textLayers: [],
   },
   {
     id: "modern-editorial",
     label: "Modern Editorial",
     src: "/frames/modern-editorial.png",
-    textLayers: [
-      {
-        text: "eventTitle",
-        fontVar: "--font-dm-mono",
-        fallback: "monospace",
-        fontWeight: 500,
-        sizePx: 58,
-        letterSpacingPx: 16,
-        yRatio: 0.865,
-        color: "#f7f2ea",
-        uppercase: true,
-      },
-    ],
+    textLayers: [],
   },
-  // Owner-approved exception (2026-08-21): baked-in typography asset —
-  // no dynamic text layers, otherwise the event title renders twice.
+  // Baked-in typography asset (2026-08-21); like every other frame it
+  // registers no dynamic text layers — the event-title stamp was removed
+  // from all frames (owner decision, 2026-08-29).
   {
     id: "wedding-crimson",
     label: "Wedding Crimson",
@@ -125,17 +92,7 @@ export const FRAMES: Frame[] = [
     id: "flower",
     label: "Flower",
     src: "/frames/flower.png",
-    textLayers: [
-      {
-        text: "eventTitle",
-        fontVar: "--font-pinyon",
-        fallback: "cursive",
-        fontWeight: 400,
-        sizePx: 118,
-        yRatio: 0.85,
-        color: "#f7f2ea",
-      },
-    ],
+    textLayers: [],
   },
 ];
 

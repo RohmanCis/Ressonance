@@ -619,7 +619,14 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
     // Keepsake: last server-confirmed capture, still in client memory (§5.4).
     const keepsakeUrl =
       [...pendingPhotos].reverse().find((p) => p.status === "confirmed")?.previewUrl ?? null;
-    return <Done eventTitle={event.title} keepsakeUrl={keepsakeUrl} />;
+    return (
+      <Done
+        eventTitle={event.title}
+        keepsakeUrl={keepsakeUrl}
+        photoUrl={keepsakeUrl ?? null}
+        hasVoice={session?.voice_note_submitted ?? false}
+      />
+    );
   }
 
   return null;

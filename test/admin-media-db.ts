@@ -3,7 +3,7 @@
  * submission listing and media access route tests. Backed by plain arrays for
  * events, guest_sessions, photos, and voice_notes, plus a mock storage client
  * that returns signed URLs. Supports the query shapes `admin-media-repo` uses:
- * select / eq / in / maybeSingle, and storage.createSignedUrl.
+ * select / eq / ilike / in / maybeSingle, and storage.createSignedUrl.
  */
 export interface FakeEventIdRow {
   id: string;
@@ -44,12 +44,17 @@ export interface FakeMediaDbState {
 
 type Filter =
   | { type: "eq"; col: string; val: string }
-  | { type: "in"; col: string; vals: string[] };
+  | { type: "in"; col: string; vals: string[] }
+  | { type: "ilike"; col: string; val: string };
 
 function matches(row: Record<string, unknown>, filters: Filter[]): boolean {
   return filters.every((f) => {
     if (f.type === "eq") return row[f.col] === f.val;
-    return (f.vals as string[]).includes(row[f.col] as string);
+    if (f.type === "in") return (f.vals as string[]).includes(row[f.col] as string);
+    // Mirrors Postgres ILIKE for the patterns admin-media-repo emits:
+    // %-wrapped, backslash-escaped literal case-insensitive substring.
+    const inner = f.val.replace(/^%/, "").replace(/%$/, "").replace(/\\(.)/g, "$1");
+    return String(row[f.col] ?? "").toLowerCase().includes(inner.toLowerCase());
   });
 }
 
@@ -82,6 +87,10 @@ function buildQuery(rows: Record<string, unknown>[]) {
     },
     eq(col: string, val: string) {
       filters.push({ type: "eq", col, val });
+      return this;
+    },
+    ilike(col: string, val: string) {
+      filters.push({ type: "ilike", col, val });
       return this;
     },
     in(col: string, vals: string[]) {
