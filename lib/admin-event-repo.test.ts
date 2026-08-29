@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { closeAdminEvent, listAdminEvents } from "@/lib/admin-event-repo";
+import { closeAdminEvent, createAdminEvent, listAdminEvents } from "@/lib/admin-event-repo";
 import { createFakeDb, type FakeEventRow } from "@/test/admin-event-db";
 
 /**
@@ -60,6 +60,60 @@ describe("listAdminEvents", () => {
   it("throws when the db query fails", async () => {
     const db = createFakeDb({ events: [], selectError: { message: "connection reset" } });
     await expect(listAdminEvents(asDb(db), "admin-1")).rejects.toThrow("connection reset");
+  });
+});
+
+describe("createAdminEvent", () => {
+  it("creates an ACTIVE event and returns the Event shape", async () => {
+    const db = createFakeDb({ events: [] });
+    const result = await createAdminEvent(asDb(db), {
+      adminId: "admin-1",
+      title: "Summer Party",
+      publicId: "evt-new",
+    });
+    expect(result.kind).toBe("ok");
+    if (result.kind !== "ok") return;
+    expect(result.event.status).toBe("ACTIVE");
+    expect(result.event.public_id).toBe("evt-new");
+  });
+
+  it("maps a 23505 unique violation on the one-active-per-admin constraint to active_event_exists", async () => {
+    const db = createFakeDb({
+      events: [],
+      insertError: {
+        code: "23505",
+        message: 'duplicate key value violates unique constraint "uq_events_one_active_per_admin"',
+      },
+    });
+    const result = await createAdminEvent(asDb(db), {
+      adminId: "admin-1",
+      title: "Second Party",
+      publicId: "evt-2",
+    });
+    expect(result.kind).toBe("active_event_exists");
+  });
+
+  it("does not map to active_event_exists when the constraint name appears without the 23505 code", async () => {
+    const db = createFakeDb({
+      events: [],
+      insertError: { message: 'proxy echo: "uq_events_one_active_per_admin"' },
+    });
+    const result = await createAdminEvent(asDb(db), {
+      adminId: "admin-1",
+      title: "Second Party",
+      publicId: "evt-2",
+    });
+    expect(result.kind).toBe("error");
+  });
+
+  it("returns error on an unrelated db insert error", async () => {
+    const db = createFakeDb({ events: [], insertError: { message: "connection reset" } });
+    const result = await createAdminEvent(asDb(db), {
+      adminId: "admin-1",
+      title: "Summer Party",
+      publicId: "evt-new",
+    });
+    expect(result.kind).toBe("error");
   });
 });
 

@@ -77,6 +77,10 @@ export function Capture({
   // Shutter press flash (150ms scale handled by active:, plus a brief opacity flash overlay)
   const [flash, setFlash] = useState(false);
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Double-tap guard: both rapid calls pass shutterDisabled before state
+  // updates land, so gate with a ref lock. 500ms ceiling covers compositing
+  // latency (ponytail: raise if capture ever grows slower).
+  const shutterLock = useRef(false);
   useEffect(() => {
     return () => {
       if (flashTimer.current) clearTimeout(flashTimer.current);
@@ -94,6 +98,9 @@ export function Capture({
 
   function handleShutter() {
     if (shutterDisabled) return;
+    if (shutterLock.current) return;
+    shutterLock.current = true;
+    setTimeout(() => { shutterLock.current = false; }, 500);
     setFlash(true);
     if (flashTimer.current) clearTimeout(flashTimer.current);
     flashTimer.current = setTimeout(() => setFlash(false), 150);

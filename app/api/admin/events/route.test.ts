@@ -11,8 +11,8 @@ import { createFakeDb, type FakeEventRow } from "@/test/admin-event-db";
  */
 
 let events: FakeEventRow[] = [];
-let insertError: { message?: string } | null = null;
-let selectError: { message?: string } | null = null;
+let insertError: { message?: string; code?: string; details?: string; hint?: string } | null = null;
+let selectError: { message?: string; code?: string; details?: string; hint?: string } | null = null;
 let getUser: { ok: true; id: string } | { ok: false } = { ok: false };
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -115,12 +115,25 @@ describe("POST /api/admin/events", () => {
   });
 
   it("returns 409 ACTIVE_EVENT_EXISTS when the admin already has an ACTIVE event", async () => {
-    insertError = { message: 'duplicate key value violates unique constraint "uq_events_one_active_per_admin"' };
+    insertError = {
+      code: "23505",
+      message: 'duplicate key value violates unique constraint "uq_events_one_active_per_admin"',
+    };
     const res = await POST(makeRequest({ title: "Second Party" }));
     expect(res.status).toBe(409);
     const body = await res.json();
     expect(body.error.code).toBe("ACTIVE_EVENT_EXISTS");
     expect(events).toHaveLength(0);
+  });
+
+  it("returns 500 INTERNAL_ERROR when an error mentions the constraint without the 23505 code", async () => {
+    insertError = {
+      message: 'duplicate key value violates unique constraint "uq_events_one_active_per_admin" (proxy echo)',
+    };
+    const res = await POST(makeRequest({ title: "Second Party" }));
+    expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body.error.code).toBe("INTERNAL_ERROR");
   });
 
   it("returns 500 INTERNAL_ERROR on an unexpected db error", async () => {

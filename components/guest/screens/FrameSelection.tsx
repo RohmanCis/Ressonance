@@ -47,8 +47,9 @@ export function FrameSelection({
 
     optionRefs.current[next]?.focus();
 
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     optionRefs.current[next]?.scrollIntoView({
-      behavior: "smooth",
+      behavior: reduced ? "auto" : "smooth",
       block: "nearest",
       inline: "center",
     });
@@ -152,8 +153,9 @@ export function FrameSelection({
                 onClick={() => {
                   setSelectedId(frame.id);
 
+                  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
                   optionRefs.current[index]?.scrollIntoView({
-                    behavior: "smooth",
+                    behavior: reduced ? "auto" : "smooth",
                     block: "nearest",
                     inline: "center",
                   });

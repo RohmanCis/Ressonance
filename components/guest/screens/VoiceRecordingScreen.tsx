@@ -155,11 +155,11 @@ export function VoiceRecordingScreen({
             Batas pesan suara untuk sesi ini sudah terpakai.
           </p>
         ) : closed ? (
-          <p role="alert" className="max-w-sm text-center text-sm text-text-muted">
+          <p role="alert" className="max-w-sm text-center text-sm text-error">
             Acara ini sudah selesai. Kiriman baru nggak diterima lagi.
           </p>
         ) : voiceState === "unsupported" ? (
-          <p role="alert" className="max-w-sm text-center text-sm text-text-muted">
+          <p role="alert" className="max-w-sm text-center text-sm text-error">
             {voiceMessage}
           </p>
         ) : reviewing ? (
@@ -209,7 +209,7 @@ export function VoiceRecordingScreen({
               </p>
             )}
             {voiceState === "error" && (
-              <p role="alert" className="max-w-sm text-center text-sm text-text-muted">
+              <p role="alert" className="max-w-sm text-center text-sm text-error">
                 {voiceMessage}
               </p>
             )}
@@ -228,7 +228,7 @@ export function VoiceRecordingScreen({
           </p>
         )}
         {voiceState === "review-error" && (
-          <p role="alert" className="max-w-sm text-center text-sm text-text-muted">
+          <p role="alert" className="max-w-sm text-center text-sm text-error">
             {voiceMessage}
           </p>
         )}

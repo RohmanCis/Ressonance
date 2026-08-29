@@ -136,12 +136,12 @@ export function PhotoReview({
         )}
 
         {hasErrors && (
-          <p role="alert" className="mt-4 text-sm text-text-secondary">
+          <p role="alert" className="mt-4 text-sm text-error">
             {errorCount} foto nggak tersimpan. Ulangi kirim atau hapus dulu sebelum lanjut.
           </p>
         )}
         {closed && !allConfirmed && (
-          <p role="alert" className="mt-4 text-sm text-text-secondary">
+          <p role="alert" className="mt-4 text-sm text-error">
             Acara ini sudah selesai. Kiriman baru nggak diterima lagi.
           </p>
         )}

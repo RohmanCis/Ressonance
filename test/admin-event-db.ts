@@ -15,9 +15,9 @@ export interface FakeEventRow {
 
 export interface FakeDbState {
   events: FakeEventRow[];
-  insertError?: { message?: string } | null;
-  updateError?: { message?: string } | null;
-  selectError?: { message?: string } | null;
+  insertError?: { message?: string; code?: string; details?: string; hint?: string } | null;
+  updateError?: { message?: string; code?: string; details?: string; hint?: string } | null;
+  selectError?: { message?: string; code?: string; details?: string; hint?: string } | null;
 }
 
 function omitAdmin(row: FakeEventRow): Omit<FakeEventRow, "admin_id"> {

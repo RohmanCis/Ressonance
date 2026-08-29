@@ -251,7 +251,7 @@ function Status({
       role="alert"
       className="mt-6 rounded-xl border border-border bg-bg-elevated/90 p-4 text-center"
     >
-      <h2 className="font-display text-lg font-semibold text-text-primary">
+      <h2 className="font-display text-lg font-semibold text-error">
         {title}
       </h2>
       <p className="mt-1.5 text-xs text-text-secondary leading-relaxed">

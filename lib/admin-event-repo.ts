@@ -111,6 +111,9 @@ export async function listAdminEvents(db: Db, adminId: string): Promise<AdminEve
 
 function isConstraintViolation(error: unknown, constraint: string): boolean {
   if (!error || typeof error !== "object") return false;
-  const message = (error as { message?: string }).message ?? "";
-  return message.includes(constraint);
+  const e = error as { code?: unknown; message?: unknown; details?: unknown; hint?: unknown };
+  if (e.code !== "23505") return false;
+  return [e.message, e.details, e.hint].some(
+    (s) => typeof s === "string" && s.includes(constraint),
+  );
 }

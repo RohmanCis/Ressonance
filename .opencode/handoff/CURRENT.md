@@ -1,31 +1,34 @@
 # Current Task Status
 
-**Status:** IDLE — T043/T044 complete 2026-08-29 (commit follows).
+**Status:** IDLE — T045 complete 2026-08-29 (uncommitted, working tree).
 
-## Session summary
+## T045 changes (fix batch, owner-approved)
 
-- T043 Indonesian UI sweep: all user-facing copy (guest + admin, visible +
-  aria-labels + sr-only + placeholders) → Bahasa Indonesia, guest-page casual
-  tone. `lang="id"`. e2e specs ×5, perf harness, component-catalog.html synced
-  in-commit; stale catalog Done #15 → thermal-print; sign-in #25 re-rendered.
-  Server/API error messages remain English (contract domain).
-- T044 admin sign-in redesign (designer lane): asymmetric editorial split,
-  copy "Akses admin"/"Kelola acaramu."/"Buat acara, bagikan akses, dan lihat
-  semua kiriman."/"Masuk"/"Sebentar, ya…". Auth behavior untouched.
-- DESIGN.md §5.3/§5.5/§6 synced; UX_FLOW.md synced; AGENTS.md §12 recorded.
-- Fix found during e2e: `error.toLowerCase().includes("udah ada")` gates the
-  ACTIVE_EVENT_EXISTS recovery link (was case-sensitive, broke vs "Udah ada").
-- Validation: typecheck PASS; vitest 46 files / 374 PASS; build PASS (after
-  killing a dev server that corrupted .next); e2e full 37 passed / 1 skipped.
-- Known-fragile: client logic keying off message substrings — re-check
-  `admin-ui.tsx` link gating on future copy changes.
+- `components/guest/screens/Capture.tsx` — shutter double-fire guard (ref
+  lock, 500ms release).
+- `components/guest/screens/FrameSelection.tsx` — both scrollIntoView call
+  sites honor `prefers-reduced-motion: reduce` (`behavior: "auto"`).
+- `lib/admin-event-repo.ts` — `isConstraintViolation` requires PG code
+  `23505` AND constraint name in message/details/hint; tests updated
+  (+5 tests: route negative case + repo describe).
+- Guest error-color unified to `--error` on neutral blocks (admin §2 parity):
+  `PreSession.tsx` (Status title), `VoiceRecordingScreen.tsx` ×4,
+  `PhotoReview.tsx` ×2. DESIGN.md §5.1 synced (error-text color qualifier).
+- Closed as no-change: signed-URL clock drift (URLs always fetched fresh,
+  never cached; TTL 900s owner-locked); Capture focus-restore (Radix Dialog
+  owns trap+restore); Done loading role="status" (DROPPED by owner —
+  out of scope).
 
-## Outstanding (unchanged)
+Validation: typecheck PASS (combined state); vitest 46 files / 379 PASS
+(Lane A, includes 5 new); Lane B color-only, no test imports. Not committed,
+not pushed.
 
-- Fix 6 LOW: Done loading `role="status"`; shutter double-fire guard;
-  Capture focus-restore re-verify.
-- Fix 7 deferred LOW (owner): signed-URL clock drift, isConstraintViolation
-  hardening, unguarded smooth scrollIntoView, guest/admin error-color.
+## Outstanding
+
+- Commit + push T045 (and 6 unpushed commits dc12c73..f029479) — owner call.
+- Case-sensitive guest_name search (deferred LOW, owner decision pending).
+- API-level sign-in rate limiting (deferred LOW, owner decision pending).
+- PHOTO_LIMIT dedup (deferred LOW, owner decision pending).
 - Live-DB ILIKE re-verification at next `npm run test:postgres` window.
 - Pre-deploy blockers: `TRUSTED_PROXY=1` + `CRON_SECRET` in Vercel.
 - Owner visual QA: ~7px gap below camera SVG slot.
