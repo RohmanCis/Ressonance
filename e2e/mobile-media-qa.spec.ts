@@ -118,9 +118,11 @@ async function startSession(page: Page) {
   await expect(page.getByRole("heading", { name: "Take photos" })).toBeVisible({ timeout: 5000 });
 }
 
-// The Done screen's only heading is the event title (DESIGN.md §5.4).
+// The Done screen marks arrival with the receipt copy (DESIGN.md §5.6): the
+// h1 is sr-only and the thermal-print sequence holds content until phase 4
+// (~8.5s after mount), so callers must allow a >9s timeout.
 function doneHeading(page: Page) {
-  return page.getByRole("heading", { name: "QA Media Event" });
+  return page.getByText("Terima kasih — foto dan pesan suara kamu sudah kami terima.");
 }
 
 // Voice note is a dedicated full-screen step AFTER photo review (DESIGN.md
@@ -299,7 +301,7 @@ test.describe("Mobile-media QA", () => {
 
     // Photos-only finish: skip voice → done.
     await page.getByRole("button", { name: "Lewati — Kirim Foto Saja" }).click();
-    await expect(doneHeading(page)).toBeVisible({ timeout: 5000 });
+    await expect(doneHeading(page)).toBeVisible({ timeout: 12000 });
     expect(session.getVoice()).toBe(false);
   });
 
@@ -314,7 +316,7 @@ test.describe("Mobile-media QA", () => {
     await captureOnePhoto(page);
     await advanceToVoiceScreen(page);
     await page.getByRole("button", { name: "Lewati — Kirim Foto Saja" }).click();
-    await expect(doneHeading(page)).toBeVisible({ timeout: 5000 });
+    await expect(doneHeading(page)).toBeVisible({ timeout: 12000 });
     // No voice note was submitted; the voice screen is gone.
     expect(session.getVoice()).toBe(false);
     await expect(page.getByRole("heading", { name: "Tinggalkan Pesan Suara" })).toHaveCount(0);
@@ -394,7 +396,7 @@ test.describe("Mobile-media QA", () => {
 
     // Submit → done.
     await page.getByRole("button", { name: "Kirim Pesan Suara" }).click();
-    await expect(doneHeading(page)).toBeVisible({ timeout: 5000 });
+    await expect(doneHeading(page)).toBeVisible({ timeout: 12000 });
     expect(session.getVoice()).toBe(true);
   });
 
@@ -446,7 +448,7 @@ test.describe("Mobile-media QA", () => {
     await page.getByRole("button", { name: "Kirim Pesan Suara" }).click();
 
     // The flow may complete only after the re-fetch carries the full shape.
-    await expect(doneHeading(page)).toBeVisible({ timeout: 5000 });
+    await expect(doneHeading(page)).toBeVisible({ timeout: 12000 });
     expect(voicePosts).toBe(1);
     expect(sessionGets).toBeGreaterThan(0);
   });
@@ -493,7 +495,7 @@ test.describe("Mobile-media QA", () => {
     await recordAndStop(page, 1000);
     await expect(page.getByRole("button", { name: "Kirim Pesan Suara" })).toBeVisible();
     await page.getByRole("button", { name: "Kirim Pesan Suara" }).click();
-    await expect(doneHeading(page)).toBeVisible({ timeout: 5000 });
+    await expect(doneHeading(page)).toBeVisible({ timeout: 12000 });
   });
 
   // 7. VOICE: upload error retains review UI (D1 fix)
@@ -574,7 +576,7 @@ test.describe("Mobile-media QA", () => {
     expect(session.getPhotos()).toBe(1);
     await recordAndStop(page, 1000);
     await page.getByRole("button", { name: "Kirim Pesan Suara" }).click();
-    await expect(doneHeading(page)).toBeVisible({ timeout: 5000 });
+    await expect(doneHeading(page)).toBeVisible({ timeout: 12000 });
 
     expect(session.getVoice()).toBe(true);
   });
