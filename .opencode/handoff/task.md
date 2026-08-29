@@ -1,48 +1,25 @@
 ﻿# Task
 
-T041 — Execute fixes 1–5 from CURRENT.md priority list (previous session,
-2026-08-29). All bounded, single-file-area changes. No canonical-doc edits, no
-schema changes, no new endpoints.
+T042 — E2E diagnostic + fix. Owner reports many e2e failures after
+`839e871`/`b9b00ae`/`fae60ba`/`dc12c73`. Redesign planned afterward (separate
+task) — e2e must be green first.
 
 ## Scope
 
-All fixes in `components/guest-event-entry.tsx` unless noted. Line refs from
-CURRENT.md may have drifted ±few lines — locate by symbol, not line.
-
-1. **HIGH — mic + voice-timer leak on unmount** (~:495–501): the unmount
-   cleanup must also call `stopVoiceTimer()` and `finishRecording()` so an
-   in-flight recording/timer doesn't leak past unmount. One-line addition to
-   existing cleanup effect.
-2. **MEDIUM — syncPhotos double-invocation race** (~:315–391): add a ref mutex
-   (`syncingRef`) so concurrent invocations are no-ops. Preserve existing
-   behavior on success/failure paths — do not swallow the first call's result.
-3. **MEDIUM — start() double-submit guard** (~:137–139): stale `state` closure
-   allows double submit; guard with a ref (not state) so the guard is
-   synchronous and closure-safe.
-4. **MEDIUM — handleCapture try/catch** (~:253–268): wrap unguarded
-   `video.play()` rejection path; plus `use-camera.ts` `capture()` (~:128–143):
-   early-return teardown when `srcObject` is null (avoid throwing on dead
-   stream).
-5. **MEDIUM — object-URL leaks**: `onDeclineCarryOver` (~:515–518) and
-   `handleSessionExpired` (~:235) must revoke pending photo object URLs before
-   clearing state; `submitVoice` (~:448–463) abort via AbortController on
-   unmount/expiry where practical.
+1. Run `npm run e2e` (one pass, alone — no concurrent suites).
+2. Triage failures: functional-broken vs copy-obsolete.
+3. Fix functional breaks directly (likely suspects: server-side auth gate
+   redirect/timing, code-split lazy-mount timing, start() double-submit guard
+   eating e2e clicks). Copy-obsolete failures caused by planned redesign:
+   leave, record.
+4. Re-run affected suites to green.
 
 ## Constraints
 
-- No visual/UI changes; behavior-only hardening.
-- TypeScript strict, no `any`.
-- No changes to `docs/`, `supabase/migrations/`, `AGENTS.md`, DESIGN.md.
-- Keep diffs minimal — no refactors beyond the five fixes.
+- No UI/copy redesign in this task.
+- No doc edits unless a canonical conflict surfaces (report instead).
+- Single e2e lane at a time.
 
 ## Validation
 
-- `npm run typecheck`
-- `npx vitest run` (full suite; serialized — run alone)
-- Focused test where practical for fix #1 (per CURRENT.md).
-- Do NOT run e2e.
-
-## Deliverable
-
-Write `result.md`: status, files changed, tests run, failures, risks. No commit
-(orchestrator commits).
+`npm run e2e` green (or only known copy-obsolete skips recorded).
