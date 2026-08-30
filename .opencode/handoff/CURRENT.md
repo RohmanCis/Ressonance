@@ -1,6 +1,6 @@
 # Current Task Status
 
-**Status:** IDLE — T045 complete 2026-08-29 (uncommitted, working tree).
+**Status:** IDLE — T045 complete 2026-08-29, committed `ef9ea01` (unpushed).
 
 ## T045 changes (fix batch, owner-approved)
 
