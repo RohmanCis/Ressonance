@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import { FormEvent, ReactNode, useEffect, useState } from "react";
 import { AdminInput } from "./admin-input";
 import { AdminPageShell } from "./admin-page-shell";
@@ -21,8 +22,40 @@ export async function api<T>(url: string, init?: RequestInit): Promise<T> {
   return body as T;
 }
 
+// DESIGN.md §6: persistent quiet "Keluar" control — muted, NOT gold (logout is
+// not a primary action). Full reload after sign-out clears all client state.
+function SignOut() {
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+  async function signOut() {
+    setBusy(true);
+    setFailed(false);
+    try {
+      const res = await fetch("/api/admin/auth/sign-out", { method: "POST", credentials: "same-origin" });
+      if (!res.ok) throw new Error("SIGN_OUT_FAILED");
+      window.location.href = "/admin/sign-in";
+    } catch {
+      setFailed(true);
+      setBusy(false);
+    }
+  }
+  return (
+    <span className="inline-flex items-center gap-3">
+      {failed && <span role="alert" className="text-xs text-error">Gagal keluar</span>}
+      <button
+        type="button"
+        onClick={signOut}
+        disabled={busy}
+        className="inline-flex min-h-11 items-center text-xs font-medium text-text-muted underline-offset-4 transition duration-fast hover:text-text-primary hover:underline disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+      >
+        {busy ? "Keluar…" : "Keluar"}
+      </button>
+    </span>
+  );
+}
+
 // DESIGN.md §6: admin chrome on dark tokens — bg-base page, hairline header, gold only on primary actions.
-export function Shell({ children, title = "Admin", eyebrow }: { children: ReactNode; title?: string; eyebrow?: string }) {
+export function Shell({ children, title = "Admin", eyebrow, breadcrumb }: { children: ReactNode; title?: string; eyebrow?: string; breadcrumb?: { href: string; label: string } }) {
   return (
     <main className="relative flex min-h-dvh flex-col overflow-hidden bg-bg-base px-5 pt-[calc(2rem+env(safe-area-inset-top))] pb-[calc(2rem+env(safe-area-inset-bottom))] text-text-primary sm:px-8">
       {/* Ambient orbs + grain (print-hidden) — PreSession baseline (DESIGN.md §2) */}
@@ -30,9 +63,18 @@ export function Shell({ children, title = "Admin", eyebrow }: { children: ReactN
       {/* CONTENT WRAPPER */}
       <div className="relative z-10 mx-auto w-full max-w-[90rem] min-h-[60vh]">
         <header className="mb-10 flex items-center justify-between border-b border-border pb-5">
-          <Link href="/admin" className="font-display text-xl font-semibold tracking-tight text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">{title}</Link>
-          {eyebrow && <span className="text-xs font-medium tracking-[0.04em] text-text-muted">{eyebrow}</span>}
+          <Link href="/admin" className="inline-flex min-h-11 items-center font-sans text-xl font-medium tracking-tight text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">{title}</Link>
+          <div className="flex items-center gap-4">
+            {eyebrow && <span className="text-xs font-medium tracking-[0.04em] text-text-muted">{eyebrow}</span>}
+            <SignOut />
+          </div>
         </header>
+        {breadcrumb && (
+          <Link href={breadcrumb.href} className="mb-6 inline-flex min-h-11 items-center gap-1.5 text-xs text-text-muted transition duration-fast hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+            <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />
+            {breadcrumb.label}
+          </Link>
+        )}
         {children}
       </div>
     </main>
@@ -66,5 +108,5 @@ export function Button({ children, secondary = false, ...props }: React.ButtonHT
 export function AdminCreateEvent() {
   const [title, setTitle] = useState(""); const [busy, setBusy] = useState(false); const [message, setMessage] = useState(""); const [error, setError] = useState("");
   async function submit(event: FormEvent) { event.preventDefault(); setBusy(true); setError(""); setMessage(""); try { const body = await api<{ event: Event; public_url: string }>("/api/admin/events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title }) }); setMessage(`Acara “${body.event.title}” udah dibuat.`); window.location.href = `/admin/events/${body.event.public_id}`; } catch (e) { setError(errorText[(e as Error).message] ?? ((e as Error).message === "OFFLINE" ? "Kamu lagi offline. Coba lagi pas konek." : "Acaranya gagal dibuat. Aman buat coba lagi.")); setBusy(false); } }
-  return <AuthGate><Shell eyebrow="Meja acara"><div className="mx-auto max-w-2xl"><AdminPageShell eyebrow="Acara baru" title="Buat acara baru."><p className="mt-3 text-sm text-text-secondary leading-relaxed">Cuma bisa ada satu acara aktif. Tutup aja kalau acaranya udah selesai.</p><form onSubmit={submit} className="mt-8 rounded-2xl border border-border bg-bg-surface p-6"><AdminInput id="event-title" label="Nama acara" required value={title} onChange={e => setTitle(e.target.value)} placeholder="Contoh: Resepsi R & C" />{error && <Status error message={error} action={error.toLowerCase().includes("udah ada") ? <Link href="/admin" className="underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Lihat acara yang ada</Link> : undefined} />}{message && <Status message={message} />}<Button disabled={busy} className="mt-6">{busy ? "Membuat…" : "Buat acara"}</Button></form></AdminPageShell></div></Shell></AuthGate>;
+  return <AuthGate><Shell><div className="mx-auto max-w-2xl"><AdminPageShell eyebrow="Acara baru" title="Buat acara baru."><p className="mt-3 text-sm text-text-secondary leading-relaxed">Cuma bisa ada satu acara aktif. Tutup aja kalau acaranya udah selesai.</p><form onSubmit={submit} className="mt-8 rounded-2xl border border-border bg-bg-surface p-6"><AdminInput id="event-title" label="Nama acara" required value={title} onChange={e => setTitle(e.target.value)} placeholder="Contoh: Resepsi R & C" />{error && <Status error message={error} action={error.toLowerCase().includes("udah ada") ? <Link href="/admin" className="inline-flex min-h-11 items-center underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Lihat acara yang ada</Link> : undefined} />}{message && <Status message={message} />}<Button disabled={busy} className="mt-6">{busy ? "Membuat…" : "Buat acara"}</Button></form></AdminPageShell></div></Shell></AuthGate>;
 }

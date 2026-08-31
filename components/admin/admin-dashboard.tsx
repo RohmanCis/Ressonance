@@ -4,9 +4,10 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { ChevronDown, ChevronRight, Download, Image as ImageIcon, Loader2, Mic, Pause, Play } from "lucide-react";
+import { ChevronDown, ChevronRight, Download, Image as ImageIcon, Loader2, Mic, Pause, Play, Search, Users, X } from "lucide-react";
 import { api, Button, Event, Shell, Status, Submission } from "./admin-ui";
-import { AdminInput } from "./admin-input";
+import { underlineInput } from "./admin-input";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { describeDownloadResponse, downloadErrorCodeFromResponse, downloadErrorMessage } from "@/lib/admin-download";
 
 const PreviewDialog = dynamic(() => import("./admin-preview-dialog").then((m) => m.PreviewDialog));
@@ -29,7 +30,6 @@ export const fmtFull = (iso: string) => {
   const d = new Date(iso);
   return `${fmtDate(d)} · ${fmtTime(d)}`;
 };
-const fmtShort = fmtFull;
 const fmtRange = (oldestIso: string, newestIso: string) => {
   const oldest = new Date(oldestIso);
   const newest = new Date(newestIso);
@@ -39,6 +39,19 @@ const fmtDuration = (s?: number | null) => (s == null ? "" : `${Math.floor(s / 6
 export const typeLabel = (item: Submission) => (item.type === "PHOTO" ? "Foto" : "Pesan suara");
 
 type Group = { ref: string; name: string; session: number | null; items: Submission[] };
+
+// DESIGN.md §6: exactly 3 derived metrics, client-side from loaded items only.
+export function deriveMetrics(items: Submission[]) {
+  const guests = new Set<string>();
+  let photos = 0;
+  let voices = 0;
+  for (const item of items) {
+    guests.add(item.guest_session_ref);
+    if (item.type === "PHOTO") photos += 1;
+    else voices += 1;
+  }
+  return { guests: guests.size, photos, voices };
+}
 
 type MediaFilter = "ALL" | "PHOTO" | "VOICE_NOTE";
 const MEDIA_SEGMENTS: { value: MediaFilter; label: string }[] = [
@@ -244,7 +257,7 @@ function PhotoTile({ item, name, onPreview }: { item: Submission; name: string; 
               Foto
             </span>
             <time dateTime={item.created_at} className="font-mono tabular-nums text-text-muted">
-              {fmtShort(item.created_at)}
+              {fmtFull(item.created_at)}
             </time>
           </span>
         </button>
@@ -338,7 +351,7 @@ function VoiceTile({ item, name }: { item: Submission; name: string }) {
         </span>
       </span>
       <time dateTime={item.created_at} className="font-mono text-xs tabular-nums text-text-muted">
-        {fmtShort(item.created_at)}
+        {fmtFull(item.created_at)}
       </time>
       <DownloadButton item={item} name={name} />
       {loading && (
@@ -429,7 +442,7 @@ function GuestGroup({ group, onPreview }: { group: Group; onPreview: (item: Subm
 
 function TimelineSkeleton() {
   return (
-    <div role="status" aria-label="Memuat kiriman" className="mt-6 grid animate-pulse gap-6">
+    <div role="status" className="mt-6 grid animate-pulse gap-6">
       {[0, 1].map((g) => (
         <div key={g} aria-hidden="true" className="rounded-3xl border border-border bg-bg-surface/90 p-5">
           <div className="flex items-center gap-3">
@@ -452,7 +465,7 @@ function TimelineSkeleton() {
 
 function AsideSkeleton() {
   return (
-              <div role="status" aria-label="Memuat acara" className="animate-pulse">
+              <div role="status" className="animate-pulse">
       <div aria-hidden="true">
         <div className="h-3 w-20 rounded bg-bg-elevated" />
         <div className="mt-3 h-9 w-48 rounded bg-bg-elevated" />
@@ -477,6 +490,9 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
   const [error, setError] = useState("");
   const [preview, setPreview] = useState<{ photos: Submission[]; name: string; index: number } | null>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
+  // Last search actually sent to the API — drives the polite result announcement.
+  const [appliedQuery, setAppliedQuery] = useState("");
+  const lastSearchRef = useRef("");
 
   async function load(search = query) {
     setBusy(true);
@@ -489,6 +505,8 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
       ]);
       setEvent(eventRes.event);
       setItems(subsRes.submissions);
+      setAppliedQuery(search);
+      lastSearchRef.current = search;
     } catch (e) {
       const code = (e as Error).message;
       // UI_UX §5.5: unauthenticated access redirects to sign-in.
@@ -504,6 +522,14 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
   useEffect(() => {
     load("");
   }, [publicId]);
+  // DESIGN.md §6: inline debounced search — no submit button; Enter loads
+  // immediately (pending timer no-ops on the same query), Escape clears.
+  useEffect(() => {
+    const handle = window.setTimeout(() => {
+      if (query !== lastSearchRef.current) void load(query);
+    }, 300);
+    return () => window.clearTimeout(handle);
+  }, [query]);
 
   async function close() {
     setClosing(true);
@@ -519,17 +545,12 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
 
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("ALL");
   // Derived metrics from the loaded submissions only — no extra fetch (task spec).
-  const metrics = useMemo(() => {
-    const guests = new Set<string>();
-    let photos = 0;
-    let voices = 0;
-    for (const item of items) {
-      guests.add(item.guest_session_ref);
-      if (item.type === "PHOTO") photos += 1;
-      else voices += 1;
-    }
-    return { guests: guests.size, photos, voices, media: items.length };
-  }, [items]);
+  const metrics = useMemo(() => deriveMetrics(items), [items]);
+  const metricCards = [
+    { label: "Tamu", value: metrics.guests, icon: Users },
+    { label: "Foto", value: metrics.photos, icon: ImageIcon },
+    { label: "Pesan suara", value: metrics.voices, icon: Mic },
+  ];
   // Segmented media filter applied client-side before grouping.
   const visibleItems = useMemo(
     () => (mediaFilter === "ALL" ? items : items.filter((item) => item.type === mediaFilter)),
@@ -551,7 +572,7 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
   }
 
   return (
-    <Shell eyebrow="Event desk">
+    <Shell eyebrow="Event desk" breadcrumb={{ href: "/admin", label: "Semua acara" }}>
         <div className="grid gap-8 lg:grid-cols-[18rem_1fr]">
           <aside className="min-h-[300px] lg:sticky lg:top-6 lg:self-start">
             {busy && !event ? (
@@ -573,9 +594,36 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
                       Akses / QR
                     </Link>
                     {event.status === "ACTIVE" && (
-                      <Button disabled={closing} onClick={close}>
-                        {closing ? "Menutup…" : "Tutup acara"}
-                      </Button>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button disabled={closing}>
+                            {closing ? "Menutup…" : "Tutup acara"}
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent showCloseButton={false} className="border-border bg-bg-elevated text-text-primary">
+                          <DialogHeader>
+                            <DialogTitle className="font-display text-xl font-semibold tracking-tight text-text-primary">Tutup acara ini?</DialogTitle>
+                            <DialogDescription className="text-text-secondary">
+                              Setelah ditutup, tamu tidak bisa lagi mengirim foto atau pesan suara. Tindakan ini tidak bisa dibatalkan.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <DialogFooter>
+                            <DialogClose asChild>
+                              <Button secondary>Batal</Button>
+                            </DialogClose>
+                            <DialogClose asChild>
+                              <button
+                                type="button"
+                                disabled={closing}
+                                onClick={() => void close()}
+                                className={`min-h-12 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-400 transition duration-fast hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-45 ${focusRing}`}
+                              >
+                                Ya, tutup sekarang
+                              </button>
+                            </DialogClose>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
                     )}
                   </div>
                 </>
@@ -583,17 +631,13 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
             )}
           </aside>
           <section className="max-w-4xl">
-            <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {(
-                [
-                  { label: "Tamu", value: metrics.guests },
-                  { label: "Foto", value: metrics.photos },
-                  { label: "Pesan suara", value: metrics.voices },
-                  { label: "Media", value: metrics.media },
-                ] as const
-              ).map((stat) => (
-                <div key={stat.label} className="rounded-xl border border-border bg-bg-surface p-4">
-                  <p className="font-mono text-2xl tabular-nums text-text-primary">{stat.value}</p>
+            <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {metricCards.map((stat) => (
+                <div key={stat.label} className="rounded-xl border border-border bg-bg-surface p-4 [border-top:1px_solid_theme(colors.border)] [border-top-color:color-mix(in_srgb,var(--accent)_20%,transparent)]">
+                  <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-lg bg-bg-elevated text-text-muted">
+                    <stat.icon className="h-4 w-4" />
+                  </span>
+                  <p className="mt-3 font-mono text-2xl tabular-nums text-text-primary">{stat.value}</p>
                   <p className="mt-1 text-xs text-text-muted">{stat.label}</p>
                 </div>
               ))}
@@ -603,26 +647,48 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
                 <p className="text-xs font-medium tracking-[0.04em] text-text-muted">Kiriman</p>
                 <h2 className="mt-1 text-xl font-semibold text-text-primary">Terbaru dulu</h2>
               </div>
-              <form
-                className="w-full sm:max-w-sm"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  load();
-                }}
-              >
-                <AdminInput
-                  id="guest-search"
-                  label="Cari nama tamu"
-                  type="search"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Cari nama tamu"
-                  autoComplete="off"
-                />
-                <Button secondary className="mt-3">
-                  Cari
-                </Button>
-              </form>
+              <div className="w-full sm:max-w-sm">
+                <label className="block" htmlFor="guest-search">
+                  <span className="text-xs font-medium text-text-secondary">Cari nama tamu</span>
+                  <span className="relative mt-2 block">
+                    <Search className="pointer-events-none absolute left-0 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" aria-hidden="true" />
+                    <input
+                      id="guest-search"
+                      type="search"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          void load();
+                        } else if (e.key === "Escape") {
+                          setQuery("");
+                        }
+                      }}
+                      placeholder="Cari nama tamu"
+                      autoComplete="off"
+                      className={`text-text-primary ${underlineInput} pl-6 pr-10 [&::-webkit-search-cancel-button]:hidden`}
+                    />
+                    {query && (
+                      <button
+                        type="button"
+                        aria-label="Hapus pencarian"
+                        onClick={() => setQuery("")}
+                        className={`absolute right-0 top-1/2 inline-flex min-h-11 -translate-y-1/2 items-center px-2 text-text-muted transition duration-fast hover:text-text-primary ${focusRing}`}
+                      >
+                        <X className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    )}
+                  </span>
+                </label>
+                <p aria-live="polite" className="sr-only">
+                  {!busy && appliedQuery
+                    ? items.length
+                      ? `${items.length} kiriman ditemukan`
+                      : "Tidak ada kiriman ditemukan"
+                    : ""}
+                </p>
+              </div>
             </div>
             <div role="group" aria-label="Saring jenis media" className="mt-4 inline-flex rounded-lg border border-border bg-bg-surface p-1">
               {MEDIA_SEGMENTS.map((segment) => {

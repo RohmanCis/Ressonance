@@ -64,6 +64,8 @@ Scale (rem, with clamp for fluid guest titles):
 
 Counters and timers always use DM Mono with tabular figures. Sentence case everywhere; labels may use `0.04em` tracking.
 
+Admin controls menggunakan text-sm sebagai ukuran button (bukan base) — diratifikasi 2026-08-30.
+
 ## 4. Motion Principles
 
 ```css

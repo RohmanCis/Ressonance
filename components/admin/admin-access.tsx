@@ -34,7 +34,7 @@ export function AdminAccess({ publicId }: { publicId: string }) {
 
   return (
     <AuthGate>
-      <Shell eyebrow="Meja acara">
+      <Shell breadcrumb={{ href: `/admin/events/${publicId}`, label: "Dasbor acara" }}>
         {/* ponytail: page-scoped print isolation (hide chrome, neutralize Shell geometry); promote to a print stylesheet if more pages ship print artifacts. */}
         <style>{`@page { margin: 0; }
 @media print {
@@ -44,7 +44,7 @@ export function AdminAccess({ publicId }: { publicId: string }) {
 }`}</style>
         <div className="mx-auto max-w-md print:hidden">
           <AdminPageShell eyebrow="Bagikan akses" title="Bagikan akses acara.">
-            <p className="mt-3 text-sm text-text-secondary leading-relaxed">Tamu bisa scan kartus ini atau buka link publiknya.</p>
+            <p className="mt-3 text-sm text-text-secondary leading-relaxed">Tamu bisa scan kartu ini atau buka link publiknya.</p>
             {error ? (
               <Status
                 error

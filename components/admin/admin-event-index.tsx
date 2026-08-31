@@ -19,7 +19,7 @@ const linkGold = `${linkButton} gold-foil-btn h-12 active:scale-[0.98]`;
 const linkSecondary = `${linkButton} border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated`;
 // Hero-card "Open" demoted to secondary (DESIGN.md §6: one gold primary per
 // view — "Create new event" keeps gold-foil-btn).
-const linkRowAction = `inline-flex min-h-10 items-center justify-center rounded-lg border border-border bg-bg-surface px-4 py-2 text-xs font-medium text-text-primary transition duration-fast hover:bg-bg-elevated ${focusRing}`;
+const linkRowAction = `inline-flex min-h-11 items-center justify-center rounded-lg border border-border bg-bg-surface px-4 py-2 text-xs font-medium text-text-primary transition duration-fast hover:bg-bg-elevated ${focusRing}`;
 const rowLink = `inline-flex min-h-12 items-center text-xs font-medium text-text-secondary underline-offset-4 transition duration-fast hover:text-text-primary hover:underline ${focusRing}`;
 
 function errorText(code: string) {
@@ -56,7 +56,7 @@ export function AdminEventIndex() {
   const history = events?.filter((event) => event.status !== "ACTIVE") ?? [];
 
   return (
-    <Shell eyebrow="Meja acara">
+    <Shell>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <AdminPageShell eyebrow="Daftar acara" title="Acara kamu." />
         <Link href="/admin/events/new" className={linkGold}>
