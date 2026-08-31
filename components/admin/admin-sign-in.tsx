@@ -33,7 +33,7 @@ export function AdminSignIn() {
   }
 
   return (
-    <Shell title="Admin">
+    <Shell title="Admin" showSignOut={false}>
       {/* Asymmetric editorial split: wide copy column + offset form card on
           desktop; single stacked column on mobile (DESIGN.md §6 sign-in). */}
       <div className="mx-auto grid w-full max-w-5xl gap-12 pt-4 sm:pt-8 lg:grid-cols-[1.1fr_1fr] lg:gap-16">

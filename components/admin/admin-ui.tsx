@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, LogOut } from "lucide-react";
 import { FormEvent, ReactNode, useEffect, useState } from "react";
 import { AdminInput } from "./admin-input";
 import { AdminPageShell } from "./admin-page-shell";
@@ -46,8 +46,9 @@ function SignOut() {
         type="button"
         onClick={signOut}
         disabled={busy}
-        className="inline-flex min-h-11 items-center text-xs font-medium text-text-muted underline-offset-4 transition duration-fast hover:text-text-primary hover:underline disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        className="inline-flex min-h-11 items-center gap-1.5 text-xs font-medium text-text-muted transition duration-fast hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
       >
+        <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
         {busy ? "Keluar…" : "Keluar"}
       </button>
     </span>
@@ -55,7 +56,7 @@ function SignOut() {
 }
 
 // DESIGN.md §6: admin chrome on dark tokens — bg-base page, hairline header, gold only on primary actions.
-export function Shell({ children, title = "Admin", eyebrow, breadcrumb }: { children: ReactNode; title?: string; eyebrow?: string; breadcrumb?: { href: string; label: string } }) {
+export function Shell({ children, title = "Admin", eyebrow, breadcrumb, showSignOut = true }: { children: ReactNode; title?: string; eyebrow?: string; breadcrumb?: { href: string; label: string }; showSignOut?: boolean }) {
   return (
     <main className="relative flex min-h-dvh flex-col overflow-hidden bg-bg-base px-5 pt-[calc(2rem+env(safe-area-inset-top))] pb-[calc(2rem+env(safe-area-inset-bottom))] text-text-primary sm:px-8">
       {/* Ambient orbs + grain (print-hidden) — PreSession baseline (DESIGN.md §2) */}
@@ -66,7 +67,7 @@ export function Shell({ children, title = "Admin", eyebrow, breadcrumb }: { chil
           <Link href="/admin" className="inline-flex min-h-11 items-center font-sans text-xl font-medium tracking-tight text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">{title}</Link>
           <div className="flex items-center gap-4">
             {eyebrow && <span className="text-xs font-medium tracking-[0.04em] text-text-muted">{eyebrow}</span>}
-            <SignOut />
+            {showSignOut && <SignOut />}
           </div>
         </header>
         {breadcrumb && (
@@ -96,8 +97,8 @@ export function Busy({ label = "Memuat" }) {
 export function AuthGate({ children }: { children: ReactNode }) {
   const [state, setState] = useState<"loading" | "ok" | "no">("loading");
   useEffect(() => { api("/api/admin/me").then(() => setState("ok")).catch(() => setState("no")); }, []);
-  if (state === "loading") return <Shell><Busy label="Mengecek akses" /></Shell>;
-  if (state === "no") return <Shell><Status error message="Sesi adminmu nggak bisa dibuka." action={<Link className="inline-flex min-h-12 items-center rounded-lg border border-border bg-bg-surface px-4 py-2 font-semibold text-text-primary transition duration-fast hover:bg-bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" href="/admin/sign-in">Kembali ke halaman masuk</Link>} /></Shell>;
+  if (state === "loading") return <Shell showSignOut={false}><Busy label="Mengecek akses" /></Shell>;
+  if (state === "no") return <Shell showSignOut={false}><Status error message="Sesi adminmu nggak bisa dibuka." action={<Link className="inline-flex min-h-12 items-center rounded-lg border border-border bg-bg-surface px-4 py-2 font-semibold text-text-primary transition duration-fast hover:bg-bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" href="/admin/sign-in">Kembali ke halaman masuk</Link>} /></Shell>;
   return <>{children}</>;
 }
 
