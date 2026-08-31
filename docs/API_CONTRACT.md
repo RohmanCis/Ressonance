@@ -396,6 +396,30 @@ Returns only events owned by the authenticated admin, newest first (by `created_
 
 **Errors:** `401 AUTHENTICATION_REQUIRED`, `500 INTERNAL_ERROR`.
 
+### 5.11 Sign out
+
+```text
+POST /api/admin/auth/sign-out
+```
+
+**Authentication:** Supabase Auth session required.
+
+**Request body:** none.
+
+**Success:** `200`
+
+```json
+{
+  "signed_out": true
+}
+```
+
+The server invalidates the current Supabase Auth session. The auth cookies established at sign-in are cleared via the server-side SSR cookie adapter (`@supabase/ssr`, `lib/supabase/server.ts`) — there is no `__Host-admin_session` cookie to clear manually. Tokens are never returned as JSON.
+
+**Errors:** `401 AUTHENTICATION_REQUIRED` with the envelope `{ "error": { "code": "AUTHENTICATION_REQUIRED", "message": "A valid admin session is required." } }`.
+
+**Rate limit:** none.
+
 ## 6. Guest endpoints
 
 ### 6.1 Get event by public ID
