@@ -197,7 +197,7 @@ Never trust frontend limits, localStorage, client MIME/duration, public storage 
 
 **Outstanding:** pre-deploy blockers `TRUSTED_PROXY=1` + `CRON_SECRET` in Vercel, with live-DB re-verification (`npm run test:postgres` + `PLAYWRIGHT_LIVE=1 npm run e2e`, covers ILIKE search) in the same window.
 
-**Last validated (2026-08-29, post-T045 `ef9ea01`):** typecheck PASS; vitest 379/379 (46 files); e2e 37 passed / 1 skipped (live-backend, expected). Lint baseline: 1 pre-existing `any` error in `e2e/print-qa.spec.ts` + pre-existing warnings.
+**Last validated (2026-09-06):** typecheck PASS; vitest 384/384 (48 files); e2e 37 passed / 1 skipped (live-backend, expected). Lint baseline: 1 pre-existing `any` error in `e2e/print-qa.spec.ts` + pre-existing warnings.
 
 **Owner decisions (2026-08-15):** Supabase managed backups only; structured logs + Vercel logs only (no Sentry/OTel); no guest-facing retention messaging; APAC Supabase region ratified; signed URL TTL 900s; ARCHIVED post-MVP.
 

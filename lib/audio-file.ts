@@ -16,7 +16,7 @@ const VOICE_NOTE_MIME_TYPES = [
 
 export type VoiceNoteMimeType = (typeof VOICE_NOTE_MIME_TYPES)[number];
 
-/** Accepted voice-note duration range, inclusive (db_scheme §5 CHECK). */
+/** Accepted voice-note duration range, inclusive (db_scheme.md DDL CHECK). */
 export const VOICE_DURATION_MIN = 5;
 export const VOICE_DURATION_MAX = 30;
 

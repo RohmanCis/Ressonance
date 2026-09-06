@@ -1,34 +1,32 @@
 # Current Task Status
 
-**Status:** IDLE — T045 complete 2026-08-29, committed `ef9ea01` (unpushed).
+**Status:** IDLE — doc audit + dead-code cleanup complete, committed 2026-09-06.
 
-## T045 changes (fix batch, owner-approved)
+## Completed this session
 
-- `components/guest/screens/Capture.tsx` — shutter double-fire guard (ref
-  lock, 500ms release).
-- `components/guest/screens/FrameSelection.tsx` — both scrollIntoView call
-  sites honor `prefers-reduced-motion: reduce` (`behavior: "auto"`).
-- `lib/admin-event-repo.ts` — `isConstraintViolation` requires PG code
-  `23505` AND constraint name in message/details/hint; tests updated
-  (+5 tests: route negative case + repo describe).
-- Guest error-color unified to `--error` on neutral blocks (admin §2 parity):
-  `PreSession.tsx` (Status title), `VoiceRecordingScreen.tsx` ×4,
-  `PhotoReview.tsx` ×2. DESIGN.md §5.1 synced (error-text color qualifier).
-- Closed as no-change: signed-URL clock drift (URLs always fetched fresh,
-  never cached; TTL 900s owner-locked); Capture focus-restore (Radix Dialog
-  owns trap+restore); Done loading role="status" (DROPPED by owner —
-  out of scope).
+- Lane A (#librarian) doc audit + Lane B (#explorer) dead-code scan,
+  both read-only, reconciled by orchestrator.
+- Findings: docs/codebase clean. Only 2 actionable edits:
+  - `AGENTS.md:200` — vitest baseline 379/379 (46 files) → 384/384
+    (48 files), date → 2026-09-06.
+  - `lib/audio-file.ts:19` — stale `db_scheme §5 CHECK` →
+    `db_scheme.md DDL CHECK` (no numbered sections in that doc).
+  - `.opencode/handoff/result.md` — stale prior-session result reset.
+- Gates: `npx tsc --noEmit` PASS; `npx vitest run` 384/384 (48 files) PASS.
+- Commit: `chore: doc sync, dead code cleanup, handoff reconcile`.
+- No logic/API/DB changes; comment/markdown only.
 
-Validation: typecheck PASS (combined state); vitest 46 files / 379 PASS
-(Lane A, includes 5 new); Lane B color-only, no test imports. Not committed,
-not pushed.
+## Remaining dirty (intentional, owner call)
 
-## Outstanding
+- `.gitignore` (ignore additions from prior session — commit when
+  convenient).
+- Commits not pushed (not requested).
 
-- Commit + push T045 (and 6 unpushed commits dc12c73..f029479) — owner call.
-- Case-sensitive guest_name search (deferred LOW, owner decision pending).
-- API-level sign-in rate limiting (deferred LOW, owner decision pending).
-- PHOTO_LIMIT dedup (deferred LOW, owner decision pending).
-- Live-DB ILIKE re-verification at next `npm run test:postgres` window.
-- Pre-deploy blockers: `TRUSTED_PROXY=1` + `CRON_SECRET` in Vercel.
-- Owner visual QA: ~7px gap below camera SVG slot.
+## Outstanding (pre-existing, unchanged)
+
+- API-level sign-in rate limiting (deferred LOW).
+- Pre-deploy blockers: TRUSTED_PROXY=1 + CRON_SECRET in Vercel, with
+  live-DB re-verification (`npm run test:postgres` +
+  `PLAYWRIGHT_LIVE=1 npm run e2e`, covers ILIKE search) in same window.
+- Future flag: `types/supabase.ts:5` TODO "regenerate once migrations
+  exist" now obsolete (migrations exist) — outside this task's scope.
