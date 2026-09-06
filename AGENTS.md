@@ -17,14 +17,14 @@ Read only the documents relevant to the task, plus this file. Do not duplicate t
 | 3 | `docs/ARCHITECTURE_DECISIONS.md` | Approved architectural decisions and stack |
 | 4 | `docs/TECHNICAL_DESIGN.md` | System boundaries, security, storage, sessions, transactions, testing strategy |
 | 5 | `docs/API_CONTRACT.md` | HTTP paths, methods, payloads, status codes, errors, auth behavior |
-| 6 | `DESIGN.md` (root) — UI/design system, canonical | Tokens, typography, motion, guest/admin visual system, component inventory |
-| 7 | `UX_FLOW.md` (root) — guest and admin flow reference | Screen-by-screen guest/admin flow and QA edge cases |
+| 6 | `docs/DESIGN.md` — UI/design system, canonical | Tokens, typography, motion, guest/admin visual system, component inventory |
+| 7 | `docs/UX_FLOW.md` — guest and admin flow reference | Screen-by-screen guest/admin flow and QA edge cases |
 
 Precedence follows the table for conflicts, except a higher document cannot silently invalidate a lower document's explicit locked constraint. Report the conflict. `AGENTS.md` never overrides canonical documents.
 
 Authority is confined to this repository. External projects, workspaces, absolute paths outside the repository, imported external requirements, and external AGENTS files are invalid authority and must never be used to change, challenge, or QA this repository's behavior. Do not read or reference them.
 
-Current UI status: `DESIGN.md` (root) is CANONICAL (approved 2026-08-20) — single source of truth for all UI/design decisions. `UX_FLOW.md` (root) is the flow reference.
+Current UI status: `docs/DESIGN.md` is CANONICAL (approved 2026-08-20) — single source of truth for all UI/design decisions. `docs/UX_FLOW.md` is the flow reference.
 Current API status: `docs/API_CONTRACT.md` is LOCKED and approved for implementation.
 
 ## 3. Locked product invariants
@@ -83,8 +83,8 @@ Environment: Supabase credentials and rate-limit/upload caps come from env (see 
 
 - TypeScript strict mode; no `any` in new code.
 - Next.js App Router: server-side API under `app/api/**/route.ts`; client components under `components/`.
-- Styling: Tailwind CSS v4 with the token variables from DESIGN.md (root) (`--bg-base`, `--text-primary`, `--accent`, …); shadcn/ui primitives; no inline color literals that bypass tokens.
-- Accessibility is not optional: focus-visible rings, aria-live/status regions, 44px+ touch targets (48px guest primaries), safe-area insets — per DESIGN.md (root) §2 and §13.
+- Styling: Tailwind CSS v4 with the token variables from docs/DESIGN.md (`--bg-base`, `--text-primary`, `--accent`, …); shadcn/ui primitives; no inline color literals that bypass tokens.
+- Accessibility is not optional: focus-visible rings, aria-live/status regions, 44px+ touch targets (48px guest primaries), safe-area insets — per docs/DESIGN.md §2 and §5.
 - Comments: sparse, only where a non-obvious invariant or canonical-doc cross-reference must be recorded (see existing `lib/*.ts` docblocks for the pattern).
 - Tests: Vitest co-located as `*.test.ts` next to the code under test; route tests live beside routes. Every non-trivial behavior change leaves a focused runnable test.
 - E2E specs live in `e2e/` (Playwright).
@@ -96,7 +96,7 @@ Environment: Supabase credentials and rate-limit/upload caps come from env (see 
 - **Product/domain task:** `docs/PRD.md` relevant sections; `docs/db_scheme.md` for data impact.
 - **Database/migration task:** `docs/db_scheme.md` + relevant `docs/TECHNICAL_DESIGN.md` sections.
 - **API/backend task:** `docs/API_CONTRACT.md` + relevant `docs/TECHNICAL_DESIGN.md` and `docs/ARCHITECTURE_DECISIONS.md` sections.
-- **UI task:** DESIGN.md (root) for the visual system + UX_FLOW.md (root) for flow + relevant PRD/API sections; route visual work to Designer.
+- **UI task:** docs/DESIGN.md for the visual system + docs/UX_FLOW.md for flow + relevant PRD/API sections; route visual work to Designer.
 - **Cross-cutting/security task:** relevant sections of all affected canonical documents.
 
 Inspect existing code and conventions after loading context. Read the governing document before modifying code. Do not load every document by default.
@@ -186,16 +186,16 @@ Never trust frontend limits, localStorage, client MIME/duration, public storage 
 - Submission seam (ADR-012): `lib/guest-submission-auth.ts` + `lib/guest-submission-pipeline.ts` + per-kind payload adapters; routes are config-only.
 - Frame selection/compositing is client-side UX only (`lib/frames.ts`).
 - Admin surfaces: sign-in, event index, dashboard, access/QR — `components/admin/`.
-- Capture screen: 3-zone photobooth studio (DESIGN.md §5.3); review overlay uses shadcn/Radix Dialog (owns focus trap/restore).
+- Capture screen: 3-zone photobooth studio (docs/DESIGN.md §5.3); review overlay uses shadcn/Radix Dialog (owns focus trap/restore).
 - Signed media URLs are fetched fresh per preview/download, never cached client-side; TTL 900s is owner-locked.
 
 **Database:** migrations `0001`–`0004`, `0007`–`0009` in repo (live DB records `0001`–`0008`; `0008` storage RLS applied manually, repo file documentation-only; `0009` drops unused guest-messages). All migrations idempotent. Live Supabase verified (schema tests + `PLAYWRIGHT_LIVE=1`).
 
 **Known-fragile pattern:** `admin-ui.tsx` gates the ACTIVE_EVENT_EXISTS recovery link off `error.toLowerCase().includes("udah ada")` — re-check on any copy change.
 
-**Deferred LOW (owner decision pending):** case-sensitive guest_name search; API-level sign-in rate limiting; PHOTO_LIMIT dedup.
+**Deferred LOW (owner decision pending):** API-level sign-in rate limiting.
 
-**Outstanding:** live-DB ILIKE re-verification at next `npm run test:postgres` window; owner visual QA (~7px gap below camera SVG slot); pre-deploy blockers `TRUSTED_PROXY=1` + `CRON_SECRET` in Vercel.
+**Outstanding:** pre-deploy blockers `TRUSTED_PROXY=1` + `CRON_SECRET` in Vercel, with live-DB re-verification (`npm run test:postgres` + `PLAYWRIGHT_LIVE=1 npm run e2e`, covers ILIKE search) in the same window.
 
 **Last validated (2026-08-29, post-T045 `ef9ea01`):** typecheck PASS; vitest 379/379 (46 files); e2e 37 passed / 1 skipped (live-backend, expected). Lint baseline: 1 pre-existing `any` error in `e2e/print-qa.spec.ts` + pre-existing warnings.
 

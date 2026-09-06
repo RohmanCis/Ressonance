@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 /**
- * Structured server-side error logging (TECHNICAL_DESIGN.md:219 —
+ * Structured server-side error logging (TECHNICAL_DESIGN.md:222 —
  * "Errors must be logged with correlation IDs, without cookies, raw media,
  * or secrets").
  *

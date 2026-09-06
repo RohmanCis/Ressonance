@@ -10,7 +10,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 export const runtime = "nodejs";
 
-/** Opaque, non-sequential public id (API Contract §4/§5.3; format remains open). */
+/** Opaque, non-sequential public id (API Contract §4/§5.3; base64url of 16 random bytes). */
 function generatePublicId(): string {
   return randomBytes(16).toString("base64url");
 }

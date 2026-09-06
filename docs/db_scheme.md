@@ -2,7 +2,7 @@
 
 Version: 1.2
 Status: Approved schema design  
-Reconciled 2026-08-15 — closes open technical decisions; schema applied via migrations 0001–0008.
+Reconciled 2026-08-15 — closes open technical decisions; schema applied via migrations 0001–0008; 0009 (repo-only, pending live apply) drops the removed guest_messages table.
 Source of Truth: PRD v1.3 + Domain Model + ERD (all locked)
 
 ---
@@ -33,7 +33,7 @@ Source of Truth: PRD v1.3 + Domain Model + ERD (all locked)
 ```sql
 -- =============================================================================
 -- QR GUEST PHOTO & VOICEBOOK — DATABASE SCHEMA
--- Version: 1.1
+-- Version: 1.2
 -- =============================================================================
 
 -- Enable UUID generation
@@ -291,4 +291,4 @@ ARCHIVE→ status = 'ARCHIVED', closed_at = (tetap timestamp dari CLOSE)
 
 ## Next Step
 
-Schema applied to live Supabase via migrations 0001–0008 (verified: migration history records `0001`–`0008`). Migration 0002 sets `search_path = public, extensions` so the pgcrypto `gen_random_bytes` backfill resolves on Supabase, where pgcrypto installs in the `extensions` schema. Migrations 0007–0008 (2026-08-17) change privileges/policies only, not schema shape: 0007 pins explicit `service_role` table grants (photos/voice_notes SELECT+DELETE, events SELECT+INSERT+UPDATE, guest_sessions SELECT+INSERT); 0008 asserts `storage.objects` RLS policies scoped to the private `guest-media` bucket for `service_role` (SELECT/INSERT/DELETE; applied via Supabase dashboard, repo file is documentation-only). All migrations are idempotent and safe to re-run. Further schema changes require an approved change to this document plus a new migration.
+Schema applied to live Supabase via migrations 0001–0008 (verified: migration history records `0001`–`0008`); 0009 (repo-only, pending live apply) drops the removed guest_messages table. Migration 0002 sets `search_path = public, extensions` so the pgcrypto `gen_random_bytes` backfill resolves on Supabase, where pgcrypto installs in the `extensions` schema. Migrations 0007–0008 (2026-08-17) change privileges/policies only, not schema shape: 0007 pins explicit `service_role` table grants (photos/voice_notes SELECT+DELETE, events SELECT+INSERT+UPDATE, guest_sessions SELECT+INSERT); 0008 asserts `storage.objects` RLS policies scoped to the private `guest-media` bucket for `service_role` (SELECT/INSERT/DELETE; applied via Supabase dashboard, repo file is documentation-only). All migrations are idempotent and safe to re-run. Further schema changes require an approved change to this document plus a new migration.

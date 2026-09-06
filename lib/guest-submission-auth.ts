@@ -12,8 +12,8 @@ import { resolveGuestSession, type SessionByTokenRepo } from "@/lib/resolve-gues
  * SESSION_EXPIRED (API Contract §3, §6).
  *
  * Cross-refs: API Contract §6 (auth for all guest submissions),
- * db_scheme.md guest_sessions/events tables, TECHNICAL_DESIGN.md §4.1
- * (GuestSession credential) and §5 (expiry via `expires_at`).
+ * db_scheme.md guest_sessions/events tables, TECHNICAL_DESIGN.md §5
+ * (GuestSession credential and expiry via `expires_at`).
  */
 
 /** Repo shape needed to resolve auth: event by public_id + session by token hash. */

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, DM_Mono, DM_Sans, Pinyon_Script } from "next/font/google";
 import "./globals.css";
 
-// DESIGN.md (root) §3: Cormorant Garamond headings, DM Sans body, DM Mono counters/timers.
+// docs/DESIGN.md §3: Cormorant Garamond headings, DM Sans body, DM Mono counters/timers.
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],

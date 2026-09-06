@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { correlationIdFrom, logApiError } from "@/lib/api-log";
 
 /**
- * Unit tests for structured error logging (TECHNICAL_DESIGN.md:219).
+ * Unit tests for structured error logging (TECHNICAL_DESIGN.md:222).
  * Verifies single-line JSON emission, correlationId precedence, redaction of
  * cookies/query strings, and safe handling of non-Error thrown values.
  */

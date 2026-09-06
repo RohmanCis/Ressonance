@@ -274,7 +274,7 @@ describe("POST /api/events/{public_id}/session", () => {
   it("returns exact 500 and logs rate_limit_check_failed when the DB limiter throws", async () => {
     // Fail-closed: a limiter DB error must not leak internals, must return the
     // exact INTERNAL_ERROR body, and must emit one structured log line with a
-    // correlationId (TECHNICAL_DESIGN.md:219).
+    // correlationId (TECHNICAL_DESIGN.md:222).
     vi.mocked(checkSessionCreateRateLimit).mockRejectedValueOnce(new Error("rate-limit db down"));
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 

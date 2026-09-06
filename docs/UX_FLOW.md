@@ -1,6 +1,6 @@
 # UX_FLOW.md — Guest & Admin Flow Reference
 
-QA companion to DESIGN.md (canonical design system) and docs/TECHNICAL_DESIGN.md (system constraints). Audience: owner doing manual QA on localhost.
+QA companion to docs/DESIGN.md (canonical design system) and docs/TECHNICAL_DESIGN.md (system constraints). Audience: owner doing manual QA on localhost.
 
 ## Guest Flow
 
@@ -42,7 +42,7 @@ QA companion to DESIGN.md (canonical design system) and docs/TECHNICAL_DESIGN.md
 
 ### 6. DONE
 
-- Thermal-print sequence (T035–T038): loading line → camera illustration → keepsake photo prints from the film slot (5s reveal) → thank-you block + settle → optional keepsake download card. Event title is sr-only. No further actions; a new session requires Start again.
+- Thermal-print sequence (T035–T040): loading line → camera illustration → keepsake photo prints from the film slot (5s reveal) → thank-you block + settle → optional keepsake download card. Event title is sr-only. No further actions; a new session requires Start again.
 
 ## Guest Edge Cases (QA checklist)
 

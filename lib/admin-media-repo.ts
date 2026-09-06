@@ -35,7 +35,7 @@ export interface MediaRecord {
   duration_seconds: number | null;
 }
 
-/** Signed URL TTL remains open in the contract; a short-lived default (15 min). */
+/** Signed URL TTL, owner-ratified at 900s (API Contract §5.8); short-lived. */
 export const SIGNED_URL_TTL_SECONDS = 900;
 
 type Db = SupabaseClient;

@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* DESIGN.md (root) §2 + §4 — canonical dark analog-film tokens. */
+/* docs/DESIGN.md §2 + §4 — canonical dark analog-film tokens. */
 :root {
   /* Deep Espresso palette — Luxury Analog Keepsake Edition (owner-ratified 2026-08-21). */
   --bg-base: #14110f;
@@ -64,7 +64,7 @@ body {
   color: var(--text-primary);
 }
 
-/* DESIGN.md (root) §4 — remove movement only; state changes stay instant and announced. */
+/* docs/DESIGN.md §4 — remove movement only; state changes stay instant and announced. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
