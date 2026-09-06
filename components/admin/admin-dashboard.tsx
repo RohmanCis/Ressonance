@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { ChevronDown, ChevronRight, Download, Image as ImageIcon, Loader2, Mic, Pause, Play, Search, Users, X } from "lucide-react";
 import { api, Button, Event, Shell, Status, Submission } from "./admin-ui";
-import { underlineInput } from "./admin-input";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { describeDownloadResponse, downloadErrorCodeFromResponse, downloadErrorMessage } from "@/lib/admin-download";
 
 const PreviewDialog = dynamic(() => import("./admin-preview-dialog").then((m) => m.PreviewDialog));
@@ -302,7 +302,7 @@ function VoiceTile({ item, name }: { item: Submission; name: string }) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-border bg-bg-surface/90 p-4">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-border bg-bg-surface/90 p-3">
       <audio
         ref={audioRef}
         preload="none"
@@ -383,14 +383,14 @@ function GuestGroup({ group, onPreview }: { group: Group; onPreview: (item: Subm
     .join(" · ");
 
   return (
-    <section className="rounded-3xl border border-border bg-bg-surface/90 p-5 backdrop-blur-sm">
+    <article className="py-5">
       <h3>
         <button
           type="button"
           aria-expanded={open}
           aria-controls={contentId}
           onClick={() => setOpen((o) => !o)}
-          className={`flex w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-md py-1 text-left ${focusRing}`}
+          className={`flex w-full items-center gap-3 rounded-md py-1 text-left ${focusRing}`}
         >
           {open ? (
             <ChevronDown className="h-4 w-4 shrink-0 text-text-muted" aria-hidden="true" />
@@ -400,30 +400,33 @@ function GuestGroup({ group, onPreview }: { group: Group; onPreview: (item: Subm
           <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bg-elevated text-xs font-semibold text-text-secondary">
             {initialsOf(group.name)}
           </span>
-          <span className="text-lg font-semibold text-text-primary">{group.name}</span>
-          {group.session !== null && (
-            <span className="text-xs font-medium text-text-muted">Sesi {group.session}</span>
-          )}
-          <span className="rounded-full border border-border px-2.5 py-0.5 font-mono text-xs font-medium tabular-nums text-text-secondary">
-            {group.items.length} item
-          </span>
-          <span className="text-xs text-text-muted">{breakdown}</span>
-          <span className="ml-auto font-mono text-xs tabular-nums text-text-muted">
-            {group.items.length > 1 ? fmtRange(oldest.created_at, newest.created_at) : fmtFull(newest.created_at)}
+          <span className="min-w-0 flex-1">
+            <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="text-sm font-bold text-text-primary">{group.name}</span>
+              {group.session !== null && (
+                <span className="text-xs font-medium text-text-muted">Sesi {group.session}</span>
+              )}
+              <span className="rounded-full border border-border px-2.5 py-0.5 font-mono text-xs font-medium tabular-nums text-text-secondary">
+                {group.items.length} item
+              </span>
+            </span>
+            <span className="mt-1 block text-xs text-text-muted">
+              {breakdown} · {group.items.length > 1 ? fmtRange(oldest.created_at, newest.created_at) : fmtFull(newest.created_at)}
+            </span>
           </span>
         </button>
       </h3>
       {open && (
-        <div id={contentId} className="mt-4 grid gap-4">
+        <div id={contentId} className="mt-3 grid gap-3">
           {photos.length > 0 && (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
               {photos.map((item) => (
                 <PhotoTile key={item.id} item={item} name={group.name} onPreview={() => onPreview(item)} />
               ))}
             </div>
           )}
           {voices.length > 0 && (
-            <div className={photos.length > 0 ? "border-t border-border pt-4" : ""}>
+            <div className={photos.length > 0 ? "border-t border-border pt-3" : ""}>
               <p className="mb-2 text-xs font-medium tracking-[0.04em] text-text-muted">
                 Pesan suara
               </p>
@@ -436,22 +439,22 @@ function GuestGroup({ group, onPreview }: { group: Group; onPreview: (item: Subm
           )}
         </div>
       )}
-    </section>
+    </article>
   );
 }
 
 function TimelineSkeleton() {
   return (
-    <div role="status" className="mt-6 grid animate-pulse gap-6">
+    <div role="status" className="grid animate-pulse divide-y divide-border">
       {[0, 1].map((g) => (
-        <div key={g} aria-hidden="true" className="rounded-3xl border border-border bg-bg-surface/90 p-5">
+        <div key={g} aria-hidden="true" className="py-5">
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-full bg-bg-elevated" />
-            <div className="h-6 w-36 rounded bg-bg-elevated" />
+            <div className="h-4 w-36 rounded bg-bg-elevated" />
             <div className="h-5 w-16 rounded-full bg-bg-elevated" />
             <div className="ml-auto h-4 w-28 rounded bg-bg-elevated" />
           </div>
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="mt-3 grid grid-cols-2 gap-2.5 md:grid-cols-4">
             {[0, 1, 2, 3].map((t) => (
               <div key={t} className="aspect-square rounded-lg bg-bg-elevated" />
             ))}
@@ -573,162 +576,194 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
 
   return (
     <Shell eyebrow="Event desk" breadcrumb={{ href: "/admin", label: "Semua acara" }}>
-        <div className="grid gap-8 lg:grid-cols-[18rem_1fr]">
-          <aside className="min-h-[300px] lg:sticky lg:top-6 lg:self-start">
-            {busy && !event ? (
-              <AsideSkeleton />
-            ) : error && !event ? (
-              <Status error message={errorText(error)} action={<Button secondary onClick={() => load("")}>Coba lagi</Button>} />
-            ) : (
-              event && (
-                <>
-                  <h1 className="font-display text-3xl font-semibold tracking-tight text-text-primary">{event.title}</h1>
-                  <p className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${event.status === "ACTIVE" ? "border-accent/40 bg-accent-soft text-accent" : "border-border text-text-muted"}`}>
-                    {event.status === "ACTIVE" ? "Aktif" : "Selesai"}
+        {/* Prototype layout skeleton: desktop sidebar (lg) + main column
+            (event header → stats → media surface + utility aside). */}
+        <div className="mx-auto w-full max-w-[74rem] lg:grid lg:grid-cols-[13.75rem_minmax(0,1fr)] lg:gap-10">
+          <aside className="hidden lg:block">
+            <nav className="sticky top-8 grid gap-1">
+              <Link
+                href="/admin"
+                className={`flex min-h-11 items-center rounded-lg px-3 text-xs font-medium text-text-muted transition duration-fast hover:bg-bg-surface hover:text-text-primary ${focusRing}`}
+              >
+                Semua acara
+              </Link>
+              <Link
+                href={`/admin/events/${publicId}/access`}
+                className={`flex min-h-11 items-center rounded-lg px-3 text-xs font-medium text-text-muted transition duration-fast hover:bg-bg-surface hover:text-text-primary ${focusRing}`}
+              >
+                Akses / QR
+              </Link>
+            </nav>
+          </aside>
+          <div>
+            <header className="border-b border-border pb-6">
+              {busy && !event ? (
+                <AsideSkeleton />
+              ) : error && !event ? (
+                <Status error message={errorText(error)} action={<Button secondary onClick={() => load("")}>Coba lagi</Button>} />
+              ) : (
+                event && (
+                  <div className="md:flex md:items-end md:justify-between md:gap-6">
+                    <div>
+                      <h1 className="font-display text-3xl font-semibold tracking-tight text-text-primary">{event.title}</h1>
+                      <p className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${event.status === "ACTIVE" ? "border-accent/40 bg-accent-soft text-accent" : "border-border text-text-muted"}`}>
+                        {event.status === "ACTIVE" ? "Aktif" : "Selesai"}
+                      </p>
+                    </div>
+                    {event.status === "ACTIVE" && (
+                      <div className="mt-5 md:mt-0 md:flex md:justify-end">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button disabled={closing} className="w-full md:w-auto">
+                              {closing ? "Menutup…" : "Tutup acara"}
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent showCloseButton={false} className="border-border bg-bg-elevated text-text-primary">
+                            <DialogHeader>
+                              <DialogTitle className="font-display text-xl font-semibold tracking-tight text-text-primary">Tutup acara ini?</DialogTitle>
+                              <DialogDescription className="text-text-secondary">
+                                Setelah ditutup, tamu tidak bisa lagi mengirim foto atau pesan suara. Tindakan ini tidak bisa dibatalkan.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter>
+                              <DialogClose asChild>
+                                <Button secondary>Batal</Button>
+                              </DialogClose>
+                              <DialogClose asChild>
+                                <button
+                                  type="button"
+                                  disabled={closing}
+                                  onClick={() => void close()}
+                                  className={`min-h-12 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-400 transition duration-fast hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-45 ${focusRing}`}
+                                >
+                                  Ya, tutup sekarang
+                                </button>
+                              </DialogClose>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                    )}
+                  </div>
+                )
+              )}
+            </header>
+            <div className="mt-6 grid grid-cols-2 gap-2.5 md:grid-cols-3 md:gap-3">
+              {metricCards.map((stat) => (
+                <div key={stat.label} className="rounded-xl border border-border bg-bg-surface p-4 last:col-span-2 md:last:col-span-1">
+                  <div className="flex items-center gap-2">
+                    <span aria-hidden="true" className="flex h-7 w-7 items-center justify-center rounded-lg bg-bg-elevated text-text-muted">
+                      <stat.icon className="h-3.5 w-3.5" />
+                    </span>
+                    <p className="text-xs text-text-muted">{stat.label}</p>
+                  </div>
+                  <p className="mt-3 font-mono text-2xl tabular-nums text-text-primary">{stat.value}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 grid items-start gap-6 md:grid-cols-[minmax(0,1fr)_17.5rem] md:gap-5">
+              <section className="rounded-2xl border border-border bg-bg-surface p-4 sm:p-5">
+                <div className="grid gap-4 border-b border-border pb-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+                  <div>
+                    <p className="text-xs font-medium tracking-[0.04em] text-text-muted">Kiriman</p>
+                    <h2 className="mt-1 text-xl font-semibold text-text-primary">Terbaru dulu</h2>
+                  </div>
+                  <div className="grid gap-2 md:w-60">
+                    <label className="block" htmlFor="guest-search">
+                      <span className="sr-only">Cari nama tamu</span>
+                      <span className="relative block">
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" aria-hidden="true" />
+                        <Input
+                          id="guest-search"
+                          type="search"
+                          value={query}
+                          onChange={(e) => setQuery(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              void load();
+                            } else if (e.key === "Escape") {
+                              setQuery("");
+                            }
+                          }}
+                          placeholder="Cari nama tamu"
+                          autoComplete="off"
+                          className="pl-9 pr-10 [&::-webkit-search-cancel-button]:hidden"
+                        />
+                        {query && (
+                          <button
+                            type="button"
+                            aria-label="Hapus pencarian"
+                            onClick={() => setQuery("")}
+                            className={`absolute right-1 top-1/2 inline-flex min-h-11 -translate-y-1/2 items-center px-2 text-text-muted transition duration-fast hover:text-text-primary ${focusRing}`}
+                          >
+                            <X className="h-4 w-4" aria-hidden="true" />
+                          </button>
+                        )}
+                      </span>
+                    </label>
+                    <div role="group" aria-label="Saring jenis media" className="grid grid-cols-3 gap-[3px] rounded-[10px] border border-border bg-bg-base p-[3px]">
+                      {MEDIA_SEGMENTS.map((segment) => {
+                        const selected = mediaFilter === segment.value;
+                        return (
+                          <button
+                            key={segment.value}
+                            type="button"
+                            aria-pressed={selected}
+                            onClick={() => setMediaFilter(segment.value)}
+                            className={`min-h-10 rounded-md text-xs font-bold transition duration-fast ${selected ? "bg-bg-elevated text-text-primary" : "text-text-muted hover:text-text-primary"} ${focusRing}`}
+                          >
+                            {segment.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p aria-live="polite" className="sr-only">
+                      {!busy && appliedQuery
+                        ? items.length
+                          ? `${items.length} kiriman ditemukan`
+                          : "Tidak ada kiriman ditemukan"
+                        : ""}
+                    </p>
+                  </div>
+                </div>
+                {error && event && <Status error message={errorText(error)} action={<Button secondary onClick={() => load()}>Coba lagi</Button>} />}
+                {busy ? (
+                  <TimelineSkeleton />
+                ) : groups.length === 0 ? (
+                  <p className="py-8 text-center text-sm text-text-muted">
+                    {query
+                      ? "Nggak ada kiriman yang cocok. Kosongkan atau ubah pencarian nama tamunya."
+                      : mediaFilter !== "ALL"
+                        ? `Nggak ada ${mediaFilter === "PHOTO" ? "foto" : "pesan suara"} yang cocok dengan saringan ini.`
+                        : "Foto dan pesan suara baru bakal muncul di sini."}
                   </p>
-                  <div className="mt-6 grid gap-2">
+                ) : (
+                  <div className="divide-y divide-border">
+                    {groups.map((group) => (
+                      <GuestGroup
+                        key={group.ref}
+                        group={group}
+                        onPreview={(item) => openPreview(item, group)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+              {event && (
+                <aside className="grid gap-3">
+                  <section className="rounded-xl border border-border bg-bg-surface p-3">
                     <Link
-                      className={`flex min-h-12 items-center rounded-lg px-3 text-sm font-semibold transition duration-fast ${quietButton} ${focusRing}`}
+                      className={`flex min-h-12 items-center justify-center rounded-lg px-4 text-sm font-semibold transition duration-fast ${quietButton} ${focusRing}`}
                       href={`/admin/events/${publicId}/access`}
                     >
                       Akses / QR
                     </Link>
-                    {event.status === "ACTIVE" && (
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button disabled={closing}>
-                            {closing ? "Menutup…" : "Tutup acara"}
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent showCloseButton={false} className="border-border bg-bg-elevated text-text-primary">
-                          <DialogHeader>
-                            <DialogTitle className="font-display text-xl font-semibold tracking-tight text-text-primary">Tutup acara ini?</DialogTitle>
-                            <DialogDescription className="text-text-secondary">
-                              Setelah ditutup, tamu tidak bisa lagi mengirim foto atau pesan suara. Tindakan ini tidak bisa dibatalkan.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <DialogFooter>
-                            <DialogClose asChild>
-                              <Button secondary>Batal</Button>
-                            </DialogClose>
-                            <DialogClose asChild>
-                              <button
-                                type="button"
-                                disabled={closing}
-                                onClick={() => void close()}
-                                className={`min-h-12 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-400 transition duration-fast hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-45 ${focusRing}`}
-                              >
-                                Ya, tutup sekarang
-                              </button>
-                            </DialogClose>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
-                    )}
-                  </div>
-                </>
-              )
-            )}
-          </aside>
-          <section className="max-w-4xl">
-            <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-              {metricCards.map((stat) => (
-                <div key={stat.label} className="rounded-xl border border-border bg-bg-surface p-4 [border-top:1px_solid_theme(colors.border)] [border-top-color:color-mix(in_srgb,var(--accent)_20%,transparent)]">
-                  <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-lg bg-bg-elevated text-text-muted">
-                    <stat.icon className="h-4 w-4" />
-                  </span>
-                  <p className="mt-3 font-mono text-2xl tabular-nums text-text-primary">{stat.value}</p>
-                  <p className="mt-1 text-xs text-text-muted">{stat.label}</p>
-                </div>
-              ))}
+                  </section>
+                </aside>
+              )}
             </div>
-            <div className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-xs font-medium tracking-[0.04em] text-text-muted">Kiriman</p>
-                <h2 className="mt-1 text-xl font-semibold text-text-primary">Terbaru dulu</h2>
-              </div>
-              <div className="w-full sm:max-w-sm">
-                <label className="block" htmlFor="guest-search">
-                  <span className="text-xs font-medium text-text-secondary">Cari nama tamu</span>
-                  <span className="relative mt-2 block">
-                    <Search className="pointer-events-none absolute left-0 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" aria-hidden="true" />
-                    <input
-                      id="guest-search"
-                      type="search"
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          void load();
-                        } else if (e.key === "Escape") {
-                          setQuery("");
-                        }
-                      }}
-                      placeholder="Cari nama tamu"
-                      autoComplete="off"
-                      className={`text-text-primary ${underlineInput} pl-6 pr-10 [&::-webkit-search-cancel-button]:hidden`}
-                    />
-                    {query && (
-                      <button
-                        type="button"
-                        aria-label="Hapus pencarian"
-                        onClick={() => setQuery("")}
-                        className={`absolute right-0 top-1/2 inline-flex min-h-11 -translate-y-1/2 items-center px-2 text-text-muted transition duration-fast hover:text-text-primary ${focusRing}`}
-                      >
-                        <X className="h-4 w-4" aria-hidden="true" />
-                      </button>
-                    )}
-                  </span>
-                </label>
-                <p aria-live="polite" className="sr-only">
-                  {!busy && appliedQuery
-                    ? items.length
-                      ? `${items.length} kiriman ditemukan`
-                      : "Tidak ada kiriman ditemukan"
-                    : ""}
-                </p>
-              </div>
-            </div>
-            <div role="group" aria-label="Saring jenis media" className="mt-4 inline-flex rounded-lg border border-border bg-bg-surface p-1">
-              {MEDIA_SEGMENTS.map((segment) => {
-                const selected = mediaFilter === segment.value;
-                return (
-                  <button
-                    key={segment.value}
-                    type="button"
-                    aria-pressed={selected}
-                    onClick={() => setMediaFilter(segment.value)}
-                    className={`min-h-11 rounded-md px-4 text-sm font-semibold transition duration-fast ${selected ? "bg-bg-elevated text-text-primary" : "text-text-secondary hover:text-text-primary"} ${focusRing}`}
-                  >
-                    {segment.label}
-                  </button>
-                );
-              })}
-            </div>
-            {error && event && <Status error message={errorText(error)} action={<Button secondary onClick={() => load()}>Coba lagi</Button>} />}
-            {busy ? (
-              <TimelineSkeleton />
-            ) : groups.length === 0 ? (
-              <p className="mt-6 text-center text-sm text-text-muted">
-                {query
-                  ? "Nggak ada kiriman yang cocok. Kosongkan atau ubah pencarian nama tamunya."
-                  : mediaFilter !== "ALL"
-                    ? `Nggak ada ${mediaFilter === "PHOTO" ? "foto" : "pesan suara"} yang cocok dengan saringan ini.`
-                    : "Foto dan pesan suara baru bakal muncul di sini."}
-              </p>
-            ) : (
-              <div className="mt-6 grid gap-6">
-                {groups.map((group) => (
-                  <GuestGroup
-                    key={group.ref}
-                    group={group}
-                    onPreview={(item) => openPreview(item, group)}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
+          </div>
         </div>
         {preview && (
           <PreviewDialog

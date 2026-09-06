@@ -71,7 +71,7 @@ export function Shell({ children, title = "Admin", eyebrow, breadcrumb, showSign
           </div>
         </header>
         {breadcrumb && (
-          <Link href={breadcrumb.href} className="mb-6 inline-flex min-h-11 items-center gap-1.5 text-xs text-text-muted transition duration-fast hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+          <Link href={breadcrumb.href} className="mb-6 inline-flex min-h-11 items-center gap-1.5 text-xs text-text-muted transition duration-fast hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent print:hidden">
             <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />
             {breadcrumb.label}
           </Link>
