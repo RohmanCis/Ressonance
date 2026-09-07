@@ -60,7 +60,7 @@ Scale (rem, with clamp for fluid guest titles):
 | xl | 1.25rem | Admin section headings |
 | 2xl | 1.5rem | Guest sub-headings |
 | 3xl | 2rem | Guest screen headings, admin page title |
-| 4xl | 3rem | Event title on Landing and Done (Cormorant Garamond 600) |
+| 4xl | 3rem | Event title on Landing and Done (Cormorant Garamond 500, `font-medium`; amended 2026-09-07, aligns with PreSession/FrameSelection implementation) |
 
 Counters and timers always use DM Mono with tabular figures. Sentence case everywhere; labels may use `0.04em` tracking.
 
@@ -109,21 +109,19 @@ All state changes remain instant and announced; only the movement is removed.
 ### 5.1 Landing (Pre-Session)
 
 - **Layout:** Mobile-first single column, content vertically centered with generous top space. `--bg-base` page; a `--bg-surface` card (max-width `30rem`) holds the session form. Event name set in Cormorant Garamond 4xl, no logo, no imagery.
-- **Key visual elements:** Eyebrow line ("Ada cerita buat kamu" — Pinyon Script script-face eyebrow, `--accent`); event title; one-sentence helper on the optional name ("Jepret momennya, pilih Frame favorit, lalu tinggalin pesan."); name field ("Namamu", quiet "Boleh dikosongkan" pill, placeholder "Contoh: Andi") with `--border` underline styling on `--bg-surface`; expiry/carry-over and error messages as quiet bordered blocks (`--border` on `--bg-elevated`, color on text only; error text in `--error`). Guest copy in Bahasa Indonesia, tone santai dan ramah.
-- **Primary action placement:** Start button ("Mulai yuk"; starting state "Sebentar ya…"; carry-over "Mulai & Bawa Foto Draf") full-width at the bottom of the card, 48px high, gold fill (`--accent`) with `#14110f` text. Single obvious action, followed by a quiet clock-icon reminder line ("30 menit untuk abadikan momenmu.").
+- **Key visual elements:** Eyebrow line ("Ada cerita buat kamu" — Pinyon Script script-face eyebrow, `--accent`); event title; name field ("Namamu", placeholder "Contoh: Andi") with `--border` underline styling on `--bg-surface`; one-sentence helper on the optional name ("Jepret momennya, pilih Frame favorit, lalu tinggalin pesan.") rendered as the field's `aria-describedby` hint below the input; expiry/carry-over and error messages as quiet bordered blocks (`--border` on `--bg-elevated`, color on text only; error text in `--error`). Guest copy in Bahasa Indonesia, tone santai dan ramah.
+- **Primary action placement:** Start button ("Mulai yuk"; starting state "Sebentar ya…"; carry-over "Mulai & Bawa Foto Draf") full-width at the bottom of the card, 48px high, gold fill (`--accent`) with `#14110f` text. Single obvious action, followed by a quiet Sparkles-icon line ("Langsung dari browser • Tanpa unduh aplikasi", text-xs muted).
 - **Transition:** On successful Start, screen fades/slides out (opacity + slight translateY, `--motion-base`) into Frame Selection.
 
 ### 5.2 Frame Selection
 
-- **Layout:** Full-screen `--bg-base`, viewport-locked (`h-dvh overflow-hidden`, no page scroll): header (shrink-0) + horizontal snap carousel (`flex-1 min-h-0`) + pinned bottom action band with safe-area inset. Heading (Cormorant 3xl, "Pilih Frame fotomu") + one helper line at top.
-- **Key visual elements:** Each card is a 9:16 preview (`aspect-[9/16]`) on `--bg-surface` with `--border` hairline, frame artwork `object-contain`. Selected card: gold 2px border + `--accent-soft` fill + small gold check badge. Radio-group keyboard behavior (arrow keys, roving tabindex, `aria-checked`) is preserved from the current implementation.
-- **Primary action placement:** Full-width gold confirm ("Pakai {Frame}" with camera icon / disabled fallback "Pilih Frame") at the bottom; "Tanpa Frame, lanjut" as a quiet text link below it. Selection-indicator dots render above the band when more than one option exists; a quiet "30 menit untuk abadikan momenmu." reminder line sits under the actions.
-- **Canonical frame registry (Dynamic Frame Engine, owner-approved 2026-08-21; fifth template added 2026-08-28, owner-approved):** five wedding templates, plus "No Frame" (`none`, default):
-   1. `royal-gold` — "Royal Gold Serif": classic double-hairline border + quarter-arc corner flourishes + center diamonds.
-   2. `botanical-romance` — "Botanical Romance": organic wavy rails + corner botanical leaf clusters + berry accents.
-   3. `modern-editorial` — "Modern Editorial": paired editorial rules + crop-mark ticks + monogram square + corner brackets.
-   4. `wedding-crimson` — "Wedding Crimson": typography ("The Wedding of", couple names, date) baked into the 1080×1920 asset; like every frame it registers no dynamic text layers — no title stamp on captured photos (owner decision 2026-08-29).
-   5. `flower` — "Flower": floral border artwork with a transparent center band.
+- **Layout:** Full-screen `--bg-base`, viewport-locked (`h-dvh overflow-hidden`, no page scroll): header (shrink-0) + horizontal snap carousel (`flex-1 min-h-0`) + pinned bottom action band with safe-area inset. Heading (Cormorant 3xl, "Pilih Frame fotomu"); no helper line.
+- **Key visual elements:** Each card is a 9:16 preview (`aspect-[9/16]`) on `--bg-surface` with `--border` hairline, frame artwork `object-contain`. Selected card: gold 2px border + `--accent-soft` fill + small gold check badge. Unselected cards recede: `border-border/70 opacity-80 scale-95` (hover: `opacity-90`, border to `--text-secondary`). Radio-group keyboard behavior (arrow keys, roving tabindex, `aria-checked`) is preserved from the current implementation.
+- **Primary action placement:** Full-width gold confirm ("Pakai {Frame}" with camera icon / disabled fallback "Pilih Frame") at the bottom; "Tanpa Frame, lanjut" as a quiet text link below it. Selection-indicator dots render above the band when more than one option exists.
+- **Canonical frame registry (pruned 2026-09-07, owner-directed):** two wedding templates, plus "No Frame" (`none`, default):
+   1. `wedding-crimson` — "Wedding Crimson": typography ("The Wedding of", couple names, date) baked into the 1080×1920 asset; like every frame it registers no dynamic text layers — no title stamp on captured photos (owner decision 2026-08-29).
+   2. `flower` — "Flower": floral border artwork with a transparent center band.
+   (Removed 2026-09-07: `royal-gold`, `botanical-romance`, `modern-editorial`.)
 - **Dynamic composition model (`FrameTextLayer`):** frame assets are 1080×1920 PNG overlays with true alpha and a transparent photo area — never any baked text (sole exception: `wedding-crimson`, whose typography is baked in). No frame registers a dynamic event-title layer: the title stamp was removed from captured photos entirely (owner decision 2026-08-29) and frames carry their decorative artwork only. Output stays the fixed 1080×1920 JPEG (quality 0.92); the overlay is never mirrored — only the photo mirrors for the front camera.
 - **Transition:** Confirm fades to a brief usage-confirmation state, then into the Camera screen (`--motion-base`).
 

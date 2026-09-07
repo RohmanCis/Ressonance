@@ -1,49 +1,38 @@
-﻿# Result — Doc audit, dead-code cleanup, handoff reconcile
+﻿# Result: Amend §3 Typography Weight & Delete Orphaned Frame Assets
 
-**Status:** DONE — changes applied, gates pending final run (see Validation).
+**Status:** complete
 
 ## Files changed
+- `docs/DESIGN.md` (§3 scale table only)
+- `public/frames/royal-gold.png` — deleted
+- `public/frames/botanical-romance.png` — deleted
+- `public/frames/modern-editorial.png` — deleted
 
-1. `AGENTS.md:200` — stale count fix: vitest 379/379 (46 files) → 384/384
-   (48 files); date 2026-08-29 post-T045 → 2026-09-06. Reason: baseline
-   advanced since T045; code/actual state wins.
-2. `lib/audio-file.ts:19` — stale comment fix: `db_scheme §5 CHECK` →
-   `db_scheme.md DDL CHECK`. Reason: db_scheme.md has no numbered
-   sections; CHECK lives in DDL (docs/db_scheme.md:159).
-3. `.opencode/handoff/result.md` — stale reset (prior session's
-   "Admin UX batch" result removed; open items only).
-
-## Lane reports (summary)
-
-- Lane A (#librarian, doc audit): no dead references, no doc-vs-code
-  conflicts, no removed-feature/reversed-decision text. Redundancies
-  (signed-URL TTL ×6, retention ×7, guest-messages-drop ×3) are
-  intentional cross-doc invariants — kept. db_scheme "0001–0008" live-DB
-  phrasing accurate — kept.
-- Lane B (#explorer, dead-code scan): 0 dead exports (276 defs all used),
-  0 unused imports, 0 debug artifacts, 0 obsolete TODOs in scope. 1 stale
-  comment (fixed above). Out-of-scope note: `types/supabase.ts:5` TODO
-  ("regenerate once migrations exist") is now obsolete — left untouched
-  (types/ outside scan scope; flag for future task).
+## Changes applied
+1. DESIGN.md §3 4xl row: "Cormorant Garamond 600" → "Cormorant Garamond
+   500, `font-medium`; amended 2026-09-07, aligns with
+   PreSession/FrameSelection implementation". Closes the §3-vs-code
+   weight inconsistency (item 9 from docs audit). Note: Done screen
+   h1 remains `font-semibold` (600) — doc now names 500 as the
+   standard; minor residual inconsistency on Done, owner-accepted.
+2. Orphaned PNGs removed. `public/frames/` now contains only
+   `flower.png` and `wedding-crimson.png` — the two active frames.
+3. Reference check: repo-wide grep for
+   `royal-gold.png|botanical-romance.png|modern-editorial.png` →
+   zero matches (code, docs, e2e).
 
 ## Validation
-
-- `npx tsc --noEmit` — see final report (run by orchestrator).
-- `npx vitest run` — see final report (run by orchestrator).
-- No logic/API/DB changes: AGENTS.md comment-only, lib comment-only,
-  handoff markdown.
+- `npx tsc --noEmit` → exit 0 (typecheck PASS).
+- `git status`: this task's footprint = `M docs/DESIGN.md` + 3 `D`
+  PNGs. Other dirty files are this session's earlier tasks (guest
+  screens, frames.ts + tests, e2e, handoff, types, pre-existing
+  .gitignore) — unchanged by this task.
 
 ## Blockers
-
-None. Outstanding (carried, unchanged): API-level sign-in rate limiting
-(deferred LOW); pre-deploy blockers TRUSTED_PROXY=1 + CRON_SECRET in
-Vercel + live-DB re-verification; .gitignore additions dirty (owner call).
-
-## SSOT conflict / Architecture drift
-
 None.
 
-## Next step
+## SSOT conflicts
+None. §3 now matches implementation.
 
-Commit: `chore: doc sync, dead code cleanup, handoff reconcile`. Not
-pushed (not requested).
+## Next step
+None. Task complete.

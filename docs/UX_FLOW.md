@@ -14,7 +14,7 @@ QA companion to docs/DESIGN.md (canonical design system) and docs/TECHNICAL_DESI
 
 ### 2. FRAME_SELECT
 
-- Horizontal snap carousel of 9:16 frame cards (viewport-locked, no page scroll). Selecting a card highlights it (gold border); exactly one frame — or none — is active.
+- Horizontal snap carousel of 9:16 frame cards (viewport-locked, no page scroll). Selecting a card highlights it (gold border + glow); unselected cards recede (scale-95, opacity-80); exactly one frame — or none — is active.
 - Press **Pakai {Frame}** to confirm with a selection, or **Tanpa Frame, lanjut** to proceed unframed.
 - "No Frame" is never a grid card — only reachable via skip.
 - Session usage is confirmed after this step; then the camera opens.

@@ -22,6 +22,9 @@ export const FRAME_ASPECT_RATIO = 9 / 16;
 /** Fixed composited output size for every camera capture. */
 export const FRAME_OUTPUT = { width: 1080, height: 1920 } as const;
 
+// ponytail: no frame registers textLayers since 2026-08-29 (owner
+// decision); delete schema + compositor text path if still unused when
+// the next frame is added.
 /**
  * Dynamic text layer. Drawn on the composited canvas after the photo and the
  * frame overlay; the only dynamic token today is the event title (bride &
@@ -59,24 +62,6 @@ export const FRAMES: Frame[] = [
     id: "none",
     label: "No Frame",
     src: "",
-    textLayers: [],
-  },
-  {
-    id: "royal-gold",
-    label: "Royal Gold Serif",
-    src: "/frames/royal-gold.png",
-    textLayers: [],
-  },
-  {
-    id: "botanical-romance",
-    label: "Botanical Romance",
-    src: "/frames/botanical-romance.png",
-    textLayers: [],
-  },
-  {
-    id: "modern-editorial",
-    label: "Modern Editorial",
-    src: "/frames/modern-editorial.png",
     textLayers: [],
   },
   // Baked-in typography asset (2026-08-21); like every other frame it

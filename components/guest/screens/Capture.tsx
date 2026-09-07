@@ -250,12 +250,12 @@ export function Capture({
                   type="button"
                   onClick={onAdvance}
                   disabled={closed}
-                  className="flex h-11 items-center justify-center rounded-xl bg-accent px-4 text-xs font-bold text-on-accent transition duration-fast hover:brightness-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-45 shadow-lg"
+                  className="flex h-12 items-center justify-center rounded-xl bg-accent px-4 text-xs font-bold text-on-accent transition duration-fast hover:brightness-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-45 shadow-lg"
                 >
                   Lanjut →
                 </button>
               ) : (
-                <div className="h-11 w-full" />
+                <div className="h-12 w-full" />
               )}
             </div>
 
@@ -462,7 +462,7 @@ function ReviewOverlay({
               type="button"
               onClick={onRetake}
               aria-label="Ulangi"
-              className="flex-1 h-12 rounded-xl gold-foil-btn text-xs font-bold transition active:scale-95 hover:brightness-105 focus-visible:outline-2 focus-visible:outline-accent"
+              className="flex-1 h-12 rounded-xl border border-border bg-bg-surface/80 text-xs font-semibold text-text-primary transition active:scale-95 hover:bg-bg-elevated focus-visible:outline-2 focus-visible:outline-accent"
             >
               Ulangi
             </button>

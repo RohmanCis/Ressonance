@@ -1,5 +1,5 @@
 import { FormEvent } from "react";
-import { Clock3 } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import type { PendingPhoto } from "@/lib/pending-photos";
 import { AmbientBackdrop } from "@/components/guest/ambient-backdrop";
 
@@ -94,7 +94,7 @@ export function PreSession({
           <p className="font-script text-3xl sm:text-4xl text-accent tracking-wide drop-shadow-[0_2px_10px_color-mix(in_srgb,var(--accent)_30%,transparent)]">
             Ada cerita buat kamu
           </p>
-          <h1 className="mt-2 font-display text-4xl sm:text-5xl font-normal leading-tight tracking-tight text-text-primary">
+          <h1 className="mt-2 font-display text-4xl sm:text-5xl font-medium leading-tight tracking-tight text-text-primary">
             {event.title}
           </h1>
 
@@ -107,10 +107,6 @@ export function PreSession({
             <span className="h-1.5 w-1.5 rotate-45 bg-accent/80" />
             <span className="h-px w-12 bg-gradient-to-l from-transparent to-accent/60" />
           </div>
-
-          <p className="text-xs sm:text-sm text-text-secondary leading-relaxed max-w-xs mx-auto">
-            Jepret momennya, pilih Frame favorit, lalu tinggalin pesan.
-          </p>
         </header>
 
         {/* STATUS ALERTS */}
@@ -167,17 +163,12 @@ export function PreSession({
           aria-busy={state === "starting"}
         >
           <div className="space-y-1.5">
-            <div className="flex justify-between items-baseline">
-              <label
-                htmlFor="guest-name"
-                className="text-xs font-medium text-text-secondary"
-              >
-                Namamu
-              </label>
-              <span className="rounded-full border border-border px-2.5 py-1 text-[11px] font-medium text-text-muted">
-                Boleh dikosongkan
-              </span>
-            </div>
+            <label
+              htmlFor="guest-name"
+              className="block text-xs font-medium text-text-secondary"
+            >
+              Namamu
+            </label>
             <input
               id="guest-name"
               name="guest_name"
@@ -185,11 +176,11 @@ export function PreSession({
               value={name}
               onChange={(e) => onNameChange(e.target.value)}
               disabled={blocked || state === "starting"}
-              className="h-12 w-full rounded-none border-0 border-b border-border bg-transparent px-0 pb-2 text-sm text-text-primary placeholder:text-text-muted/50 focus:border-accent focus:outline-none"
+              className="h-12 w-full rounded-none border-0 border-b border-border bg-transparent px-0 pb-2 text-base text-text-primary placeholder:text-text-muted/50 focus:border-accent focus:outline-none"
               aria-describedby="name-help"
             />
-            <p id="name-help" className="text-[11px] text-text-muted pt-0.5">
-              Namamu akan muncul di foto dan pesan suara.
+            <p id="name-help" className="text-xs text-text-secondary leading-relaxed pt-1">
+              Jepret momennya, pilih Frame favorit, lalu tinggalin pesan.
             </p>
           </div>
 
@@ -206,9 +197,9 @@ export function PreSession({
                   : "Mulai yuk"}
             </button>
 
-            <div className="flex items-center justify-center gap-2 text-[11px] text-text-muted">
-              <Clock3 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              <span>30 menit untuk abadikan momenmu.</span>
+            <div className="flex items-center justify-center gap-1.5 text-xs text-text-muted">
+              <Sparkles className="h-3.5 w-3.5 shrink-0 text-accent/80" aria-hidden="true" />
+              <span>Langsung dari browser • Tanpa unduh aplikasi</span>
             </div>
           </div>
         </form>

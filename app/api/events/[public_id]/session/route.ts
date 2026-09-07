@@ -108,8 +108,8 @@ export async function POST(
     );
   }
 
-  // types/supabase.ts is a placeholder until migrations generate types; use an
-  // untyped SupabaseClient for these raw queries (typed cast, no explicit any).
+  // Raw queries use an untyped SupabaseClient (types/supabase.ts is
+  // generated; result shapes stay hand-typed, no explicit any).
   const db = createServiceRoleClient() as unknown as SupabaseClient;
 
   const repo: SessionRepo = {
@@ -194,7 +194,8 @@ export async function GET(
 ) {
   const { public_id } = await context.params;
 
-  // types/supabase.ts is a placeholder until migrations generate types.
+  // Raw query paths use an untyped SupabaseClient (types/supabase.ts is
+  // generated; result shapes stay hand-typed).
   const db = createServiceRoleClient() as unknown as SupabaseClient;
 
   const repo: UsageRepo = {

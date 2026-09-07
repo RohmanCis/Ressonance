@@ -61,3 +61,11 @@ e2e/*.png
 
 # opencode local workspace (agent session handoffs, tooling, node_modules)
 .opencode/
+
+# agent tooling dirs / session artifacts
+.agents/
+.claude/
+.impeccable/
+skills-lock.json
+admin-dash-*.png
+ressonance-admin-dashboard-responsive.html

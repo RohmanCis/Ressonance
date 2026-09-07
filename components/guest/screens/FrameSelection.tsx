@@ -100,25 +100,21 @@ export function FrameSelection({
 
         <div
           aria-hidden="true"
-          className="mx-auto mt-2 flex items-center justify-center gap-3"
+          className="flex items-center justify-center gap-3 my-3"
         >
-          <span className="h-px w-10 bg-accent/50" />
-          <span className="text-accent text-xs">◆</span>
-          <span className="h-px w-10 bg-accent/50" />
+          <span className="h-px w-10 bg-gradient-to-r from-transparent to-accent/60" />
+          <span className="h-1.5 w-1.5 rotate-45 bg-accent/80" />
+          <span className="h-px w-10 bg-gradient-to-l from-transparent to-accent/60" />
         </div>
 
         <h1
           id="frame-heading"
           ref={headingRef}
           tabIndex={-1}
-          className="mt-2 font-display text-3xl font-normal leading-tight tracking-tight text-text-primary outline-none sm:text-4xl"
+          className="font-display text-3xl font-medium leading-tight tracking-tight text-text-primary outline-none sm:text-4xl"
         >
           Pilih Frame fotomu
         </h1>
-
-        <p className="mt-2 text-sm text-text-secondary">
-          Pilih Frame yang paling kamu suka.
-        </p>
       </header>
 
       {/* Frame carousel */}
@@ -170,7 +166,7 @@ export function FrameSelection({
                   className={`relative aspect-[9/16] h-[calc(100%-2rem)] max-h-[52dvh] overflow-hidden rounded-2xl border-2 bg-bg-surface/90 p-1.5 transition-[transform,opacity,border-color,box-shadow] duration-fast group-focus-visible:ring-2 group-focus-visible:ring-accent group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-bg-base ${
                     isSelected
                       ? "scale-[1.02] border-accent bg-accent-soft shadow-[0_0_30px_color-mix(in_srgb,var(--accent)_35%,transparent)] ring-1 ring-accent"
-                      : "border-border/60 opacity-55 hover:border-text-secondary hover:opacity-90"
+                      : "border-border/70 opacity-80 scale-95 hover:border-text-secondary hover:opacity-90"
                   }`}
                 >
                   <img
@@ -198,7 +194,7 @@ export function FrameSelection({
                 <span
                   className={`mt-3 flex min-h-5 items-center justify-center text-sm font-medium transition-colors ${
                     isSelected
-                      ? "font-semibold text-accent"
+                      ? "font-semibold text-text-primary"
                       : "text-text-secondary"
                   }`}
                 >
@@ -275,20 +271,6 @@ export function FrameSelection({
 
           <span>Tanpa Frame, lanjut</span>
         </button>
-
-        <div className="flex items-center justify-center gap-2 pt-1 text-[11px] text-text-muted">
-          <span
-            aria-hidden="true"
-            className="h-px w-6 bg-border"
-          />
-
-          <span>30 menit untuk abadikan momenmu.</span>
-
-          <span
-            aria-hidden="true"
-            className="h-px w-6 bg-border"
-          />
-        </div>
       </div>
     </main>
   );

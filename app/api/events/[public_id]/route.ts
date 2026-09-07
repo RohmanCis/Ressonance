@@ -19,7 +19,8 @@ export async function GET(
 ) {
   const { public_id } = await context.params;
 
-  // types/supabase.ts is a placeholder until migrations generate types.
+  // Raw query paths use an untyped SupabaseClient (types/supabase.ts is
+  // generated; result shapes here stay hand-typed).
   const db = createServiceRoleClient() as unknown as SupabaseClient;
 
   try {

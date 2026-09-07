@@ -50,9 +50,9 @@ export function PhotoReview({
         <h1
           ref={headingRef}
           tabIndex={-1}
-          className="mt-3 font-mono text-3xl font-semibold leading-tight tracking-tight tabular-nums outline-none"
+          className="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight outline-none"
         >
-          Foto kamu ({photos.length})
+          Foto kamu <span className="font-mono tabular-nums">({photos.length})</span>
         </h1>
         <p className="mt-2 text-sm text-text-secondary">
           Hapus yang nggak diinginkan sebelum dikirim.

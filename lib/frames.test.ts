@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_FRAME_ID, FRAMES, FRAME_OUTPUT, FRAME_ASPECT_RATIO } from "@/lib/frames";
 
 const REAL_FRAMES = FRAMES.filter((f) => f.id !== DEFAULT_FRAME_ID);
-const EXPECTED_IDS = ["royal-gold", "botanical-romance", "modern-editorial", "wedding-crimson", "flower"];
+const EXPECTED_IDS = ["wedding-crimson", "flower"];
 
 describe("frame registry invariants", () => {
   it("enforces a single 9:16 standard", () => {
@@ -35,12 +35,9 @@ describe("frame registry invariants", () => {
 });
 
 describe("curated wedding template registry (Dynamic Frame Engine)", () => {
-  it("registers exactly the 5 templates in curated order", () => {
+  it("registers exactly the curated templates in order (first 3 pruned, owner decision 2026-09-07)", () => {
     expect(REAL_FRAMES.map((f) => f.id)).toEqual(EXPECTED_IDS);
     expect(REAL_FRAMES.map((f) => f.label)).toEqual([
-      "Royal Gold Serif",
-      "Botanical Romance",
-      "Modern Editorial",
       "Wedding Crimson",
       "Flower",
     ]);

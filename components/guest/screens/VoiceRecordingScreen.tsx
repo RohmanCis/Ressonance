@@ -39,7 +39,7 @@ function Cassette({ recording }: { recording: boolean }) {
           {[0, 1, 2, 3, 4].map((i) => (
             <span
               key={i}
-              className={`h-8 w-1.5 origin-center rounded-full bg-accent ${
+              className={`h-8 w-1.5 origin-center rounded-full bg-text-muted/40 ${
                 recording ? "animate-wave-pulse" : "scale-y-[0.3]"
               }`}
               style={recording ? { animationDelay: `${i * 120}ms` } : undefined}

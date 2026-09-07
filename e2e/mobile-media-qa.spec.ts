@@ -178,8 +178,8 @@ test.describe("Frame selection (9:16 standard, DESIGN.md §5.2)", () => {
     // Every real frame card shows its preview image (9:16 container,
     // object-contain so the art is never distorted).
     const cards = group.getByRole("radio");
-    await expect(cards).toHaveCount(5);
-    for (let i = 0; i < 5; i++) {
+    await expect(cards).toHaveCount(2);
+    for (let i = 0; i < 2; i++) {
       const box = await cards.nth(i).locator("div.aspect-\\[9\\/16\\]").boundingBox();
       expect(box).not.toBeNull();
       expect(box!.width / box!.height).toBeCloseTo(9 / 16, 2);
@@ -189,11 +189,11 @@ test.describe("Frame selection (9:16 standard, DESIGN.md §5.2)", () => {
     // Selecting a frame flips aria-checked and the confirm button label.
     await cards.nth(0).click();
     await expect(cards.nth(0)).toHaveAttribute("aria-checked", "true");
-    await expect(page.getByRole("button", { name: "Pakai Royal Gold Serif" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Pakai Wedding Crimson" })).toBeVisible();
 
     // The chosen frame is printed onto captures: the fullscreen viewfinder
     // shows the overlay and the confirm leads to the capture screen.
-    await page.getByRole("button", { name: "Pakai Royal Gold Serif" }).click();
+    await page.getByRole("button", { name: "Pakai Wedding Crimson" }).click();
     await expect(page.getByRole("heading", { name: "Jepret foto" })).toBeVisible({ timeout: 5000 });
       const video = page.locator("video[aria-label='Pratinjau kamera']");
     await expect(video).toBeVisible({ timeout: 5000 });
@@ -204,7 +204,7 @@ test.describe("Frame selection (9:16 standard, DESIGN.md §5.2)", () => {
     expect(vbox!.width / vbox!.height).toBeCloseTo(9 / 16, 2);
     // Scoped to the 9:16 viewport box: the ambient blurred backdrop img also
     // matches the raw src, but it lives outside the box (DESIGN.md §5.3).
-    await expect(page.locator("div.aspect-\\[9\\/16\\] img[src='/frames/royal-gold.png']")).toBeVisible();
+    await expect(page.locator("div.aspect-\\[9\\/16\\] img[src='/frames/wedding-crimson.png']")).toBeVisible();
   });
 
   test("keyboard navigation moves the selection with arrow keys", async ({ page }) => {
@@ -219,19 +219,20 @@ test.describe("Frame selection (9:16 standard, DESIGN.md §5.2)", () => {
     await expect(cards.nth(0)).toHaveAttribute("tabindex", "0");
     await expect(cards.nth(1)).toHaveAttribute("tabindex", "-1");
 
-    // Arrow keys move selection + focus.
+    // Arrow keys move selection + focus (2 cards: ArrowDown from the
+    // last card wraps to the first).
     await cards.nth(0).focus();
     await page.keyboard.press("ArrowRight");
     await expect(cards.nth(1)).toBeFocused();
     await expect(cards.nth(1)).toHaveAttribute("aria-checked", "true");
     await page.keyboard.press("ArrowDown");
-    await expect(cards.nth(2)).toBeFocused();
+    await expect(cards.nth(0)).toBeFocused();
     await page.keyboard.press("ArrowLeft");
     await expect(cards.nth(1)).toBeFocused();
-    // Wrap-around (now 5 cards: index 4 is last).
+    // Wrap-around (now 2 cards: index 1 is last).
     await cards.nth(0).focus();
     await page.keyboard.press("ArrowUp");
-    await expect(cards.nth(4)).toBeFocused();
+    await expect(cards.nth(1)).toBeFocused();
   });
 
   test("capture with a frame produces a 1080×1920 JPEG", async ({ page }) => {
@@ -243,7 +244,7 @@ test.describe("Frame selection (9:16 standard, DESIGN.md §5.2)", () => {
 
     // Select a real frame and enter the capture screen.
     await page.getByRole("radio").nth(0).click();
-    await page.getByRole("button", { name: "Pakai Royal Gold Serif" }).click();
+    await page.getByRole("button", { name: "Pakai Wedding Crimson" }).click();
     await expect(page.getByRole("heading", { name: "Jepret foto" })).toBeVisible({ timeout: 5000 });
 
     // The fake media device provides a 1280×720 landscape feed: the capture

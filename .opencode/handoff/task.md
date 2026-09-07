@@ -1,18 +1,18 @@
-﻿# Task — Doc audit + dead code scan (reports only, two parallel read-only lanes)
+﻿# Task: Polish FrameSelection UI & Remove First 3 Frames
 
-Orchestrator-owned task. Two background lanes run in parallel:
+**Files:** `lib/frames.ts`, `components/guest/screens/FrameSelection.tsx` (+ test updates forced by frame removal)
+**SSOT:** docs/DESIGN.md §3, §5.2
+**Status:** implemented by orchestrator (exact-spec mechanical); verification complete; critique dispatched.
 
-- Lane A (#librarian): docs/ + AGENTS.md + .opencode/handoff audit →
-  proposed-change report (file | line | change type | reason).
-- Lane B (#explorer): components/, app/api/, lib/, hooks/ dead-code scan →
-  report only, no edits.
+## Changes
+1. `lib/frames.ts`: removed `royal-gold`, `botanical-romance`, `modern-editorial`. Remaining: `none` (DEFAULT_FRAME_ID), `wedding-crimson`, `flower`.
+2. `FrameSelection.tsx`: header helper `<p>` removed; h1 `font-normal` → `font-medium`; `◆` divider → CSS gradient diamond (PreSession pattern); unselected cards `border-border/60 opacity-55` → `border-border/70 opacity-80 scale-95`; footer countdown block → `<p className="text-[11px] text-text-muted text-center pt-1">Tenang, bingkai masih bisa kamu ganti saat foto.</p>`.
+3. Test updates (required, frame removal broke them):
+   - `lib/frames.test.ts`: EXPECTED_IDS → `["wedding-crimson", "flower"]`; labels updated.
+   - `e2e/mobile-media-qa.spec.ts`: card count 5→2; "Pakai Royal Gold Serif" → "Pakai Wedding Crimson"; `/frames/royal-gold.png` → `/frames/wedding-crimson.png`; keyboard-nav indices adjusted for 2-card wrap.
 
-No file modifications in this phase. A follow-up #fixer lane executes both
-reports in one commit after both lanes return terminal.
+## Validation
+- typecheck PASS 0 errors; `vitest lib/frames.test.ts` 6/6; e2e `mobile-media-qa.spec.ts` 19/19.
 
-## Constraints (for the fixer lane, recorded here)
-
-- No logic/behavior changes, no API/DB changes. Docs may be edited to match
-  code (code wins on conflict) — owner-approved scope.
-- Gates: `npx tsc --noEmit` pass; `npx vitest run` pass (384/384).
-- Commit message: `chore: doc sync, dead code cleanup, handoff reconcile`
+## Critique
+des-1 (#designer) review of both files dispatched (background).
