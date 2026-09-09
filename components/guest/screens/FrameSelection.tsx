@@ -1,8 +1,9 @@
 "use client";
 
-import { KeyboardEvent, useEffect, useRef, useState } from "react";
-import { Camera, Check, CircleOff } from "lucide-react";
+import { KeyboardEvent, useEffect, useRef, useState, useCallback } from "react";
+import { Camera, Check, CircleOff, User } from "lucide-react";
 import { DEFAULT_FRAME_ID, FRAMES, type Frame } from "@/lib/frames";
+import { AmbientBackdrop } from "@/components/guest/ambient-backdrop";
 
 const OPTIONS: Frame[] = FRAMES.filter(
   (frame) => frame.id !== DEFAULT_FRAME_ID,
@@ -19,110 +20,159 @@ export function FrameSelection({
     OPTIONS[0]?.id ?? null,
   );
 
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const headingRef = useRef<HTMLHeadingElement | null>(null);
-
-  const selected =
-    OPTIONS.find((frame) => frame.id === selectedId) ?? null;
-
-  const selectedIndex = OPTIONS.findIndex(
-    (frame) => frame.id === selectedId,
-  );
-
-  const noneFrame = FRAMES.find(
-    (frame) => frame.id === DEFAULT_FRAME_ID,
-  );
+  const isProgrammaticScroll = useRef(false);
+  const scrollResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
-    headingRef.current?.focus();
+    headingRef.current?.focus({ preventScroll: true });
+  }, []);
+
+  const selected = OPTIONS.find((frame) => frame.id === selectedId) ?? null;
+  const selectedIndex = OPTIONS.findIndex((frame) => frame.id === selectedId);
+  const noneFrame = FRAMES.find((frame) => frame.id === DEFAULT_FRAME_ID);
+
+  // Fokus + scroll kembali ke kartu tengah kontainer lokal tanpa menyentuh viewport utama
+  const endProgrammaticScroll = useCallback(() => {
+    isProgrammaticScroll.current = false;
+  }, []);
+
+  const scrollToItem = useCallback((index: number) => {
+    const container = containerRef.current;
+    const target = optionRefs.current[index];
+    if (!container || !target) return;
+
+    isProgrammaticScroll.current = true;
+
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const containerWidth = container.clientWidth;
+    const targetLeft = target.offsetLeft;
+    const targetWidth = target.clientWidth;
+
+    // Hitung posisi tengah kartu relatif terhadap container
+    const scrollTarget = targetLeft - containerWidth / 2 + targetWidth / 2;
+
+    container.scrollTo({
+      left: Math.max(0, scrollTarget),
+      behavior: reduced ? "auto" : "smooth",
+    });
+
+    // Bersihkan reset timeout yang belum selesai sebelum memasang yang baru
+    if (scrollResetTimer.current) {
+      clearTimeout(scrollResetTimer.current);
+      scrollResetTimer.current = null;
+    }
+
+    // Reset flag scrolling saat animasi selesai; pakai scrollend bila didukung
+    if ("onscrollend" in container) {
+      container.removeEventListener("scrollend", endProgrammaticScroll);
+      container.addEventListener("scrollend", endProgrammaticScroll, { once: true });
+    } else {
+      scrollResetTimer.current = setTimeout(() => {
+        isProgrammaticScroll.current = false;
+        scrollResetTimer.current = null;
+      }, 350);
+    }
+  }, [endProgrammaticScroll]);
+
+  // Bersihkan scrollend listener + timeout pending pada unmount
+  useEffect(() => {
+    const container = containerRef.current;
+    return () => {
+      if (scrollResetTimer.current) {
+        clearTimeout(scrollResetTimer.current);
+        scrollResetTimer.current = null;
+      }
+      container?.removeEventListener("scrollend", endProgrammaticScroll);
+    };
+  }, [endProgrammaticScroll]);
+
+  // Sinkronisasi swipe sentuh via Intersection Observer
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || OPTIONS.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (isProgrammaticScroll.current) return;
+
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
+            const id = entry.target.getAttribute("data-frame-id");
+            if (id) setSelectedId(id);
+          }
+        });
+      },
+      {
+        root: container,
+        threshold: 0.6,
+      }
+    );
+
+    optionRefs.current.forEach((el) => {
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
   }, []);
 
   function moveSelection(from: number, delta: number) {
     if (OPTIONS.length === 0) return;
-
-    const next =
-      (from + delta + OPTIONS.length) % OPTIONS.length;
-
+    const next = (from + delta + OPTIONS.length) % OPTIONS.length;
     setSelectedId(OPTIONS[next].id);
 
-    optionRefs.current[next]?.focus();
-
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    optionRefs.current[next]?.scrollIntoView({
-      behavior: reduced ? "auto" : "smooth",
-      block: "nearest",
-      inline: "center",
-    });
+    // Cegah browser menggeser viewport saat memindahkan fokus tombol
+    optionRefs.current[next]?.focus({ preventScroll: true });
+    scrollToItem(next);
   }
 
-  function handleKeyDown(
-    event: KeyboardEvent<HTMLButtonElement>,
-    index: number,
-  ) {
-    if (
-      event.key === "ArrowRight" ||
-      event.key === "ArrowDown"
-    ) {
+  function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
       event.preventDefault();
       moveSelection(index, 1);
-    } else if (
-      event.key === "ArrowLeft" ||
-      event.key === "ArrowUp"
-    ) {
+    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
       event.preventDefault();
       moveSelection(index, -1);
     }
   }
 
-  function confirm() {
-    if (selected) {
-      onFrameConfirm(selected);
-    }
-  }
-
   return (
-    <main className="relative flex h-dvh max-h-dvh w-full max-w-full flex-col overflow-hidden bg-bg-base text-text-primary select-none">
-      {/* Ambient background */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 overflow-hidden"
-      >
-        <div className="absolute -right-24 -top-20 h-80 w-80 rounded-full bg-accent/15 blur-[100px]" />
-        <div className="absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-accent/10 blur-[110px]" />
-        <div className="film-grain absolute inset-0" />
-      </div>
+    <main className="relative flex h-dvh max-h-dvh w-full max-w-full flex-col justify-between overflow-hidden bg-bg-base text-text-primary select-none">
+      {/* Background Ambience */}
+      <AmbientBackdrop />
 
-      {/* Header */}
-      <header className="relative z-10 w-full shrink-0 px-5 pt-[calc(1.25rem+env(safe-area-inset-top))] text-center">
-        <p className="truncate font-script text-2xl text-accent drop-shadow-sm">
+      {/* Header Terkunci */}
+      <header className="relative z-10 w-full shrink-0 px-5 pt-[calc(1rem+env(safe-area-inset-top))] text-center">
+        <p className="truncate font-script text-xl sm:text-2xl text-accent drop-shadow-sm">
           {eventTitle}
         </p>
 
-        <div
-          aria-hidden="true"
-          className="flex items-center justify-center gap-3 my-3"
-        >
-          <span className="h-px w-10 bg-gradient-to-r from-transparent to-accent/60" />
-          <span className="h-1.5 w-1.5 rotate-45 bg-accent/80" />
-          <span className="h-px w-10 bg-gradient-to-l from-transparent to-accent/60" />
+        <div aria-hidden="true" className="flex items-center justify-center gap-3 my-2">
+          <span className="h-px w-8 bg-gradient-to-r from-transparent to-accent/60" />
+          <span className="h-1 w-1 rotate-45 bg-accent/80" />
+          <span className="h-px w-8 bg-gradient-to-l from-transparent to-accent/60" />
         </div>
 
         <h1
           id="frame-heading"
           ref={headingRef}
           tabIndex={-1}
-          className="font-display text-3xl font-medium leading-tight tracking-tight text-text-primary outline-none sm:text-4xl"
+          className="font-display text-2xl sm:text-3xl font-medium tracking-tight text-text-primary outline-none"
         >
           Pilih Frame fotomu
         </h1>
       </header>
 
-      {/* Frame carousel */}
-      <section className="relative z-10 flex min-h-0 flex-1 items-center justify-center overflow-hidden py-3">
+      {/* Frame Carousel Area */}
+      <section className="relative z-10 flex min-h-0 flex-1 items-center justify-center py-2 w-full overflow-hidden">
         <div
+          ref={containerRef}
           role="radiogroup"
           aria-labelledby="frame-heading"
-          className="scrollbar-hide flex h-full max-h-[58dvh] w-full max-w-full snap-x snap-mandatory items-center justify-start gap-4 overflow-x-auto overscroll-x-contain px-8 py-4 touch-pan-x sm:justify-center"
+          // px-[calc(50vw-5.5rem)] memberi ruang agar frame pertama & terakhir bisa center sempurna
+          className="scrollbar-hide flex h-full max-h-[50dvh] w-full snap-x snap-mandatory items-center justify-start gap-4 overflow-x-auto overscroll-x-contain px-[calc(50vw-5.5rem)] sm:px-[calc(50%-6rem)] py-2 touch-pan-x"
         >
           {OPTIONS.map((frame, index) => {
             const isSelected = frame.id === selectedId;
@@ -130,6 +180,7 @@ export function FrameSelection({
             return (
               <button
                 key={frame.id}
+                data-frame-id={frame.id}
                 ref={(node) => {
                   optionRefs.current[index] = node;
                 }}
@@ -137,65 +188,46 @@ export function FrameSelection({
                 role="radio"
                 aria-checked={isSelected}
                 aria-label={frame.label}
-                tabIndex={
-                  selectedId === null
-                    ? index === 0
-                      ? 0
-                      : -1
-                    : isSelected
-                      ? 0
-                      : -1
-                }
+                tabIndex={isSelected ? 0 : -1}
                 onClick={() => {
                   setSelectedId(frame.id);
-
-                  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-                  optionRefs.current[index]?.scrollIntoView({
-                    behavior: reduced ? "auto" : "smooth",
-                    block: "nearest",
-                    inline: "center",
-                  });
+                  scrollToItem(index);
                 }}
-                onKeyDown={(event) =>
-                  handleKeyDown(event, index)
-                }
+                onKeyDown={(e) => handleKeyDown(e, index)}
                 className="group relative flex h-full shrink-0 snap-center flex-col items-center justify-center outline-none"
               >
-                {/* Frame */}
                 <div
-                  className={`relative aspect-[9/16] h-[calc(100%-2rem)] max-h-[52dvh] overflow-hidden rounded-2xl border-2 bg-bg-surface/90 p-1.5 transition-[transform,opacity,border-color,box-shadow] duration-fast group-focus-visible:ring-2 group-focus-visible:ring-accent group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-bg-base ${
+                  className={`relative aspect-[9/16] h-[calc(100%-1.75rem)] max-h-[46dvh] overflow-hidden rounded-2xl border-2 bg-bg-surface/90 p-1.5 transition-[transform,opacity,border-color,box-shadow,background-color] duration-fast group-focus-visible:ring-2 group-focus-visible:ring-accent ${
                     isSelected
-                      ? "scale-[1.02] border-accent bg-accent-soft shadow-[0_0_30px_color-mix(in_srgb,var(--accent)_35%,transparent)] ring-1 ring-accent"
-                      : "border-border/70 opacity-80 scale-95 hover:border-text-secondary hover:opacity-90"
+                      ? "scale-[1.02] border-accent bg-accent/10 shadow-[0_0_30px_color-mix(in_srgb,var(--accent)_30%,transparent)] ring-1 ring-accent"
+                      : "border-border/70 opacity-70 scale-95 hover:opacity-90"
                   }`}
                 >
+                  {/* Siluet Wajah Foto Booth */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-15">
+                    <User className="h-20 w-20 text-text-muted" strokeWidth={1} />
+                  </div>
+
                   <img
                     src={frame.src}
                     alt=""
                     aria-hidden="true"
-                    className="pointer-events-none h-full w-full rounded-xl object-contain"
+                    className="pointer-events-none relative z-10 h-full w-full rounded-xl object-contain"
                   />
 
-                  {/* Selection badge */}
                   {isSelected && (
                     <span
                       aria-hidden="true"
-                      className="absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full bg-accent text-on-accent shadow-lg"
+                      className="absolute right-2.5 top-2.5 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-accent text-on-accent shadow-md"
                     >
-                      <Check
-                        className="h-4 w-4"
-                        strokeWidth={3}
-                      />
+                      <Check className="h-3.5 w-3.5" strokeWidth={3} />
                     </span>
                   )}
                 </div>
 
-                {/* Label */}
                 <span
-                  className={`mt-3 flex min-h-5 items-center justify-center text-sm font-medium transition-colors ${
-                    isSelected
-                      ? "font-semibold text-text-primary"
-                      : "text-text-secondary"
+                  className={`mt-2 text-xs sm:text-sm transition-colors ${
+                    isSelected ? "font-semibold text-text-primary" : "text-text-secondary"
                   }`}
                 >
                   {frame.label}
@@ -206,27 +238,16 @@ export function FrameSelection({
         </div>
       </section>
 
-      {/* Selection indicators */}
+      {/* Indikator Titik */}
       {OPTIONS.length > 1 && (
-        <div
-          aria-hidden="true"
-          className="relative z-10 flex shrink-0 items-center justify-center gap-2 pb-3"
-        >
+        <div aria-hidden="true" className="relative z-10 flex shrink-0 items-center justify-center gap-1.5 pb-2">
           {OPTIONS.map((frame, index) => {
             const isSelected = index === selectedIndex;
-
             return (
-              // Fixed-width track; the active bar elongates via scaleX only
-              // (DESIGN.md §4: transform/opacity, never layout properties).
-              // Reduced-motion zeroes the transition — static end states stay
-              // correct: active = full accent bar, inactive = muted dot.
-              <span
-                key={frame.id}
-                className="relative block h-2 w-5 overflow-hidden rounded-full"
-              >
-                <span className="absolute left-0 top-0 h-2 w-2 rounded-full bg-text-muted/40" />
+              <span key={frame.id} className="relative block h-1.5 w-4 overflow-hidden rounded-full">
+                <span className="absolute inset-0 rounded-full bg-text-muted/30" />
                 <span
-                  className="absolute inset-0 origin-left rounded-full bg-accent transition-transform duration-[var(--motion-base)]"
+                  className="absolute inset-0 rounded-full bg-accent transition-transform duration-fast"
                   style={{ transform: `scaleX(${isSelected ? 1 : 0})` }}
                 />
               </span>
@@ -235,41 +256,28 @@ export function FrameSelection({
         </div>
       )}
 
-      {/* Bottom action band */}
-      <div className="relative z-10 mx-auto w-full max-w-md shrink-0 space-y-2.5 px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:px-8">
+      {/* Tombol Aksi Bawah */}
+      <div className="relative z-10 mx-auto w-full max-w-md shrink-0 space-y-2 px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:px-8">
         <button
           type="button"
-          onClick={confirm}
+          onClick={() => selected && onFrameConfirm(selected)}
           disabled={!selected}
           className="gold-foil-btn flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold shadow-lg transition duration-fast hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <Camera
-            className="h-4 w-4"
-            aria-hidden="true"
-          />
-
-          <span>
-            {selected
-              ? `Pakai ${selected.label}`
-              : "Pilih Frame"}
-          </span>
+          <Camera className="h-4 w-4" aria-hidden="true" />
+          <span>{selected ? `Pilih ${selected.label}` : "Pilih Frame"}</span>
         </button>
 
         <button
           type="button"
           onClick={() => {
-            if (noneFrame) {
-              onFrameConfirm(noneFrame);
-            }
+            if (!noneFrame) return;
+            onFrameConfirm(noneFrame);
           }}
-          className="flex min-h-12 w-full items-center justify-center gap-2 text-center text-xs font-medium text-text-muted underline underline-offset-4 transition-colors hover:text-text-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          className="flex min-h-11 w-full items-center justify-center gap-2 text-xs font-medium text-text-muted underline underline-offset-4 hover:text-text-secondary transition-colors focus-visible:outline-2 focus-visible:outline-accent"
         >
-          <CircleOff
-            className="h-3.5 w-3.5"
-            aria-hidden="true"
-          />
-
-          <span>Tanpa Frame, lanjut</span>
+          <CircleOff className="h-3.5 w-3.5" aria-hidden="true" />
+          <span>Tanpa Frame</span>
         </button>
       </div>
     </main>

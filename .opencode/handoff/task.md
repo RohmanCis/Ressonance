@@ -1,67 +1,38 @@
-﻿# Task: Execute M2 + M6 (M4 No-Op) — Guest Flow UI
+﻿# Task: Tech debt C11–C14 — cosmetic cleanups, zero design change
 
-**Agent:** designer (des-1, reused — you built the owner-decision preview)
-**Type:** implementation. Owner approved all three After sides.
+Read `AGENTS.md` §6 first. These are small mechanical cleanups. Do NOT change any visual design, copy, layout, or behavior. No new dependencies, no canonical doc edits, no migration edits.
 
-## M4 — verify only (no code change)
+## C11 — Capture counter aria-label sync (`components/guest/screens/Capture.tsx:160-167`)
 
-Re-confirm `components/guest/screens/VoiceRecordingScreen.tsx` stop button
-already uses `bg-error` + `Square` icon while recording (it did at dispatch
-time, line ~186). Record confirmation in result.md. No edit unless broken.
+The visual counter reads `FOTO {budgetRemaining} / {totalBudget}` but the `aria-label` says "Sisa {budgetRemaining} dari {totalBudget} foto" — direction mismatch (visual shows "FOTO" prefix first). Fix: make the accessible name mirror the visual exactly: `aria-label={`Foto ${budgetRemaining} dari ${totalBudget}`}` (keep `aria-live="polite"` and the visual markup unchanged). Leave `canAdvance` logic (Capture.tsx:92) and `localBudgetRemaining` (lib/pending-photos.ts) untouched — both correct and tested.
 
-## M2 — 48px icon buttons
+## C12 — NO-OP (verified)
 
-Per the approved After in `owner-decisions-preview.html`:
-- `components/guest/screens/Capture.tsx`: "Ganti kamera" and "Pilih foto"
-  icon buttons `h-11 w-11` → `h-12 w-12`; icon stroke 20px → 22px if the
-  current icon is `h-5 w-5` → `h-[22px] w-[22px]` (or nearest token-safe
-  size per DESIGN.md).
-- Review-overlay corner buttons (retry-strip delete chip in `Capture.tsx`,
-  delete/retake corners in `PhotoReview.tsx`): they use invisible 44px hit
-  areas (`h-11 w-11`) with small visual chips — bump hit areas to `h-12 w-12`
-  ONLY if it doesn't break the overlay positioning/visual chip geometry you
-  mocked; otherwise keep 44px (they already meet the §2 minimum) and note it.
-- Timer pill in Capture dock (`h-10 min-w-10`): leave as-is (display, not a
-  control) unless it visually collides with the enlarged neighbors — adjust
-  only for optical balance, per your preview.
+`--font-mono` in app/globals.css:44 already resolves to DM Mono (`var(--font-dm-mono), DM Mono, ...`), so `font-mono` classes in PhotoReview.tsx and Capture.tsx already render DM Mono per DESIGN.md §3. Do nothing. Record this in result.md.
 
-## M6 — screen transitions in `guest-event-entry.tsx`
+## C13 — Remove unused keyframes (`app/globals.css`)
 
-Implement the approved After: sequential full-screen state changes get a
-fade/slide transition per docs/DESIGN.md §4:
-- 350ms (`--motion-slow`), ease-out, transform+opacity ONLY.
-- Outgoing: `opacity→0, translateY(-8px)` ease-in; incoming:
-  `opacity 0→1, translateY(12px→0)` ease-out.
-- `prefers-reduced-motion`: zero duration (DESIGN.md §4 verbatim rule —
-  same global block pattern used elsewhere in the app).
-- Focus management: after transition, ensure focus lands on the new screen's
-  primary control / heading as it does today (no focus trap, no regression to
-  keyboard-nav e2e in `e2e/mobile-media-qa.spec.ts`).
-- Keep it minimal: a small transition wrapper or per-screen enter animation
-  in `guest-event-entry.tsx` — no new dependencies, no framer-motion.
-- Respect existing reduced-motion handling and `duration-fast` tokens where
-  DESIGN.md §4 already dictates specific values; §4 wins over the preview if
-  they differ.
+Delete the two unused custom animations and their keyframes (verified unused — grep the whole repo for `animate-spin-tape` and `animate-wave-pulse` usage in tsx/ts first to confirm; only the css definitions should match):
+- Line 46: `--animate-spin-tape: spin-tape 2s linear infinite;`
+- Line 47: `--animate-wave-pulse: wave-pulse 900ms ease-in-out infinite;`
+- Lines ~159-165: `@keyframes spin-tape { ... }` and `@keyframes wave-pulse { ... }` blocks.
+Do not touch any other token/keyframe.
 
-## Constraints
+## C14 — Equalizer bar transition (`components/guest/screens/VoiceRecordingScreen.tsx:~254`)
 
-- Files in scope: `components/guest-event-entry.tsx`,
-  `components/guest/screens/Capture.tsx`,
-  `components/guest/screens/PhotoReview.tsx`,
-  `components/guest/screens/VoiceRecordingScreen.tsx` (M4 verify only).
-- Do NOT touch: `docs/`, `supabase/`, `AGENTS.md`, e2e specs (if an e2e
-  assertion breaks because of a size change, STOP and report instead of
-  editing the spec).
-- No new dependencies. TypeScript strict, no `any`.
+The 9 decorative equalizer bars use `transition-all duration-300`. Replace with an explicit property list for what actually changes when toggling record state (height via inline style, background-color + height via class): `transition-[height,background-color] duration-300`. Visual result identical; removes the transition-all anti-pattern on continuously animating elements. Do not touch the pulse animation, colors, or progress bar (already scaleX-based).
 
-## Validation (run before reporting)
+## Validation (single lane, in order)
 
-- `npm run typecheck`
-- `npx vitest run` (full suite, serialized)
-- If feasible: `npx playwright test e2e/mobile-media-qa.spec.ts` — the
-  keyboard-nav and locator assertions are the regression risk for M2/M6.
+1. `npm run typecheck` — PASS
+2. `npx vitest run lib/pending-photos.test.ts` — PASS (guard: C11 must not touch budget logic)
+3. `npx playwright test e2e/mobile-media-qa.spec.ts` — ALL PASS (generous timeout; counter aria-label and voice screen are covered here)
 
-## Reporting
+## Out of scope
 
-Write `result.md`: status, files changed, validation output, M4 confirmation,
-any e2e assertion conflicts, next step.
+- docs/, supabase/migrations/, AGENTS.md
+- Any visual/copy/behavior change beyond the exact edits above
+
+## Report
+
+Write `.opencode/handoff/result.md` (overwrite): status, files changed, validation results, deviations, next step.

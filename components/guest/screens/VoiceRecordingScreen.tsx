@@ -1,7 +1,8 @@
 import { useEffect, useRef } from "react";
-import { Mic, Square } from "lucide-react";
+import { Mic, Square, Sparkles, CheckCircle2, AlertCircle, RotateCcw } from "lucide-react";
 import { AudioPlayer } from "@/components/guest/audio-player";
 import type { Usage } from "@/lib/usage";
+import { AmbientBackdrop } from "@/components/guest/ambient-backdrop";
 import { ExpiryHint } from "./expiry-hint";
 
 type VoiceState =
@@ -16,6 +17,7 @@ type VoiceState =
 type SessionData = Usage & { guest_name: string | null };
 type EventData = { title: string; status: "ACTIVE" | "CLOSED" };
 
+const MIN_SECONDS = 5;
 const MAX_SECONDS = 30;
 
 function formatTimer(seconds: number): string {
@@ -23,66 +25,10 @@ function formatTimer(seconds: number): string {
 }
 
 /**
- * Vintage cassette visual (Luxury Analog). Spools and level bars animate
- * strictly during the `recording` state; idle/review render them static.
+ * VOICE_NOTE — Layar perekaman suara mandiri (DESIGN.md §5.5).
+ * Backend-authoritative duration (5–30 detik).
+ * Zero-scroll lock pada dynamic viewport height (dvh).
  */
-function Cassette({ recording }: { recording: boolean }) {
-  return (
-    <div
-      aria-hidden="true"
-      className="w-full max-w-xs rounded-xl border border-border bg-bg-surface px-6 py-5 shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
-    >
-      <div className="flex items-center justify-between gap-4">
-        <Spool spinning={recording} />
-        {/* Level window */}
-        <div className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-md border border-border bg-bg-base px-3">
-          {[0, 1, 2, 3, 4].map((i) => (
-            <span
-              key={i}
-              className={`h-8 w-1.5 origin-center rounded-full bg-text-muted/40 ${
-                recording ? "animate-wave-pulse" : "scale-y-[0.3]"
-              }`}
-              style={recording ? { animationDelay: `${i * 120}ms` } : undefined}
-            />
-          ))}
-        </div>
-        <Spool spinning={recording} />
-      </div>
-      <div className="mt-3 flex items-center justify-between font-mono text-[0.6rem] tracking-[0.2em] text-text-muted">
-        <span>SIDE A</span>
-        <span>60</span>
-      </div>
-    </div>
-  );
-}
-
-function Spool({ spinning }: { spinning: boolean }) {
-  return (
-    <span
-      className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-border bg-bg-elevated ${
-        spinning ? "animate-spin-tape" : ""
-      }`}
-    >
-      {/* Spokes */}
-      <span className="relative block h-8 w-8 rounded-full border border-border bg-bg-base">
-        <span className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-border" />
-        <span className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-border" />
-        <span className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent" />
-      </span>
-    </span>
-  );
-}
-
-/**
- * VOICE_NOTE — dedicated full-screen voice recording step (DESIGN.md §5.5),
- * reached after PHOTO_REVIEW syncs. Gold mic button, DM Mono timer
- * (00:00 / 00:30), pulse-free recording status; review state with playback,
- * duration check (<5s warning), re-record and gold submit CTA; skip link
- * advances to Done. One voice note, 5–30s; the backend stays authoritative
- * for duration. MediaRecorder/voiceUrl/timers are owned by the parent
- * (guest-event-entry): reset/submit/skip handlers handle teardown.
- */
-
 export function VoiceRecordingScreen({
   event,
   session,
@@ -111,8 +57,10 @@ export function VoiceRecordingScreen({
   onSkip: () => void;
 }) {
   const headingRef = useRef<HTMLHeadingElement>(null);
+
+  // Focus guard dengan preventScroll agar tidak memicu lonjakan viewport di mobile
   useEffect(() => {
-    headingRef.current?.focus();
+    headingRef.current?.focus({ preventScroll: true });
   }, []);
 
   const closed = event.status === "CLOSED";
@@ -125,147 +73,301 @@ export function VoiceRecordingScreen({
     submitting ||
     voiceState === "success";
   const showMic = voiceState === "idle" || voiceState === "error" || recording;
+  const isDurationValid = voiceSeconds >= MIN_SECONDS;
+  const stoppedAfterRecording = ["review", "review-error", "submitting", "success"].includes(voiceState);
+
+  // Haptic feedback saat tombol rekam disentuh di perangkat mobile
+  function handleMicToggle() {
+    if (typeof window !== "undefined" && "vibrate" in navigator) {
+      navigator.vibrate(40);
+    }
+    if (recording) {
+      onStop();
+    } else {
+      onRecord();
+    }
+  }
 
   return (
-    <main className="flex min-h-dvh flex-col bg-bg-base text-text-primary">
-      <header className="px-5 pt-[calc(2rem+env(safe-area-inset-top))] sm:px-8">
-        <p className="truncate text-xs font-medium tracking-[0.04em] text-text-muted">{event.title}</p>
+    <main className="relative flex h-dvh max-h-dvh w-full flex-col justify-between overflow-hidden overscroll-none bg-bg-base text-text-primary select-none">
+      {/* Latar Belakang Pencahayaan Halus */}
+      <AmbientBackdrop />
+
+      {/* Status region: pengumuman perubahan state rekaman (sr-only mirror) */}
+      <p role="status" aria-live="polite" className="sr-only">
+        {recording ? "Merekam" : stoppedAfterRecording ? "Selesai merekam" : ""}
+      </p>
+
+      {/* HEADER SECTION: Compact Vertical Cadence */}
+      <header className="relative z-10 shrink-0 px-5 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-1 text-center sm:px-8">
+        <p className="truncate font-script text-2xl sm:text-3xl text-accent tracking-wide drop-shadow-sm">
+          {event.title}
+        </p>
+
+        <div aria-hidden="true" className="flex items-center justify-center gap-3 my-1.5">
+          <span className="h-px w-8 bg-gradient-to-r from-transparent to-accent/60" />
+          <span className="h-1.5 w-1.5 rotate-45 bg-accent/80" />
+          <span className="h-px w-8 bg-gradient-to-l from-transparent to-accent/60" />
+        </div>
+
         <h1
           ref={headingRef}
           tabIndex={-1}
-          className="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight outline-none sm:text-4xl"
+          className="font-display text-2xl sm:text-3xl font-medium tracking-tight text-text-primary outline-none"
         >
           Tinggalkan Pesan Suara
         </h1>
-        <p className="mt-2 text-sm text-text-secondary">
-          Satu pesan suara, maksimal 30 detik, buat yang punya hajat.
+        <p className="mt-1 text-xs text-text-secondary leading-relaxed max-w-xs mx-auto">
+          Ungkapkan doa & ucapan hangat untuk kedua mempelai secara personal.
         </p>
-        {/* Pre-expiry hint (UX hint; server expires_at stays authoritative) —
-            same muted anatomy as the Capture banner, gold-rule compliant. */}
-        <ExpiryHint
-          secondsLeft={secondsLeft}
-          message={`Sesi kamu habis dalam ${Math.ceil((secondsLeft ?? 0) / 60)} menit. Kirim pesan suaramu biar tersimpan.`}
-        />
+
+        {/* Expiry Hint Alert */}
+        <div className="mt-2 max-w-sm mx-auto">
+          <ExpiryHint
+            secondsLeft={secondsLeft}
+            message={`Sesi habis dalam ${Math.ceil((secondsLeft ?? 0) / 60)} menit. Kirim suaramu segera.`}
+          />
+        </div>
       </header>
 
-      {/* Center stage */}
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 px-5 py-6">
+      {/* CENTER STAGE: min-h-0 mencegah overflow vertikal di layar ponsel kecil */}
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col items-center justify-center px-5 py-2 max-w-md mx-auto w-full">
+        {/* State: Batas Kuota Suara Terpakai */}
         {limit ? (
-          <p role="status" className="max-w-sm text-center text-sm text-text-muted">
-            Batas pesan suara untuk sesi ini sudah terpakai.
-          </p>
-        ) : closed ? (
-          <p role="alert" className="max-w-sm text-center text-sm text-error">
-            Acara ini sudah selesai. Kiriman baru nggak diterima lagi.
-          </p>
-        ) : voiceState === "unsupported" ? (
-          <p role="alert" className="max-w-sm text-center text-sm text-error">
-            {voiceMessage}
-          </p>
-        ) : reviewing ? (
-          <div className="w-full max-w-md space-y-3">
-            <AudioPlayer src={voiceUrl} duration={voiceSeconds} />
-            <p className="text-center text-sm text-text-muted">
-              Durasi: <span className="font-mono tabular-nums">{voiceSeconds}s</span>
+          <div
+            role="alert"
+            className="w-full rounded-2xl border border-accent/30 bg-bg-surface/85 p-5 text-center shadow-xl backdrop-blur-xl"
+          >
+            <CheckCircle2 className="h-10 w-10 text-accent mx-auto mb-2 opacity-90" />
+            <h2 className="font-display text-base font-semibold text-text-primary">
+              Pesan Suara Tersimpan
+            </h2>
+            <p className="mt-1 text-xs text-text-secondary leading-relaxed max-w-xs mx-auto">
+              Satu pesan suaramu sudah berhasil dikirim. Terima kasih atas ucapan dan doa terbaikmu!
             </p>
-            {voiceSeconds < 5 && (
-              <p role="status" className="text-center text-sm text-text-secondary">
-                Pesan terlalu singkat — minimal 5 detik
+          </div>
+        ) : closed ? (
+          /* State: Acara Ditutup */
+          <div
+            role="status"
+            className="w-full rounded-2xl border border-border/80 bg-bg-surface/85 p-5 text-center shadow-xl backdrop-blur-xl"
+          >
+            <AlertCircle className="h-10 w-10 text-error mx-auto mb-2 opacity-90" />
+            <h2 className="font-display text-base font-semibold text-text-primary">
+              Acara Sudah Selesai
+            </h2>
+            <p className="mt-1 text-xs text-text-secondary leading-relaxed max-w-xs mx-auto">
+              Momen acara telah berakhir. Kiriman pesan baru tidak diterima lagi.
+            </p>
+          </div>
+        ) : voiceState === "unsupported" ? (
+          /* State: Browser Tidak Mendukung MediaRecorder */
+          <div
+            role="status"
+            className="w-full rounded-2xl border border-error/30 bg-bg-surface/85 p-5 text-center shadow-xl backdrop-blur-xl"
+          >
+            <p className="text-xs text-error leading-relaxed">{voiceMessage}</p>
+          </div>
+        ) : reviewing ? (
+          /* STATE REVIEW: Pratinjau Audio yang Sudah Direkam */
+          <div className="w-full space-y-3.5 rounded-2xl border border-accent/20 bg-bg-surface/85 p-5 shadow-[0_15px_45px_rgba(0,0,0,0.8),0_0_30px_color-mix(in_srgb,var(--accent)_6%,transparent)] backdrop-blur-xl">
+            <div className="flex items-center justify-between border-b border-border/50 pb-2.5">
+              <span className="font-mono text-[10px] font-semibold tracking-widest text-text-muted uppercase">
+                Pratinjau Suara
+              </span>
+              <span className="font-mono text-xs font-semibold tabular-nums text-accent bg-accent/10 px-2.5 py-0.5 rounded-full border border-accent/20">
+                {voiceSeconds} detik
+              </span>
+            </div>
+
+            <div className="py-0.5">
+              <AudioPlayer src={voiceUrl} duration={voiceSeconds} />
+            </div>
+
+            {!isDurationValid ? (
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 text-center">
+                <p className="text-xs font-semibold text-amber-300">
+                  Durasi terlalu singkat ({voiceSeconds} detik)
+                </p>
+                <p className="mt-0.5 text-[10px] text-text-muted leading-relaxed">
+                  Pesan suara minimal 5 detik agar dapat disimpan. Silakan rekam ulang.
+                </p>
+              </div>
+            ) : (
+              <p className="text-center text-xs text-text-secondary leading-relaxed">
+                Dengarkan rekamanmu sebelum disimpan. Kamu bisa mengulang jika ingin mengubah isi ucapan.
               </p>
             )}
           </div>
         ) : showMic ? (
-          <>
-            <Cassette recording={recording} />
-            <button
-              type="button"
-              onClick={recording ? onStop : onRecord}
-              aria-label={recording ? "Stop rekaman" : "Rekam pesan suara"}
-              className={`flex h-20 w-20 items-center justify-center rounded-full transition-transform duration-fast active:scale-[0.92] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
-                recording
-                  ? "bg-error text-text-primary"
-                  : "bg-accent text-on-accent"
-              }`}
-            >
-              {recording ? (
-                <Square className="h-7 w-7" aria-hidden="true" />
-              ) : (
-                <Mic className="h-9 w-9" aria-hidden="true" />
+          /* STATE REKAM: Hero Mic & Clean Minimalist Equalizer Animation */
+          <div className="flex flex-col items-center justify-center space-y-4">
+            {/* Tombol Mikrofon dengan Soft Breathing Halo (Bukan Ping Merah Kasar) */}
+            <div className="relative flex items-center justify-center">
+              {recording && (
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-0 -m-3 rounded-full bg-accent/20 blur-xl animate-pulse duration-[2000ms] pointer-events-none"
+                />
               )}
-            </button>
-            {/* Ticking display is visual-only (aria-live="off"); record
-                start/stop are announced by the status regions below instead. */}
-            <p className="font-mono text-xl tabular-nums text-text-primary" aria-live="off">
-              {formatTimer(voiceSeconds)} / {formatTimer(MAX_SECONDS)}
-            </p>
-            {recording && (
-              <p role="status" className="text-sm font-semibold text-text-primary">
-                Merekam
-              </p>
-            )}
-            {voiceState === "idle" && (
-              <p className="max-w-sm text-center text-sm text-text-muted">
-                Browser bakal minta izin mikrofon setelah kamu tekan rekam.
-              </p>
-            )}
-            {voiceState === "error" && (
-              <p role="alert" className="max-w-sm text-center text-sm text-error">
-                {voiceMessage}
-              </p>
-            )}
-          </>
+
+              <button
+                type="button"
+                onClick={handleMicToggle}
+                aria-label={recording ? "Hentikan rekaman" : "Mulai rekam pesan suara"}
+                className={`relative z-10 flex h-20 w-20 items-center justify-center rounded-full transition-[transform,background-color,border-color,box-shadow] duration-base active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent ${
+                  recording
+                    ? "bg-bg-surface border-2 border-accent text-accent shadow-[0_0_30px_color-mix(in_srgb,var(--accent)_30%,transparent)] scale-105"
+                    : "bg-accent text-on-accent shadow-[0_0_30px_color-mix(in_srgb,var(--accent)_45%,transparent)] hover:brightness-105"
+                }`}
+              >
+                {recording ? (
+                  <Square className="h-6 w-6 fill-current" aria-hidden="true" />
+                ) : (
+                  <Mic className="h-8 w-8" aria-hidden="true" />
+                )}
+              </button>
+            </div>
+
+            {/* Timer DM Mono & Waveform Bar Minimalis */}
+            <div className="flex flex-col items-center space-y-2">
+              <div className="flex items-baseline gap-1.5">
+                <span
+                  className="font-mono text-2xl font-semibold tabular-nums tracking-tight text-text-primary"
+                  aria-live="off"
+                >
+                  {formatTimer(voiceSeconds)}
+                </span>
+                <span className="font-mono text-xs font-normal text-text-muted">
+                  / {formatTimer(MAX_SECONDS)}
+                </span>
+              </div>
+
+              {/* Minimal Acoustic Waveform Animation (Aktif hanya saat recording) */}
+              <div
+                aria-hidden="true"
+                className="flex items-center justify-center gap-1.5 h-6 px-3 py-1"
+              >
+                {[35, 70, 100, 55, 85, 45, 90, 60, 40].map((height, i) => (
+                  <span
+                    key={i}
+                    className={`w-1 rounded-full transition-[height,background-color] duration-300 ${
+                      recording
+                        ? "bg-accent animate-pulse"
+                        : "bg-border/60 h-1.5"
+                    }`}
+                    style={
+                      recording
+                        ? {
+                            height: `${height}%`,
+                            animationDelay: `${i * 90}ms`,
+                            animationDuration: "750ms",
+                          }
+                        : undefined
+                    }
+                  />
+                ))}
+              </div>
+
+              {/* Progress Track 0–30s dengan Penanda Minimal 5 Detik (16.6%) */}
+              <div className="relative h-1.5 w-52 overflow-hidden rounded-full bg-bg-surface border border-border/70 shadow-inner">
+                {/* Milestone Tick 5 Detik */}
+                <div
+                  className="absolute top-0 bottom-0 left-[16.6%] w-[2px] bg-accent/70 z-10"
+                  title="Batas minimal 5 detik"
+                />
+                <div
+                  className={`absolute inset-y-0 left-0 w-full origin-left transition-transform duration-300 ease-linear ${
+                    recording ? "bg-accent" : isDurationValid ? "bg-accent" : "bg-accent/60"
+                  }`}
+                  style={{ transform: `scaleX(${Math.min(1, voiceSeconds / MAX_SECONDS)})` }}
+                />
+              </div>
+
+              {/* Status Copy Interaktif */}
+              {recording ? (
+                <div className="flex items-center gap-1.5 pt-0.5 text-xs font-semibold text-accent">
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+                  <span>
+                    {voiceSeconds < MIN_SECONDS
+                      ? `Tahan berbicara… (${MIN_SECONDS - voiceSeconds}s lagi)`
+                      : "Sedang merekam… ketuk kotak jika selesai"}
+                  </span>
+                </div>
+              ) : voiceState === "idle" ? (
+                <p className="text-center text-xs text-text-muted max-w-xs pt-0.5 leading-relaxed">
+                  Ketuk mikrofon untuk mulai berbicara.
+                </p>
+              ) : null}
+
+              {voiceState === "error" && (
+                <p role="alert" className="max-w-xs text-center text-xs font-medium text-error pt-0.5 leading-relaxed">
+                  {voiceMessage}
+                </p>
+              )}
+            </div>
+          </div>
         ) : null}
 
-        {/* Status / progress messages */}
-        {reviewing && voiceState === "review" && voiceMessage && (
-          <p role="status" className="max-w-sm text-center text-sm text-text-muted">
-            {voiceMessage}
-          </p>
-        )}
-        {submitting && (
-          <p role="status" className="max-w-sm text-center text-sm text-text-muted">
-            {voiceMessage}
-          </p>
-        )}
+        {/* Feedback Error Pasca Submit/Review */}
         {voiceState === "review-error" && (
-          <p role="alert" className="max-w-sm text-center text-sm text-error">
+          <p role="alert" className="mt-2 text-center text-xs font-medium text-error leading-relaxed">
             {voiceMessage}
           </p>
         )}
       </div>
 
-      {/* Bottom action band */}
-      <div className="space-y-2 px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:px-8">
+      {/* FOOTER ACTION BAND: Terkunci di Bawah Safe Area */}
+      <footer className="relative z-10 shrink-0 space-y-2 px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-1 sm:px-8 max-w-md mx-auto w-full">
         {reviewing && (
           <>
+            {/* Status region: progres submit (sr-only) */}
+            {submitting && (
+              <p role="status" aria-live="polite" className="sr-only">
+                Mengirim pesan suara…
+              </p>
+            )}
+            {/* Primary Action: Kirim Pesan Suara (Client Guard Durasi Minimal 5 Detik) */}
             <button
               type="button"
               onClick={onSubmit}
-              disabled={submitting || closed || voiceState === "success"}
-              className="gold-foil-btn min-h-12 w-full rounded-lg px-4 font-semibold transition duration-fast ease-out disabled:cursor-not-allowed disabled:opacity-45"
+              disabled={submitting || closed || !isDurationValid || voiceState === "success"}
+              className="gold-foil-btn flex h-12 w-full items-center justify-center rounded-xl text-sm font-semibold shadow-lg transition duration-fast hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {submitting ? "Mengirim…" : "Kirim Pesan Suara"}
+              {submitting ? (
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 animate-spin" />
+                  <span>Mengirim Pesan Suara…</span>
+                </div>
+              ) : (
+                "Kirim Pesan Suara →"
+              )}
             </button>
+
+            {/* Secondary Action: Rekam Ulang */}
             <button
               type="button"
               onClick={onReset}
               disabled={submitting}
-              className="min-h-12 w-full rounded-lg border border-border bg-bg-surface px-4 font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-45"
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-bg-surface/80 text-xs font-semibold text-text-secondary transition hover:text-text-primary hover:bg-bg-surface active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-40"
             >
-              Rekam Ulang
+              <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+              <span>Rekam Ulang</span>
             </button>
           </>
         )}
+
+        {/* Tertiary Action: Lewati Suara & Selesai */}
         {!recording && !submitting && voiceState !== "success" && (
           <button
             type="button"
             onClick={onSkip}
-            className="min-h-12 w-full rounded-md px-4 text-sm font-semibold text-text-secondary transition-colors duration-fast hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className="flex min-h-11 w-full items-center justify-center text-center text-xs font-medium text-text-muted underline underline-offset-4 hover:text-text-primary transition-colors focus-visible:outline-2 focus-visible:outline-accent"
           >
-            Lewati — Kirim Foto Saja
+            Lewati — Selesai & Kirim Foto Saja
           </button>
         )}
-      </div>
+      </footer>
     </main>
   );
 }

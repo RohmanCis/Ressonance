@@ -138,7 +138,7 @@ async function main() {
 
   // 3. Frame select → Capture (no frame)
   await flow.startTimespan({ stepName: "3. Frame select → Capture" });
-  await clickByText(page, "button", "Tanpa Frame, lanjut");
+  await clickByText(page, "button", "Tanpa Frame");
   await waitText(page, "Jepret foto");
   await flow.endTimespan();
 
@@ -153,19 +153,19 @@ async function main() {
   // 5. Review + sync
   await flow.startTimespan({ stepName: "5. Photo review + sync" });
   await clickByText(page, "button", "Lanjut →");
-  await waitText(page, "Foto kamu");
-  await clickByText(page, "button", "Kirim & Lanjut");
+  await waitText(page, "Foto Pilihanmu");
+  await clickByText(page, "button", "Simpan & Lanjut ke Pesan Suara →");
   await waitText(page, "Tinggalkan Pesan Suara");
   await flow.endTimespan();
 
-  // 6. Voice: record 1.6s (mocked backend accepts) → submit → Done
+  // 6. Voice: record ~6s (client blocks submit under 5s) → submit → Done
   await flow.startTimespan({ stepName: "6. Voice record + submit → Done" });
-  await clickByText(page, "button", "Rekam pesan suara");
-  await waitText(page, "Merekam");
-  await new Promise((r) => setTimeout(r, 1600));
-  await clickByText(page, "button", "Stop rekaman");
-  await waitText(page, "Durasi:");
-  await clickByText(page, "button", "Kirim Pesan Suara");
+  await clickByText(page, "button", "Mulai rekam pesan suara");
+  await waitText(page, "Hentikan rekaman");
+  await new Promise((r) => setTimeout(r, 6000));
+  await clickByText(page, "button", "Hentikan rekaman");
+  await waitText(page, "detik");
+  await clickByText(page, "button", "Kirim Pesan Suara →");
   await waitTextGone(page, "Tinggalkan Pesan Suara");
   await flow.endTimespan();
 

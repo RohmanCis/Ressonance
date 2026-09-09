@@ -2,7 +2,7 @@
 
 Non-canonical QA note. Describes the minimal Playwright smoke foundation only.
 It does not define product behavior, screens, or states; those are owned by
-docs/DESIGN.md and docs/UX_FLOW.md and the rest of the canonical set.
+docs/DESIGN.md and the rest of the canonical set.
 
 ## Prerequisites
 

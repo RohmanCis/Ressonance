@@ -1,31 +1,24 @@
-﻿# Result: Execute M2 + M6 (M4 No-Op) — Guest Flow UI
+# Result: Tech debt C11–C14 — cosmetic cleanups, zero design change
 
-**Status:** DONE
+Status: COMPLETE
 
-## M4 confirmation
-Verified, no edit: `components/guest/screens/VoiceRecordingScreen.tsx` (lines 184–194) — while `recording`, the mic/stop button renders `bg-error text-text-primary` with the lucide `Square` icon and `aria-label="Stop rekaman"`. Already matches the approved After. No change made.
+## Changes
 
-## Files changed
-- `components/guest/screens/Capture.tsx` — M2: "Ganti kamera" + "Pilih foto" buttons `h-11 w-11` → `h-12 w-12` (48px), icons `h-5 w-5` → `h-[22px] w-[22px]`. Pending-strip retry hit area `h-11 w-11` → `h-12 w-12` (geometry survives: growth extends up into the 28px `pt-7` pad and left over the item's own 48px thumbnail; 8px neighbor gap untouched; comment updated). Timer pill left as-is — no optical collision (dock row is flex with `justify-between`; 48px buttons balance the 72px shutter).
-- `components/guest/screens/PhotoReview.tsx` — M2: delete + retake corner hit areas `h-11 w-11` → `h-12 w-12` (growth extends into the tile's own image; visual chips stay 28px corner-anchored; comment updated).
-- `components/guest-event-entry.tsx` — M6: all guest screen renders wrapped in `screen()` — a `<div key={screenKey} className="animate-screen-enter">`. Key derived per distinct screen; the nine pre-session status variants share one `"pre-session"` key so PreSession never remounts mid-form (focus/name preserved). Enter-only animation: outgoing screens unmount with the state swap as today, keeping stateful screens (camera) single-mounted. Focus unchanged — each screen focuses its own heading on mount.
-- `app/globals.css` — `.animate-screen-enter { animation: fade-up var(--motion-slow) ease-out both; }` reusing the existing `fade-up` keyframe (`translateY(12px)→0, opacity 0→1` — exactly the approved incoming spec) at 350ms ease-out, transform+opacity only. Added to the existing `prefers-reduced-motion` neutralization block (animation:none, opacity:1, transform:none).
+- `components/guest/screens/Capture.tsx:163` (C11): `aria-label` on the photo counter changed from `Sisa {budgetRemaining} dari {totalBudget} foto` → `Foto {budgetRemaining} dari {totalBudget}`, mirroring the visual order (FOTO prefix). `aria-live="polite"`, visual markup, `canAdvance`, and `localBudgetRemaining` untouched.
+- `app/globals.css` (C13): removed `--animate-spin-tape` (was line 46) and `--animate-wave-pulse` (was line 47) theme tokens, plus their `@keyframes spin-tape` / `@keyframes wave-pulse` blocks (were lines 158-168). Grep-verified unused in ts/tsx source (only matches were globals.css itself and the static artifact `component-catalog.html`). No other token/keyframe touched.
+- `components/guest/screens/VoiceRecordingScreen.tsx:254` (C14): equalizer-bar class `transition-all duration-300` → `transition-[height,background-color] duration-300`. Pulse animation, colors, progress bar untouched.
+- C12: verified NO-OP. `app/globals.css` `--font-mono` already resolves to DM Mono (`var(--font-dm-mono), DM Mono, ...`), so `font-mono` classes render DM Mono already. No change made.
 
-Deviation note: the approved After also specified an outgoing `translateY(-8px)` fade-out. Implemented enter-only (task explicitly allowed "per-screen enter animation") because a true exit phase requires dual-mounting the outgoing screen for 350ms — a remount/teardown hazard for the camera screen. Visual result matches the preview's perceived direction of travel.
+## Validation (single lane, in order)
 
-## Validation
-- `npm run typecheck` — PASS.
-- `npx vitest run` — PASS, 48 files / 381 tests, 0 failures (serialized, single run). AGENTS.md baseline cites 384; no test files were touched by this change and all 48 files pass — baseline count appears stale.
-- `npx playwright test e2e/mobile-media-qa.spec.ts` — PASS, 19/19 (3.5m). Keyboard-nav, locator, and full guest-flow assertions all green — no e2e conflicts from the size/transition changes.
+1. `npm run typecheck` — PASS
+2. `npx vitest run lib/pending-photos.test.ts` — PASS (23/23)
+3. `npx playwright test e2e/mobile-media-qa.spec.ts` — PASS (19/19, 4.5m) — includes counter usage + voice screen coverage
 
-## Blockers
-- None.
+## Deviations
 
-## SSOT conflict
-- None. M6 values taken from DESIGN.md §4 (`--motion-slow` 350ms, ease-out, transform+opacity, reduced-motion zero) as instructed.
-
-## Architecture drift
-- None — no deps, no endpoints, no schema; token-system CSS + class changes only.
+None. Out-of-scope files (docs/, supabase/migrations/, AGENTS.md) untouched.
 
 ## Next step
-- Owner/orchestrator review of the diff. Optional follow-up: if a true outgoing exit animation is ever wanted, it needs a dual-mount transition manager — deferred deliberately (see deviation note).
+
+None required from this task. Budget logic and all other debt items per task scope left as-is.

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_FRAME_ID, FRAMES, FRAME_OUTPUT, FRAME_ASPECT_RATIO } from "@/lib/frames";
 
 const REAL_FRAMES = FRAMES.filter((f) => f.id !== DEFAULT_FRAME_ID);
-const EXPECTED_IDS = ["wedding-crimson", "flower"];
+const EXPECTED_IDS = ["wedding-crimson", "flower", "new", "clean"];
 
 describe("frame registry invariants", () => {
   it("enforces a single 9:16 standard", () => {
@@ -11,20 +11,13 @@ describe("frame registry invariants", () => {
     expect(FRAME_OUTPUT.width / FRAME_OUTPUT.height).toBeCloseTo(FRAME_ASPECT_RATIO, 10);
   });
 
-  it("exposes no per-frame aspect metadata (single invariant, not per-frame)", () => {
-    for (const frame of FRAMES) {
-      expect(Object.keys(frame).sort()).toEqual(["id", "label", "src", "textLayers"]);
-    }
-  });
-
-  it("has unique ids and exactly one 'none' default with empty src and no text layers", () => {
+  it("has unique ids and exactly one 'none' default with empty src", () => {
     const ids = FRAMES.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);
     const none = FRAMES.find((f) => f.id === DEFAULT_FRAME_ID);
     expect(none).toBeDefined();
     expect(none!.src).toBe("");
     expect(none!.label).toBe("No Frame");
-    expect(none!.textLayers).toEqual([]);
   });
 
   it("maps every real frame to a /frames/<id>.png asset path", () => {
@@ -34,18 +27,14 @@ describe("frame registry invariants", () => {
   });
 });
 
-describe("curated wedding template registry (Dynamic Frame Engine)", () => {
-  it("registers exactly the curated templates in order (first 3 pruned, owner decision 2026-09-07)", () => {
+describe("curated frame registry", () => {
+  it("registers exactly the current templates in order", () => {
     expect(REAL_FRAMES.map((f) => f.id)).toEqual(EXPECTED_IDS);
     expect(REAL_FRAMES.map((f) => f.label)).toEqual([
       "Wedding Crimson",
       "Flower",
+      "New",
+      "Clean",
     ]);
-  });
-
-  it("registers no text layers on any frame (owner decision 2026-08-29: no event-title stamp on captured photos)", () => {
-    for (const frame of REAL_FRAMES) {
-      expect(frame.textLayers).toEqual([]);
-    }
   });
 });

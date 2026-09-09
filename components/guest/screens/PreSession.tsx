@@ -112,12 +112,14 @@ export function PreSession({
         {/* STATUS ALERTS */}
         {blocked && (
           <Status
+            variant="neutral"
             title="Acara ini sudah selesai"
             message="Acaranya sudah selesai, jadi foto dan pesan baru nggak bisa dikirim lagi."
           />
         )}
         {failed && (
           <Status
+            variant="error"
             title={state === "invalid" ? "Cek nama kamu" : "Gagal memulai sesi"}
             message={message}
           />
@@ -159,24 +161,34 @@ export function PreSession({
         {/* FORM SECTION */}
         <form
           onSubmit={onStart}
-          className="mt-8 space-y-5"
+          className="mt-8 space-y-6"
           aria-busy={state === "starting"}
         >
           <div className="space-y-1.5">
-            <label
-              htmlFor="guest-name"
-              className="block text-xs font-medium text-text-secondary"
-            >
-              Namamu
-            </label>
+            <div className="flex items-center justify-between">
+              <label
+                htmlFor="guest-name"
+                className="block text-xs font-medium text-text-secondary"
+              >
+                Namamu
+              </label>
+              <span className="text-[11px] text-text-muted font-normal">
+                Opsional
+              </span>
+            </div>
             <input
               id="guest-name"
               name="guest_name"
+              type="text"
+              autoComplete="nickname"
+              autoCapitalize="words"
+              spellCheck={false}
+              maxLength={100}
               placeholder="Contoh: Andi"
               value={name}
               onChange={(e) => onNameChange(e.target.value)}
               disabled={blocked || state === "starting"}
-              className="h-12 w-full rounded-none border-0 border-b border-border bg-transparent px-0 pb-2 text-base text-text-primary placeholder:text-text-muted/50 focus:border-accent focus:outline-none"
+              className="h-12 w-full rounded-none border-0 border-b border-border bg-transparent px-0 pb-2 text-base text-text-primary placeholder:text-sm placeholder:text-text-muted transition-colors duration-fast focus:border-accent focus:outline-none"
               aria-describedby="name-help"
             />
             <p id="name-help" className="text-xs text-text-secondary leading-relaxed pt-1">
@@ -210,12 +222,14 @@ export function PreSession({
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-bg-base px-4 py-8 pb-[calc(2rem+env(safe-area-inset-bottom))] text-text-primary sm:px-6">
+    <main className="relative flex min-h-dvh flex-col items-center justify-start sm:justify-center overflow-y-auto bg-bg-base px-4 py-8 pb-[calc(2rem+env(safe-area-inset-bottom))] text-text-primary sm:px-6">
       {/* Ambient orbs + grain (DESIGN.md §2) */}
       <AmbientBackdrop />
 
       {/* CONTENT WRAPPER */}
-      <div className="relative z-10 w-full flex justify-center">{children}</div>
+      <div className="relative z-10 w-full flex justify-center my-auto">
+        {children}
+      </div>
     </main>
   );
 }
@@ -232,17 +246,23 @@ function Status({
   title,
   message,
   retry,
+  variant = "error",
 }: {
   title: string;
   message: string;
   retry?: () => void;
+  variant?: "error" | "neutral";
 }) {
   return (
     <section
       role="alert"
       className="mt-6 rounded-xl border border-border bg-bg-elevated/90 p-4 text-center"
     >
-      <h2 className="font-display text-lg font-semibold text-error">
+      <h2
+        className={`font-display text-lg font-semibold ${
+          variant === "error" ? "text-error" : "text-text-primary"
+        }`}
+      >
         {title}
       </h2>
       <p className="mt-1.5 text-xs text-text-secondary leading-relaxed">

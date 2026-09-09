@@ -61,7 +61,7 @@ function LoadingDots() {
 
 /**
  * DONE — terminal screen of the guest flow (DESIGN.md §5.6). Disposable-camera
- * thermal-print sequence (T034): loading text (1.0s) → camera drops in (2.5s)
+ * thermal-print sequence (T035–T040): loading text (1.0s) → camera drops in (2.5s)
  * → keepsake photo prints downward from the film slot via a 5s clip-path
  * reveal (3.2s; voice chip uses a 2s reveal) → thank-you + photo settles
  * rotate(-1.5deg) (8.5s) → keepsake card (9.0s). Condition C (nothing

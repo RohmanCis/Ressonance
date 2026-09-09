@@ -43,8 +43,6 @@
   --font-sans: var(--font-dm-sans), DM Sans, ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-dm-mono), DM Mono, ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-script: var(--font-pinyon), "Pinyon Script", cursive;
-  --animate-spin-tape: spin-tape 2s linear infinite;
-  --animate-wave-pulse: wave-pulse 900ms ease-in-out infinite;
   --animate-develop: polaroid-develop 800ms ease-out both;
   --duration-fast: var(--motion-fast);
   --duration-base: var(--motion-base);
@@ -154,18 +152,6 @@ body {
 }
 
 /* --- Luxury Analog keyframes -------------------------------------------- */
-
-/* Cassette spool rotation. */
-@keyframes spin-tape {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* Audio bar pulse. */
-@keyframes wave-pulse {
-  0%, 100% { transform: scaleY(0.3); }
-  50% { transform: scaleY(1); }
-}
 
 /* Polaroid fade-in. */
 @keyframes polaroid-develop {

@@ -18,13 +18,12 @@ Read only the documents relevant to the task, plus this file. Do not duplicate t
 | 4 | `docs/TECHNICAL_DESIGN.md` | System boundaries, security, storage, sessions, transactions, testing strategy |
 | 5 | `docs/API_CONTRACT.md` | HTTP paths, methods, payloads, status codes, errors, auth behavior |
 | 6 | `docs/DESIGN.md` — UI/design system, canonical | Tokens, typography, motion, guest/admin visual system, component inventory |
-| 7 | `docs/UX_FLOW.md` — guest and admin flow reference | Screen-by-screen guest/admin flow and QA edge cases |
 
 Precedence follows the table for conflicts, except a higher document cannot silently invalidate a lower document's explicit locked constraint. Report the conflict. `AGENTS.md` never overrides canonical documents.
 
 Authority is confined to this repository. External projects, workspaces, absolute paths outside the repository, imported external requirements, and external AGENTS files are invalid authority and must never be used to change, challenge, or QA this repository's behavior. Do not read or reference them.
 
-Current UI status: `docs/DESIGN.md` is CANONICAL (approved 2026-08-20) — single source of truth for all UI/design decisions. `docs/UX_FLOW.md` is the flow reference.
+Current UI status: `docs/DESIGN.md` is CANONICAL (approved 2026-08-20) — single source of truth for all UI/design decisions, including guest/admin flow.
 Current API status: `docs/API_CONTRACT.md` is LOCKED and approved for implementation.
 
 ## 3. Locked product invariants
@@ -96,7 +95,7 @@ Environment: Supabase credentials and rate-limit/upload caps come from env (see 
 - **Product/domain task:** `docs/PRD.md` relevant sections; `docs/db_scheme.md` for data impact.
 - **Database/migration task:** `docs/db_scheme.md` + relevant `docs/TECHNICAL_DESIGN.md` sections.
 - **API/backend task:** `docs/API_CONTRACT.md` + relevant `docs/TECHNICAL_DESIGN.md` and `docs/ARCHITECTURE_DECISIONS.md` sections.
-- **UI task:** docs/DESIGN.md for the visual system + docs/UX_FLOW.md for flow + relevant PRD/API sections; route visual work to Designer.
+- **UI task:** docs/DESIGN.md for the visual system and flow + relevant PRD/API sections; route visual work to Designer.
 - **Cross-cutting/security task:** relevant sections of all affected canonical documents.
 
 Inspect existing code and conventions after loading context. Read the governing document before modifying code. Do not load every document by default.
@@ -183,21 +182,24 @@ Never trust frontend limits, localStorage, client MIME/duration, public storage 
 **Architecture notes for agents:**
 
 - Guest flow: sequential full-screen states in `components/guest-event-entry.tsx` (PRE_SESSION → FRAME_SELECT → CAPTURE → PHOTO_REVIEW → VOICE → DONE), screens in `components/guest/screens/`.
+- **Guest UI redesign (2026-09-09, uncommitted, owner-approved to keep):** new copy register, Review→Camera back navigation, client-side <5s voice submit block (server validation unchanged), changed capture auto-advance semantics, 1920×1080 ideal camera constraints, haptics, amber/pulse voice design. E2e selectors follow the implementation. Ratified into DESIGN.md 2026-09-09 (see below).
 - Submission seam (ADR-012): `lib/guest-submission-auth.ts` + `lib/guest-submission-pipeline.ts` + per-kind payload adapters; routes are config-only.
-- Frame selection/compositing is client-side UX only (`lib/frames.ts`).
+- Frame selection/compositing is client-side UX only (`lib/frames.ts`); frame registry carries 4 frames (none, wedding-crimson, flower, new, clean); frame-asset failure falls back unframed and clears `selectedFrame`.
 - Admin surfaces: sign-in, event index, dashboard, access/QR — `components/admin/`.
-- Capture screen: 3-zone photobooth studio (docs/DESIGN.md §5.3); review overlay uses shadcn/Radix Dialog (owns focus trap/restore).
+- Capture screen: 3-zone photobooth studio (docs/DESIGN.md §5.3) with container-query 9:16 viewport; review overlay uses shadcn/Radix Dialog (owns focus trap/restore).
 - Signed media URLs are fetched fresh per preview/download, never cached client-side; TTL 900s is owner-locked.
 
 **Database:** migrations `0001`–`0004`, `0007`–`0009` in repo (live DB records `0001`–`0008`; `0008` storage RLS applied manually, repo file documentation-only; `0009` drops unused guest-messages). All migrations idempotent. Live Supabase verified (schema tests + `PLAYWRIGHT_LIVE=1`).
 
 **Known-fragile pattern:** `admin-ui.tsx` gates the ACTIVE_EVENT_EXISTS recovery link off `error.toLowerCase().includes("udah ada")` — re-check on any copy change.
 
+**SSOT divergence: RESOLVED 2026-09-09.** All implementation-vs-docs divergences were ratified into DESIGN.md (copy register §5.2–§5.6, Review→Camera back-nav §5.4, auto-advance semantics §5.3, camera constraints §5.3, haptics §4, amber/pulse voice styling via the §2 Amber semantic amendment, client-side <5s voice submit block §5.5, frame registry §5.2 = 4 templates + none). docs/UX_FLOW.md deleted by owner decision — DESIGN.md is the sole UI/flow reference (compact flow state list at §5 head). DESIGN.md also distilled for brevity (207 lines). No known code-vs-docs divergence remains.
+
 **Deferred LOW (owner decision pending):** API-level sign-in rate limiting.
 
-**Outstanding:** pre-deploy blockers `TRUSTED_PROXY=1` + `CRON_SECRET` in Vercel, with live-DB re-verification (`npm run test:postgres` + `PLAYWRIGHT_LIVE=1 npm run e2e`, covers ILIKE search) in the same window.
+**Outstanding:** pre-deploy blockers `TRUSTED_PROXY=1` + `CRON_SECRET` in Vercel, with live-DB re-verification (`npm run test:postgres` + `PLAYWRIGHT_LIVE=1 npm run e2e`, covers ILIKE search) in the same window; full `npm run e2e` (all suites) — DEFERRED by owner 2026-09-09 until UI/UX polish/revision is finished. Cosmetic debt C11–C14 RESOLVED 2026-09-09 (Capture counter aria-label synced to visual; DM Mono verified already token-backed, no-op; unused spin-tape/wave-pulse keyframes removed; equalizer `transition-all` → explicit property list).
 
-**Last validated (2026-09-06):** typecheck PASS; vitest 384/384 (48 files); e2e 37 passed / 1 skipped (live-backend, expected). Lint baseline: 1 pre-existing `any` error in `e2e/print-qa.spec.ts` + pre-existing warnings.
+**Last validated (2026-09-09):** typecheck PASS; vitest 375/375 (48 files); e2e `mobile-media-qa.spec.ts` 19 passed / 0 failed. Full e2e suite not re-run after the guest UI redesign. Lint baseline: 1 pre-existing `any` error in `e2e/print-qa.spec.ts` + pre-existing warnings.
 
 **Owner decisions (2026-08-15):** Supabase managed backups only; structured logs + Vercel logs only (no Sentry/OTel); no guest-facing retention messaging; APAC Supabase region ratified; signed URL TTL 900s; ARCHIVED post-MVP.
 
