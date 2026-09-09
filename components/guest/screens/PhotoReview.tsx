@@ -93,16 +93,16 @@ export function PhotoReview({
                   Foto {index + 1}
                 </p>
                 <PendingStatusBadge status={photo.status} />
-                {/* 44×44 hit area: invisible padded button, visual chip stays
+                {/* 48×48 hit area: invisible padded button, visual chip stays
                     28px anchored at the tile corner (AGENTS.md §6). The extra
-                    16px extends into the tile's own non-interactive image and
+                    20px extends into the tile's own non-interactive image and
                     the grid gap — never onto neighboring controls. */}
                 <button
                   type="button"
                   onClick={() => onDeletePhoto(photo.id)}
                   disabled={!canDeletePhoto(photo.status)}
                   aria-label={`Hapus foto ${index + 1}`}
-                  className="group absolute -right-1 -top-1 flex h-11 w-11 items-start justify-end rounded-full focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-45"
+                  className="group absolute -right-1 -top-1 flex h-12 w-12 items-start justify-end rounded-full focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-45"
                 >
                   <span
                     aria-hidden="true"
@@ -116,7 +116,7 @@ export function PhotoReview({
                     type="button"
                     onClick={() => onRetryPhoto(photo.id)}
                     aria-label={`Kirim ulang foto ${index + 1}: ${photo.errorMessage ?? "gagal terkirim"}`}
-                    className="group absolute -left-1 -top-1 flex h-11 w-11 items-start justify-start rounded-full focus-visible:outline-none"
+                    className="group absolute -left-1 -top-1 flex h-12 w-12 items-start justify-start rounded-full focus-visible:outline-none"
                   >
                     <span
                       aria-hidden="true"

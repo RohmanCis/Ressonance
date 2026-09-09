@@ -216,6 +216,12 @@ body {
 .animate-thermal-print-fast { animation: thermal-print 2s linear forwards; }
 .animate-thermal-settle { animation: thermal-settle 0.3s ease-out forwards; }
 .animate-fade-up     { animation: fade-up 0.5s ease-out forwards; }
+
+/* Guest screen-enter (M6, DESIGN.md §4): sequential-flow state changes fade/
+   slide in via the shared fade-up keyframe at --motion-slow (350ms) ease-out,
+   transform+opacity only. Outgoing screens unmount with the state swap —
+   enter-only keeps stateful screens (camera) single-mounted. */
+.animate-screen-enter { animation: fade-up var(--motion-slow) ease-out both; }
 .animate-leak-left  { animation: leak-left  1.2s ease-out forwards; }
 .animate-leak-right { animation: leak-right 1.5s ease-out forwards; }
 
@@ -234,7 +240,8 @@ body {
   .animate-thermal-print,
   .animate-thermal-print-fast,
   .animate-thermal-settle,
-  .animate-fade-up {
+  .animate-fade-up,
+  .animate-screen-enter {
     animation: none;
     opacity: 1;
     transform: none;

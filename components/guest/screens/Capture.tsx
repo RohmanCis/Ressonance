@@ -138,13 +138,13 @@ export function Capture({
               <button
                 type="button"
                 onClick={camera.switchCamera}
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-bg-base/60 backdrop-blur-md border border-border/60 text-sm font-semibold text-text-primary shadow-lg transition active:scale-95 focus-visible:outline-2 focus-visible:outline-accent"
+                className="flex h-12 w-12 items-center justify-center rounded-full bg-bg-base/60 backdrop-blur-md border border-border/60 text-sm font-semibold text-text-primary shadow-lg transition active:scale-95 focus-visible:outline-2 focus-visible:outline-accent"
                 aria-label="Ganti kamera"
               >
-                <RotateCcw className="h-5 w-5" aria-hidden="true" />
+                <RotateCcw className="h-[22px] w-[22px]" aria-hidden="true" />
               </button>
             ) : (
-              <div className="h-11 w-11" />
+              <div className="h-12 w-12" />
             )}
           </div>
 
@@ -218,10 +218,10 @@ export function Capture({
             <div className="flex-1 flex justify-start">
               <label
                 aria-label="Pilih foto"
-                className="flex h-11 w-11 items-center justify-center rounded-xl bg-bg-base/70 backdrop-blur-md border border-border/70 text-text-secondary transition active:scale-95 cursor-pointer hover:text-text-primary focus-within:outline-2 focus-within:outline-accent shadow-lg"
+                className="flex h-12 w-12 items-center justify-center rounded-xl bg-bg-base/70 backdrop-blur-md border border-border/70 text-text-secondary transition active:scale-95 cursor-pointer hover:text-text-primary focus-within:outline-2 focus-within:outline-accent shadow-lg"
               >
                 <span className="sr-only">Pilih foto</span>
-                <ImagePlus className="h-5 w-5" aria-hidden="true" />
+                <ImagePlus className="h-[22px] w-[22px]" aria-hidden="true" />
                 <input
                   className="sr-only"
                   type="file"
@@ -376,15 +376,15 @@ function PendingStrip({
           </button>
           <PendingStatusBadge status={photo.status} />
           {photo.status === "error" && (
-            // 44×44 hit area: invisible padded button; the 20px visual chip
+            // 48×48 hit area: invisible padded button; the 20px visual chip
             // keeps its exact corner position (bottom-right of the box). The
-            // zone extends 24px up (free space) and 24px left over the top
+            // zone extends 28px up (free space) and 28px left over the top
             // strip of THIS photo's own thumbnail only — never onto the
             // neighboring item (gap is 8px; right overhang stays 4px).
             <button
               type="button"
               onClick={() => onRetry(photo.id)}
-              className="group absolute -right-1 -top-7 flex h-11 w-11 items-end justify-end focus-visible:outline-none"
+              className="group absolute -right-1 -top-7 flex h-12 w-12 items-end justify-end focus-visible:outline-none"
               aria-label="Kirim ulang"
             >
               <span

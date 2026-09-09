@@ -532,9 +532,28 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // M6 screen transition (DESIGN.md §4): each sequential-flow state mounts
+  // inside a keyed wrapper that plays the 350ms fade-up enter animation
+  // (transform+opacity only; reduced-motion zeroes it in globals.css). The
+  // key changes only between distinct screens — pre-session status variants
+  // (ready/starting/error…) share one key so PreSession never remounts
+  // mid-form. Outgoing screens unmount with the swap, keeping stateful
+  // screens (camera) single-mounted. Focus is unaffected — each screen
+  // focuses its own heading on mount.
+  const PRE_SESSION_STATES: ViewState[] = [
+    "loading", "ready", "closed", "not-found", "starting",
+    "invalid", "rate-limited", "offline", "unexpected",
+  ];
+  const screenKey = PRE_SESSION_STATES.includes(state) ? "pre-session" : state;
+  const screen = (node: React.ReactNode) => (
+    <div key={screenKey} className="animate-screen-enter">
+      {node}
+    </div>
+  );
+
   // --- Render: pre-session states ---
   if (state !== "frame-select" && state !== "post-session-loading" && state !== "post-session" && state !== "photo-review" && state !== "voice-note" && state !== "done") {
-    return (
+    return screen(
       <PreSession
         event={event}
         name={name}
@@ -555,12 +574,12 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
 
   // --- Render: frame selection ---
   if (state === "frame-select") {
-    return <FrameSelection eventTitle={event!.title} onFrameConfirm={handleFrameSelect} />;
+    return screen(<FrameSelection eventTitle={event!.title} onFrameConfirm={handleFrameSelect} />);
   }
 
   // --- Render: post-session loading ---
   if (state === "post-session-loading" && session) {
-    return (
+    return screen(
       <main className="min-h-dvh bg-bg-base px-5 pt-[calc(4rem+env(safe-area-inset-top))] pb-[calc(2rem+env(safe-area-inset-bottom))] text-text-primary sm:px-8">
         <div className="mx-auto w-full max-w-[30rem]">
           <header>
@@ -581,7 +600,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
 
   // --- Render: capture (camera only — voice is a dedicated later step) ---
   if (state === "post-session" && session) {
-    return (
+    return screen(
       <Capture
         event={event!}
         session={session}
@@ -614,7 +633,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
 
   // --- Render: photo review ---
   if (state === "photo-review" && session) {
-    return (
+    return screen(
       <PhotoReview
         event={event!}
         photos={pendingPhotos}
@@ -629,7 +648,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
 
   // --- Render: voice note (dedicated full-screen step, DESIGN.md §5.5) ---
   if (state === "voice-note" && session) {
-    return (
+    return screen(
       <VoiceRecordingScreen
         event={event!}
         session={session}
@@ -652,7 +671,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
     // Keepsake: last server-confirmed capture, still in client memory (§5.4).
     const keepsakeUrl =
       [...pendingPhotos].reverse().find((p) => p.status === "confirmed")?.previewUrl ?? null;
-    return (
+    return screen(
       <Done
         eventTitle={event.title}
         keepsakeUrl={keepsakeUrl}
