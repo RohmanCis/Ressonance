@@ -1,38 +1,21 @@
-﻿# Task: Tech debt C11–C14 — cosmetic cleanups, zero design change
+﻿# Task: Apply migration 0009 to live Supabase DB
 
-Read `AGENTS.md` §6 first. These are small mechanical cleanups. Do NOT change any visual design, copy, layout, or behavior. No new dependencies, no canonical doc edits, no migration edits.
+## Context
+- Repo: D:\2026\ressonance. Remote: https://github.com/RohmanCis/Ressonance (verify with `git remote -v`).
+- Live DB records migrations 0001–0008. Local repo has 0001–0004, 0007–0009 (0005/0006 deleted intentionally during guest-message feature removal).
+- Target: apply `supabase/migrations/0009_drop_guest_messages.sql` (`DROP TABLE IF EXISTS public.guest_messages;` — idempotent) to live DB.
 
-## C11 — Capture counter aria-label sync (`components/guest/screens/Capture.tsx:160-167`)
+## Steps
+1. Read AGENTS.md (repo root) and `supabase/migrations/0009_drop_guest_messages.sql`.
+2. `npx supabase db push --linked`
+3. If it fails because not linked: `npx supabase link --project-ref gwczcwlysvymuomsqhdc`, then retry push.
+4. KNOWN RISK: remote history has 0005/0006 which are absent locally (deleted intentionally). `db push` may warn/error about remote-only migrations or prompt for repair. Do NOT run `supabase migration repair` without reporting first. If push prompts interactively or fails on history mismatch, STOP and report the exact output.
+5. If `supabase link` requires login (no access token), STOP and report — do not handle credentials.
 
-The visual counter reads `FOTO {budgetRemaining} / {totalBudget}` but the `aria-label` says "Sisa {budgetRemaining} dari {totalBudget} foto" — direction mismatch (visual shows "FOTO" prefix first). Fix: make the accessible name mirror the visual exactly: `aria-label={`Foto ${budgetRemaining} dari ${totalBudget}`}` (keep `aria-live="polite"` and the visual markup unchanged). Leave `canAdvance` logic (Capture.tsx:92) and `localBudgetRemaining` (lib/pending-photos.ts) untouched — both correct and tested.
+## Constraints
+- Do NOT modify any file in the repo (no code, no migrations, no docs, no handoff files except result.md).
+- Do NOT run destructive SQL beyond what `db push` does with migration 0009.
+- Do NOT print secrets.
 
-## C12 — NO-OP (verified)
-
-`--font-mono` in app/globals.css:44 already resolves to DM Mono (`var(--font-dm-mono), DM Mono, ...`), so `font-mono` classes in PhotoReview.tsx and Capture.tsx already render DM Mono per DESIGN.md §3. Do nothing. Record this in result.md.
-
-## C13 — Remove unused keyframes (`app/globals.css`)
-
-Delete the two unused custom animations and their keyframes (verified unused — grep the whole repo for `animate-spin-tape` and `animate-wave-pulse` usage in tsx/ts first to confirm; only the css definitions should match):
-- Line 46: `--animate-spin-tape: spin-tape 2s linear infinite;`
-- Line 47: `--animate-wave-pulse: wave-pulse 900ms ease-in-out infinite;`
-- Lines ~159-165: `@keyframes spin-tape { ... }` and `@keyframes wave-pulse { ... }` blocks.
-Do not touch any other token/keyframe.
-
-## C14 — Equalizer bar transition (`components/guest/screens/VoiceRecordingScreen.tsx:~254`)
-
-The 9 decorative equalizer bars use `transition-all duration-300`. Replace with an explicit property list for what actually changes when toggling record state (height via inline style, background-color + height via class): `transition-[height,background-color] duration-300`. Visual result identical; removes the transition-all anti-pattern on continuously animating elements. Do not touch the pulse animation, colors, or progress bar (already scaleX-based).
-
-## Validation (single lane, in order)
-
-1. `npm run typecheck` — PASS
-2. `npx vitest run lib/pending-photos.test.ts` — PASS (guard: C11 must not touch budget logic)
-3. `npx playwright test e2e/mobile-media-qa.spec.ts` — ALL PASS (generous timeout; counter aria-label and voice screen are covered here)
-
-## Out of scope
-
-- docs/, supabase/migrations/, AGENTS.md
-- Any visual/copy/behavior change beyond the exact edits above
-
-## Report
-
-Write `.opencode/handoff/result.md` (overwrite): status, files changed, validation results, deviations, next step.
+## Report in result.md
+- Success/failure of migration, full command output, any prompts encountered, final verification (e.g. `npx supabase migration list` or equivalent showing 0009 applied).

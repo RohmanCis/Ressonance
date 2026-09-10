@@ -189,7 +189,7 @@ Never trust frontend limits, localStorage, client MIME/duration, public storage 
 - Capture screen: 3-zone photobooth studio (docs/DESIGN.md §5.3) with container-query 9:16 viewport; review overlay uses shadcn/Radix Dialog (owns focus trap/restore).
 - Signed media URLs are fetched fresh per preview/download, never cached client-side; TTL 900s is owner-locked.
 
-**Database:** migrations `0001`–`0004`, `0007`–`0009` in repo (live DB records `0001`–`0008`; `0008` storage RLS applied manually, repo file documentation-only; `0009` drops unused guest-messages). All migrations idempotent. Live Supabase verified (schema tests + `PLAYWRIGHT_LIVE=1`).
+**Database:** migrations `0001`–`0004`, `0007`–`0009` in repo and applied to live DB (`0005`/`0006` deleted from repo during guest-message feature removal; their remote history entries repaired to `reverted` 2026-09-11, so `supabase db push` works normally; `0009` verified applied — `guest_messages` dropped). All migrations idempotent. Live Supabase verified (schema tests + `PLAYWRIGHT_LIVE=1`).
 
 **Known-fragile pattern:** `admin-ui.tsx` gates the ACTIVE_EVENT_EXISTS recovery link off `error.toLowerCase().includes("udah ada")` — re-check on any copy change.
 
@@ -199,7 +199,7 @@ Never trust frontend limits, localStorage, client MIME/duration, public storage 
 
 **Outstanding:** none blocking. Pre-deploy blockers ALL CLOSED (2026-09-11): `TRUSTED_PROXY=1` ✅ verified; `CRON_SECRET` ✅ verified (401 without bearer, 200 with); live-DB re-verification ✅ (schema 10/10, concurrency 4/4 in isolated `guestbook_test`; use `TEST_DATABASE_URL` pointing there — destructive suites DROP/re-apply schema); deployed live at `https://ressonance-one.vercel.app` (note: `ressonance.vercel.app` is taken by another party — do not use). `NEXT_PUBLIC_APP_URL` set accordingly. Full e2e suite ✅ re-run 2026-09-11 against production (38 tests; QA auth-cookie domain fix in `admin-index.spec.ts`).
 
-**Remaining (non-blocking):** C5 ffprobe runtime proof — not directly verified (media e2e paths are mocked); one manual voice upload in production closes this. Migration `0009` repo-only, not yet applied to live DB. Full e2e suite — DONE 2026-09-11 (see Last validated). Cosmetic debt C11–C14 RESOLVED 2026-09-09 (Capture counter aria-label synced to visual; DM Mono verified already token-backed, no-op; unused spin-tape/wave-pulse keyframes removed; equalizer `transition-all` → explicit property list).
+**Remaining (non-blocking):** C5 ffprobe runtime proof — not directly verified (media e2e paths are mocked); one manual voice upload in production closes this. Migration `0009` applied to live DB and verified (`guest_messages` dropped; remote history repaired 2026-09-11). Full e2e suite — DONE 2026-09-11 (see Last validated). Cosmetic debt C11–C14 RESOLVED 2026-09-09 (Capture counter aria-label synced to visual; DM Mono verified already token-backed, no-op; unused spin-tape/wave-pulse keyframes removed; equalizer `transition-all` → explicit property list).
 
 **Production:** https://ressonance-one.vercel.app
 

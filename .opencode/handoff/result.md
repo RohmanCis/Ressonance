@@ -1,24 +1,81 @@
-# Result: Tech debt C11–C14 — cosmetic cleanups, zero design change
+# Result: Apply migration 0009 to live Supabase DB
 
-Status: COMPLETE
+## Status
+**BLOCKED** — `db push` refused due to remote-only migration versions 0005/0006.
+No files modified in repo (only this result.md written).
 
-## Changes
+## Preconditions
+- Remote verified: `git remote -v` → `origin https://github.com/RohmanCis/Ressonance.git` (fetch+push). Matches task contract.
+- Read AGENTS.md and `supabase/migrations/0009_drop_guest_messages.sql`.
 
-- `components/guest/screens/Capture.tsx:163` (C11): `aria-label` on the photo counter changed from `Sisa {budgetRemaining} dari {totalBudget} foto` → `Foto {budgetRemaining} dari {totalBudget}`, mirroring the visual order (FOTO prefix). `aria-live="polite"`, visual markup, `canAdvance`, and `localBudgetRemaining` untouched.
-- `app/globals.css` (C13): removed `--animate-spin-tape` (was line 46) and `--animate-wave-pulse` (was line 47) theme tokens, plus their `@keyframes spin-tape` / `@keyframes wave-pulse` blocks (were lines 158-168). Grep-verified unused in ts/tsx source (only matches were globals.css itself and the static artifact `component-catalog.html`). No other token/keyframe touched.
-- `components/guest/screens/VoiceRecordingScreen.tsx:254` (C14): equalizer-bar class `transition-all duration-300` → `transition-[height,background-color] duration-300`. Pulse animation, colors, progress bar untouched.
-- C12: verified NO-OP. `app/globals.css` `--font-mono` already resolves to DM Mono (`var(--font-dm-mono), DM Mono, ...`), so `font-mono` classes render DM Mono already. No change made.
+## Migration file contents (`supabase/migrations/0009_drop_guest_messages.sql`)
+```sql
+-- Migration 0009: drop guest_messages (feature removed from MVP scope)
+--
+-- The guest message feature ("pesan & kesan") was removed from the MVP scope
+-- on 2026-08-20 (owner decision). Migrations 0005/0006 files were deleted from
+-- the repo during that removal; this migration cleans the live schema so the
+-- database matches the repo (schema-drift fix).
+--
+-- The table holds no rows and has no inbound foreign keys, so the drop is
+-- safe. The DROP is idempotent: re-running is a no-op.
+--
+-- Idempotent: safe to re-run.
 
-## Validation (single lane, in order)
+DROP TABLE IF EXISTS public.guest_messages;
+```
 
-1. `npm run typecheck` — PASS
-2. `npx vitest run lib/pending-photos.test.ts` — PASS (23/23)
-3. `npx playwright test e2e/mobile-media-qa.spec.ts` — PASS (19/19, 4.5m) — includes counter usage + voice screen coverage
+## Command 1: `npx supabase db push --linked`
+Output (exit non-zero):
+```
+Initialising login role...
+Connecting to remote database...
+Remote migration versions not found in local migrations directory.
+Make sure your local git repo is up-to-date. If the error persists, try repairing the migration history table:
+supabase migration repair --status reverted 0005 0006
 
-## Deviations
+And update local migrations to match remote database:
+supabase db pull
+```
+- This is the KNOWN RISK from task.md (remote history has 0005/0006, absent locally).
+- No interactive prompt was reached; the command failed at a pre-check.
+- Per task step 4: **STOPPED. No `migration repair`, no `db pull`, no history rewrite.**
 
-None. Out-of-scope files (docs/, supabase/migrations/, AGENTS.md) untouched.
+## Command 2: `npx supabase migration list` (read-only verification)
+Output:
+```
+Initialising login role...
+Connecting to remote database...
+
+   Local  | Remote | Time (UTC)
+  --------|--------|------------
+   `0001` | `0001` | `0001`
+   `0002` | `0002` | `0002`
+   `0003` | `0003` | `0003`
+   `0004` | `0004` | `0004`
+   ` `    | `0005` | `0005`
+   ` `    | `0006` | `0006`
+   `0007` | `0007` | `0007`
+   `0008` | `0008` | `0008`
+   `0009` | `0009` | `0009`
+```
+
+## Verification
+- Performed: `npx supabase migration list` (read-only).
+- Result: Remote migration history **already records `0009`** (Local and Remote both populated), while `0005`/`0006` are Remote-only.
+- Interpretation: `0009` appears already recorded on the remote `supabase_migrations.schema_migrations` table. `db push` cannot proceed anyway because remote-only `0005`/`0006` are absent locally.
+- NOT independently confirmed: whether `public.guest_messages` was actually dropped. `migration list` reports history only; the remote `0009` row could not be confirmed to be this exact file, and the table's existence was not queried (would require DB credentials/`db dump`).
+- Suggested orchestrator follow-up (do not run without approval): `SELECT to_regclass('public.guest_messages');` against live DB — `NULL` ⇒ table gone (0009 effective); non-null ⇒ table still present.
+
+## Blockers
+1. `db push` aborts on remote-only migration versions `0005`/`0006`. Repairing/deleting history is out of scope per task contract.
+2. Ambiguity: remote history shows `0009` applied, but actual table state unverified.
+
+## SSOT conflict
+None introduced. Note: AGENTS.md §12 states "Migration `0009` repo-only, not yet applied to live DB" — the remote migration history now shows `0009`, which diverges from that statement. Reported, not acted upon.
+
+## Architecture drift
+None.
 
 ## Next step
-
-None required from this task. Budget logic and all other debt items per task scope left as-is.
+Orchestrator decision required: (a) approve `supabase migration repair --status reverted 0005 0006` (or equivalent) to reconcile history, then re-push; and/or (b) confirm actual `guest_messages` table state via a read query before deciding. No further action taken.
