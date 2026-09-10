@@ -203,6 +203,8 @@ Never trust frontend limits, localStorage, client MIME/duration, public storage 
 
 **Production:** https://ressonance-one.vercel.app
 
+**Incident (2026-09-11, resolved):** POST `/api/events/{id}/session` 500 in production — pg 8.x maps `sslmode=require` to `verify-full`, rejecting Supavisor's certificate chain; every pg-pool request (session rate limit, photo/voice pipeline) failed fail-closed. Fix: production `DATABASE_URL` changed to `sslmode=no-verify` (Vercel env, redeployed, verified 201). `.env.example` documents this; local dev (5432, no sslmode) unaffected.
+
 **Last validated (2026-09-09):** typecheck PASS; vitest 375/375 (48 files); e2e `mobile-media-qa.spec.ts` 19 passed / 0 failed. Full e2e suite not re-run after the guest UI redesign. Lint baseline: 1 pre-existing `any` error in `e2e/print-qa.spec.ts` + pre-existing warnings.
 
 **Owner decisions (2026-08-15):** Supabase managed backups only; structured logs + Vercel logs only (no Sentry/OTel); no guest-facing retention messaging; APAC Supabase region ratified; signed URL TTL 900s; ARCHIVED post-MVP.
