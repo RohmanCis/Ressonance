@@ -490,6 +490,8 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
   const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(true);
   const [closing, setClosing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const [error, setError] = useState("");
   const [preview, setPreview] = useState<{ photos: Submission[]; name: string; index: number } | null>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
@@ -543,6 +545,28 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
       setError((e as Error).message);
     } finally {
       setClosing(false);
+    }
+  }
+
+  // DESIGN.md §6: destructive action — red, not gold. CLOSED events only.
+  async function deleteEvent() {
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      await api<{ deleted: boolean }>(`/api/admin/events/${publicId}/delete`, { method: "DELETE" });
+      router.replace("/admin");
+    } catch (e) {
+      const code = (e as Error).message;
+      setDeleteError(
+        code === "FORBIDDEN"
+          ? "Acara masih aktif. Tutup dulu sebelum menghapus."
+          : code === "NOT_FOUND"
+            ? "Acara udah nggak ada."
+            : code === "OFFLINE"
+              ? "Kamu lagi offline. Coba lagi pas konek."
+              : "Acaranya gagal dihapus. Aman buat coba lagi.",
+      );
+      setDeleting(false);
     }
   }
 
@@ -610,8 +634,8 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
                         {event.status === "ACTIVE" ? "Aktif" : "Selesai"}
                       </p>
                     </div>
-                    {event.status === "ACTIVE" && (
-                      <div className="mt-5 md:mt-0 md:flex md:justify-end">
+                    <div className="mt-5 md:mt-0 md:flex md:justify-end">
+                      {event.status === "ACTIVE" ? (
                         <Dialog>
                           <DialogTrigger asChild>
                             <Button disabled={closing} className="w-full md:w-auto">
@@ -642,8 +666,43 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
                             </DialogFooter>
                           </DialogContent>
                         </Dialog>
-                      </div>
-                    )}
+                      ) : (
+                        <Dialog onOpenChange={(open) => { if (!open) setDeleteError(""); }}>
+                          <DialogTrigger asChild>
+                            <button
+                              type="button"
+                              className={`min-h-11 w-full rounded-lg border border-red-500/20 bg-transparent px-4 text-xs font-medium text-red-400/70 transition duration-fast hover:border-red-500/40 hover:text-red-400 md:w-auto ${focusRing}`}
+                            >
+                              Hapus Event
+                            </button>
+                          </DialogTrigger>
+                          <DialogContent showCloseButton={false} className="border-border bg-bg-elevated text-text-primary">
+                            <DialogHeader>
+                              <DialogTitle className="font-display text-xl font-semibold tracking-tight text-text-primary">Hapus event ini secara permanen?</DialogTitle>
+                              <DialogDescription className="text-text-secondary">
+                                Semua foto, pesan suara, dan data tamu akan dihapus selamanya. Tindakan ini tidak bisa dibatalkan.
+                              </DialogDescription>
+                            </DialogHeader>
+                            {deleteError && (
+                              <p role="alert" className="text-xs text-error">{deleteError}</p>
+                            )}
+                            <DialogFooter>
+                              <DialogClose asChild>
+                                <Button secondary>Batal</Button>
+                              </DialogClose>
+                              <button
+                                type="button"
+                                disabled={deleting}
+                                onClick={() => void deleteEvent()}
+                                className={`min-h-12 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-400 transition duration-fast hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-45 ${focusRing}`}
+                              >
+                                {deleting ? "Menghapus…" : "Ya, hapus selamanya"}
+                              </button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      )}
+                    </div>
                   </div>
                 )
               )}

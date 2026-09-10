@@ -1,81 +1,30 @@
-# Result: Apply migration 0009 to live Supabase DB
+# Result: Hard Delete Event (Lane A — Backend)
 
-## Status
-**BLOCKED** — `db push` refused due to remote-only migration versions 0005/0006.
-No files modified in repo (only this result.md written).
+**Status:** COMPLETE
 
-## Preconditions
-- Remote verified: `git remote -v` → `origin https://github.com/RohmanCis/Ressonance.git` (fetch+push). Matches task contract.
-- Read AGENTS.md and `supabase/migrations/0009_drop_guest_messages.sql`.
+## Files changed
+- `docs/API_CONTRACT.md` — added §5.12 Delete event (after §5.11).
+- `lib/admin-delete-event.ts` — NEW. `DeleteEventResult` + `deleteAdminEvent(db, storage, publicId)`.
+- `app/api/admin/events/[public_id]/delete/route.ts` — NEW. `DELETE` handler.
+- `app/api/admin/events/[public_id]/delete/route.test.ts` — NEW. 8 tests.
 
-## Migration file contents (`supabase/migrations/0009_drop_guest_messages.sql`)
-```sql
--- Migration 0009: drop guest_messages (feature removed from MVP scope)
---
--- The guest message feature ("pesan & kesan") was removed from the MVP scope
--- on 2026-08-20 (owner decision). Migrations 0005/0006 files were deleted from
--- the repo during that removal; this migration cleans the live schema so the
--- database matches the repo (schema-drift fix).
---
--- The table holds no rows and has no inbound foreign keys, so the drop is
--- safe. The DROP is idempotent: re-running is a no-op.
---
--- Idempotent: safe to re-run.
+## Validation
+- `npx tsc --noEmit` — PASS (no output).
+- `npx vitest run` (full suite, single instance) — PASS: 49 files, 379 passed, 4 skipped (pre-existing), 0 failed. New delete suite: 8/8.
+- e2e not run (per contract).
 
-DROP TABLE IF EXISTS public.guest_messages;
-```
+## Implementation notes
+- **Ordering (task step 5):** storage remove FIRST (keys collected from photos/voice_notes rows before deletion), then DB child-first `photos → voice_notes → guest_sessions → events`. Chosen because a storage failure returns `error` with all DB rows intact (retryable, mirrors `lib/media-cleanup.ts`), and missing objects are success. Documented in lib docblock.
+- Storage keys sourced from DB rows; never derived from `public_id`.
+- No schema/migration/dependency changes; `components/` untouched; not committed.
 
-## Command 1: `npx supabase db push --linked`
-Output (exit non-zero):
-```
-Initialising login role...
-Connecting to remote database...
-Remote migration versions not found in local migrations directory.
-Make sure your local git repo is up-to-date. If the error persists, try repairing the migration history table:
-supabase migration repair --status reverted 0005 0006
-
-And update local migrations to match remote database:
-supabase db pull
-```
-- This is the KNOWN RISK from task.md (remote history has 0005/0006, absent locally).
-- No interactive prompt was reached; the command failed at a pre-check.
-- Per task step 4: **STOPPED. No `migration repair`, no `db pull`, no history rewrite.**
-
-## Command 2: `npx supabase migration list` (read-only verification)
-Output:
-```
-Initialising login role...
-Connecting to remote database...
-
-   Local  | Remote | Time (UTC)
-  --------|--------|------------
-   `0001` | `0001` | `0001`
-   `0002` | `0002` | `0002`
-   `0003` | `0003` | `0003`
-   `0004` | `0004` | `0004`
-   ` `    | `0005` | `0005`
-   ` `    | `0006` | `0006`
-   `0007` | `0007` | `0007`
-   `0008` | `0008` | `0008`
-   `0009` | `0009` | `0009`
-```
-
-## Verification
-- Performed: `npx supabase migration list` (read-only).
-- Result: Remote migration history **already records `0009`** (Local and Remote both populated), while `0005`/`0006` are Remote-only.
-- Interpretation: `0009` appears already recorded on the remote `supabase_migrations.schema_migrations` table. `db push` cannot proceed anyway because remote-only `0005`/`0006` are absent locally.
-- NOT independently confirmed: whether `public.guest_messages` was actually dropped. `migration list` reports history only; the remote `0009` row could not be confirmed to be this exact file, and the table's existence was not queried (would require DB credentials/`db dump`).
-- Suggested orchestrator follow-up (do not run without approval): `SELECT to_regclass('public.guest_messages');` against live DB — `NULL` ⇒ table gone (0009 effective); non-null ⇒ table still present.
+## Deviations from contract
+1. **§5.12 path is `/api/admin/events/{public_id}/delete`**, not `/api/admin/events/{public_id}` as the task.md §1 code block shows. Route file (`.../[public_id]/delete/route.ts`) and Lane B fetch (`/api/admin/events/${publicId}/delete`) both use `/delete`; documented the actual implemented path. Flagged for orchestrator.
+2. Lib event load selects `id, status` only (task text said `id, admin_id, status`); `admin_id` is unused in lib — ownership is checked in the route via `findAdminEvent`, matching `close/route.ts`.
+3. Contract §5.12 message for ACTIVE: route returns `403 FORBIDDEN` message `"Active event cannot be deleted. Close it first."` per task step 3.
 
 ## Blockers
-1. `db push` aborts on remote-only migration versions `0005`/`0006`. Repairing/deleting history is out of scope per task contract.
-2. Ambiguity: remote history shows `0009` applied, but actual table state unverified.
-
-## SSOT conflict
-None introduced. Note: AGENTS.md §12 states "Migration `0009` repo-only, not yet applied to live DB" — the remote migration history now shows `0009`, which diverges from that statement. Reported, not acted upon.
-
-## Architecture drift
 None.
 
-## Next step
-Orchestrator decision required: (a) approve `supabase migration repair --status reverted 0005 0006` (or equivalent) to reconcile history, then re-push; and/or (b) confirm actual `guest_messages` table state via a read query before deciding. No further action taken.
+## SSOT conflict / architecture drift
+None. No new endpoints beyond the approved feature; contract amendment is the approved scope.

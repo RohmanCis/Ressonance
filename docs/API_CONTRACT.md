@@ -420,6 +420,30 @@ The server invalidates the current Supabase Auth session. The auth cookies estab
 
 **Rate limit:** none.
 
+### 5.12 Delete event
+
+```text
+DELETE /api/admin/events/{public_id}/delete
+```
+
+**Authentication:** Supabase Auth session required.
+
+**Request body:** none.
+
+**Success:** `200`
+
+```json
+{
+  "deleted": true
+}
+```
+
+**Authorization:** The authenticated admin must own the event. Only a `CLOSED` event can be deleted; an `ACTIVE` event returns `403 FORBIDDEN` (close it first).
+
+**Side effects:** Deletes the event's private Storage objects, then its `photos`, `voice_notes`, and `guest_sessions` metadata, then the event record. After deletion the QR/public link for the deleted `public_id` returns `404 NOT_FOUND` (§6.1).
+
+**Errors:** `401 AUTHENTICATION_REQUIRED`, `403 FORBIDDEN`, `404 NOT_FOUND`, `500 INTERNAL_ERROR`.
+
 ## 6. Guest endpoints
 
 ### 6.1 Get event by public ID
