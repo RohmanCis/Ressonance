@@ -69,3 +69,6 @@ e2e/*.png
 skills-lock.json
 admin-dash-*.png
 ressonance-admin-dashboard-responsive.html
+
+.vercel
+.env*
