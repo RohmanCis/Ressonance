@@ -7,7 +7,9 @@ const nextConfig: NextConfig = {
   // traced into the serverless function via outputFileTracingIncludes below.
   serverExternalPackages: ["@ffprobe-installer/ffprobe"],
   outputFileTracingIncludes: {
-    "/api/events/*": ["./node_modules/@ffprobe-installer/linux-x64/**"],
+    // `**` crosses `/` — voice-notes/photos live two segments deep under
+    // /api/events/[public_id]; a single `*` would miss them (picomatch).
+    "/api/events/**": ["./node_modules/@ffprobe-installer/linux-x64/**"],
   },
   async headers() {
     return [
