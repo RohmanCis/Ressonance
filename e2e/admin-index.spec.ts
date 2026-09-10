@@ -6,6 +6,11 @@ import { test, expect, Page } from "@playwright/test";
 // these in parallel workers starves compilations and flakes URL assertions.
 test.describe.configure({ mode: "serial" });
 
+// Cookie domain must match the runtime origin (localhost dev or PLAYWRIGHT_BASE_URL).
+const AUTH_COOKIE_DOMAIN = new URL(
+  process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
+).hostname;
+
 const ACTIVE = {
   public_id: "active-evt-001",
   title: "Summer Party",
@@ -37,7 +42,7 @@ async function mockEvents(page: Page, events: unknown[]) {
 test.beforeEach(async ({ context, page }) => {
   // /admin gates on Supabase auth-cookie presence server-side; the mocked API
   // below stands in for real session validation.
-  await context.addCookies([{ name: "sb-qa-auth-token", value: "1", domain: "localhost", path: "/" }]);
+  await context.addCookies([{ name: "sb-qa-auth-token", value: "1", domain: AUTH_COOKIE_DOMAIN, path: "/" }]);
   await page.route("**/api/admin/me", async (route) => {
     await route.fulfill(json(200, { admin: { email: "qa@test.com" } }));
   });
