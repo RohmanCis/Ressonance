@@ -16,10 +16,7 @@ const fmtFull = (iso: string) => {
 const focusRing = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 const linkButton = `inline-flex min-h-12 items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition duration-fast ${focusRing}`;
 const linkGold = `${linkButton} gold-foil-btn h-12 active:scale-[0.98]`;
-const linkSecondary = `${linkButton} border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated`;
-// Hero-card "Open" demoted to secondary (DESIGN.md §6: one gold primary per
-// view — "Create new event" keeps gold-foil-btn).
-const linkRowAction = `inline-flex min-h-11 items-center justify-center rounded-lg border border-border bg-bg-surface px-4 py-2 text-xs font-medium text-text-primary transition duration-fast hover:bg-bg-elevated ${focusRing}`;
+const linkSecondary = `inline-flex min-h-12 items-center justify-center rounded-lg border border-border bg-bg-surface px-4 py-2 text-sm font-semibold text-text-primary transition duration-fast hover:bg-bg-elevated ${focusRing}`;
 const rowLink = `inline-flex min-h-12 items-center text-xs font-medium text-text-secondary underline-offset-4 transition duration-fast hover:text-text-primary hover:underline ${focusRing}`;
 
 function errorText(code: string) {
@@ -100,7 +97,7 @@ export function AdminEventIndex() {
                     )}
                   </div>
                   <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-                    <Link href={`/admin/events/${active.public_id}`} className={linkRowAction}>
+                    <Link href={`/admin/events/${active.public_id}`} className={linkSecondary}>
                       Buka
                     </Link>
                     <Link href={`/admin/events/${active.public_id}/access`} className={linkSecondary}>

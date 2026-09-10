@@ -1,7 +1,7 @@
 "use client";
 
 import { KeyboardEvent, useEffect, useRef, useState, useCallback } from "react";
-import { Camera, Check, CircleOff, User } from "lucide-react";
+import { Camera, Check, CircleOff } from "lucide-react";
 import { DEFAULT_FRAME_ID, FRAMES, type Frame } from "@/lib/frames";
 import { AmbientBackdrop } from "@/components/guest/ambient-backdrop";
 
@@ -89,6 +89,24 @@ export function FrameSelection({
     };
   }, [endProgrammaticScroll]);
 
+  // paddingInline diukur dari lebar kartu nyata (height-driven) agar frame
+  // pertama & terakhir bisa center sempurna di semua viewport/orientasi
+  const [carouselPad, setCarouselPad] = useState(0);
+  useEffect(() => {
+    const container = containerRef.current;
+    const card = optionRefs.current[0];
+    if (!container || !card) return;
+
+    const update = () =>
+      setCarouselPad(Math.max(0, (container.clientWidth - card.clientWidth) / 2));
+    update();
+
+    const ro = new ResizeObserver(update);
+    ro.observe(container);
+    ro.observe(card);
+    return () => ro.disconnect();
+  }, []);
+
   // Sinkronisasi swipe sentuh via Intersection Observer
   useEffect(() => {
     const container = containerRef.current;
@@ -98,12 +116,12 @@ export function FrameSelection({
       (entries) => {
         if (isProgrammaticScroll.current) return;
 
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
-            const id = entry.target.getAttribute("data-frame-id");
-            if (id) setSelectedId(id);
-          }
-        });
+        // Dua kartu bisa sama-sama >= 0.6 saat swipe; pilih rasio terbesar
+        const best = entries
+          .filter((entry) => entry.intersectionRatio >= 0.6)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        const id = best?.target.getAttribute("data-frame-id");
+        if (id) setSelectedId(id);
       },
       {
         root: container,
@@ -166,13 +184,13 @@ export function FrameSelection({
       </header>
 
       {/* Frame Carousel Area */}
-      <section className="relative z-10 flex min-h-0 flex-1 items-center justify-center py-2 w-full overflow-hidden">
+      <section className="relative z-10 flex min-h-0 flex-1 items-center justify-center w-full overflow-hidden">
         <div
           ref={containerRef}
           role="radiogroup"
           aria-labelledby="frame-heading"
-          // px-[calc(50vw-5.5rem)] memberi ruang agar frame pertama & terakhir bisa center sempurna
-          className="scrollbar-hide flex h-full max-h-[50dvh] w-full snap-x snap-mandatory items-center justify-start gap-4 overflow-x-auto overscroll-x-contain px-[calc(50vw-5.5rem)] sm:px-[calc(50%-6rem)] py-2 touch-pan-x"
+          className="scrollbar-hide flex h-full max-h-[50dvh] w-full snap-x snap-mandatory items-center justify-start gap-4 overflow-x-auto overscroll-x-contain py-2 touch-pan-x"
+          style={{ paddingInline: carouselPad }}
         >
           {OPTIONS.map((frame, index) => {
             const isSelected = frame.id === selectedId;
@@ -199,15 +217,10 @@ export function FrameSelection({
                 <div
                   className={`relative aspect-[9/16] h-[calc(100%-1.75rem)] max-h-[46dvh] overflow-hidden rounded-2xl border-2 bg-bg-surface/90 p-1.5 transition-[transform,opacity,border-color,box-shadow,background-color] duration-fast group-focus-visible:ring-2 group-focus-visible:ring-accent ${
                     isSelected
-                      ? "scale-[1.02] border-accent bg-accent/10 shadow-[0_0_30px_color-mix(in_srgb,var(--accent)_30%,transparent)] ring-1 ring-accent"
-                      : "border-border/70 opacity-70 scale-95 hover:opacity-90"
+                      ? "z-10 scale-105 border-accent bg-accent/10 shadow-[0_0_30px_color-mix(in_srgb,var(--accent)_30%,transparent)] ring-1 ring-accent"
+                      : "border-border/70 opacity-80 scale-90 hover:opacity-100"
                   }`}
                 >
-                  {/* Siluet Wajah Foto Booth */}
-                  <div className="absolute inset-0 flex items-center justify-center opacity-15">
-                    <User className="h-20 w-20 text-text-muted" strokeWidth={1} />
-                  </div>
-
                   <img
                     src={frame.src}
                     alt=""
@@ -226,7 +239,7 @@ export function FrameSelection({
                 </div>
 
                 <span
-                  className={`mt-2 text-xs sm:text-sm transition-colors ${
+                  className={`mt-2 w-full truncate text-center text-xs sm:text-sm transition-colors ${
                     isSelected ? "font-semibold text-text-primary" : "text-text-secondary"
                   }`}
                 >
