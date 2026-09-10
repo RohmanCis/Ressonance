@@ -197,7 +197,11 @@ Never trust frontend limits, localStorage, client MIME/duration, public storage 
 
 **Deferred LOW (owner decision pending):** API-level sign-in rate limiting.
 
-**Outstanding:** pre-deploy blockers `TRUSTED_PROXY=1` + `CRON_SECRET` in Vercel, with live-DB re-verification (`npm run test:postgres` + `PLAYWRIGHT_LIVE=1 npm run e2e`, covers ILIKE search) in the same window; full `npm run e2e` (all suites) — DEFERRED by owner 2026-09-09 until UI/UX polish/revision is finished. Cosmetic debt C11–C14 RESOLVED 2026-09-09 (Capture counter aria-label synced to visual; DM Mono verified already token-backed, no-op; unused spin-tape/wave-pulse keyframes removed; equalizer `transition-all` → explicit property list).
+**Outstanding:** none blocking. Pre-deploy blockers ALL CLOSED (2026-09-11): `TRUSTED_PROXY=1` ✅ verified; `CRON_SECRET` ✅ verified (401 without bearer, 200 with); live-DB re-verification ✅ (schema 10/10, concurrency 4/4 in isolated `guestbook_test`; use `TEST_DATABASE_URL` pointing there — destructive suites DROP/re-apply schema); deployed live at `https://ressonance-one.vercel.app` (note: `ressonance.vercel.app` is taken by another party — do not use). `NEXT_PUBLIC_APP_URL` set accordingly. Full e2e suite ✅ re-run 2026-09-11 against production (38 tests; QA auth-cookie domain fix in `admin-index.spec.ts`).
+
+**Remaining (non-blocking):** C5 ffprobe runtime proof — not directly verified (media e2e paths are mocked); one manual voice upload in production closes this. Migration `0009` repo-only, not yet applied to live DB. Full e2e suite — DONE 2026-09-11 (see Last validated). Cosmetic debt C11–C14 RESOLVED 2026-09-09 (Capture counter aria-label synced to visual; DM Mono verified already token-backed, no-op; unused spin-tape/wave-pulse keyframes removed; equalizer `transition-all` → explicit property list).
+
+**Production:** https://ressonance-one.vercel.app
 
 **Last validated (2026-09-09):** typecheck PASS; vitest 375/375 (48 files); e2e `mobile-media-qa.spec.ts` 19 passed / 0 failed. Full e2e suite not re-run after the guest UI redesign. Lint baseline: 1 pre-existing `any` error in `e2e/print-qa.spec.ts` + pre-existing warnings.
 
