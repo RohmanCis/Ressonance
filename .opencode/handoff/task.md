@@ -1,28 +1,45 @@
-﻿# Task: Post-event cleanup batch — 4 streams
+﻿# Task: UI/UX polish batch — 6 polish points + 2 minor
 
-Split into lanes to avoid write-scope conflicts. Fixers report in their final message; orchestrator writes result.md (do NOT write result.md yourself).
+Two parallel lanes (design-1 @designer, fix-1 @fixer) + one queued lane (fix-2 @fixer, AFTER design-1 completes). Fixers/designer report in their final message; orchestrator writes result.md.
 
-Global constraints: TypeScript strict, no `any`, no new deps, no canonical-doc changes, keep e2e selectors/aria stable, guest/admin copy unchanged (Bahasa Indonesia register), no API contract changes (behavior-preserving refactors only). Validation per fixer: `npm run typecheck` ONLY (vitest is serialized/destructive — orchestrator runs it once at the end).
+Global constraints: TypeScript strict, no `any`, no new deps, no canonical-doc changes, Bahasa Indonesia copy register (santai/ramah guest, kasual-profesional admin), no API contract changes. Do NOT run vitest (serialized/destructive — orchestrator runs it once at the end). Per-lane validation: `npm run typecheck` ONLY. Keep e2e selectors stable EXCEPT the two aria-labels explicitly listed below (spec updates are in scope).
 
-## Lane A — Admin UI fixes (components/admin/**)
-1. `components/admin/admin-dashboard.tsx:532-537` debounced search: add AbortController per `load()`, abort previous fetch on new query/cleanup (fixes stale-response race).
-2. `admin-dashboard.tsx:639-668` close-event dialog: error state set by `close()` is never rendered AND confirm button is `DialogClose`-wrapped so the dialog closes even on failure. Render the error inside DialogContent (match the delete dialog's pattern at ~686) and stop wrapping confirm in DialogClose — close programmatically only on success.
-3. `admin-dashboard.tsx:110-142` `useDownload.start`: `revokeObjectURL` fires synchronously after `a.click()`. Defer revoke (setTimeout 0 or a few seconds).
-4. Format-helper dedup (#11, component side only): `formatTime` (components/guest/audio-player.tsx:6-9), `formatTimer` (components/guest/screens/VoiceRecordingScreen.tsx:23-25), `fmtDuration`/`pad2` (admin-dashboard.tsx:26,38), `pad2`/`fmtFull` (admin-event-index.tsx:10-14). Create ONE small shared formatter module (e.g. `lib/format.ts`) and import everywhere. Keep each call site's exact output format unchanged (m:ss variants may differ per site — parameterize, don't merge semantics).
+Governing doc: `docs/DESIGN.md` (CANONICAL). Key sections: §2 tokens (+ Amber amendment), §3 type scale (3xl guest headings), §4 motion (transform+opacity only, reduced-motion), §5.3 Capture, §5.5 Voice, §5.1 PreSession, §5.7 admin.
 
-## Lane B — Backend/guest minor
-1. `lib/guest-submission-pipeline.ts:125-127`: move `pool.connect()` inside the try so connect failures hit `logApiError` (single fix point for photo+voice routes).
-2. `components/guest-event-entry.tsx:486-498` voice timer: setInterval 1Hz throttles in background tabs → recording can overshoot 30s. Anchor to `Date.now()` at record start; stop at real 30s elapsed (timestamp check; keep the existing UI ticking behavior + `voiceSecondsRef` semantics + the <5s review message logic).
-3. rateLimitKey dedup: identical fn in `app/api/events/[public_id]/session/route.ts:35-40` and `lib/guest-submission-pipeline.ts:97-102`. Keep the one in pipeline (or move next to `rateLimitIdentity` in its lib home) and import in the session route; delete the duplicate.
+## Lane design-1 — @designer: 6 polish points
 
-## Lane C — Refactors
-1. #7 payload adapters: `lib/photo-payload.ts` vs `lib/voice-note-payload.ts` byte-identical except field name/config/messages → one parameterized factory. Keep public API of each module stable (same exported function names) so routes stay unchanged.
-2. #8 storage adapters: `lib/photo-storage.ts` vs `lib/voice-note-storage.ts` identical except MIME → single factory + thin type-safe wrappers.
-3. #9 `tryDelete`/`compensate` dup in `lib/submit-photo.ts:78-98` vs `lib/submit-voice-note.ts:89-109` → shared helper, event-name param (`photo_cleanup_failed` vs `voice_note_cleanup_failed`).
-4. #10 + #4: create `lib/admin-auth.ts` with `requireAdmin()` (supabase.auth.getUser → 401 AUTHENTICATION_REQUIRED envelope) and an owned-event helper (findAdminEvent + admin_id check → 403 FORBIDDEN). Replace the boilerplate in all 10 admin routes (list in exp-1 map). In `app/api/admin/auth/sign-out/route.ts` also check `signOut()` result (return 500 INTERNAL_ERROR + log on failure instead of unconditional 200).
-5. #11 publicUrl dup: `app/api/admin/events/route.ts:19-21` + `app/api/admin/events/[public_id]/access/route.ts:13-15` → move to lib (e.g. lib/admin-auth.ts or a tiny lib/events-url.ts), import at both sites.
+### 1. Touch targets
+- `components/guest/screens/Capture.tsx:272` "Lanjut →" CTA: `h-11` (44px) → 48px (`h-12`) — guest primary canon (§5.1/§5.3, 48px guest primaries). Adjust the placeholder spacer (`h-11 w-11` at line 277) to match new height so layout doesn't jump.
+- `components/admin/admin-dashboard.tsx` media filter segmented control (around line 775, `role="group" aria-label="Saring jenis media"`): buttons/segments currently < 44px — raise to min-h-11 (44px).
 
-## Lane D — Dead code (runs AFTER Lane C; do not touch lib/submit-photo.ts / lib/submit-voice-note.ts — Lane C owns them)
-1. Delete `lib/supabase/client.ts` (orphan, confirmed).
-2. Delete `component-catalog.html` (repo root, unreferenced, confirmed).
-3. Export-only-for-test symbols (~23 found): unexport only where clean (function/const used solely by its co-located test). For documented contract constants (e.g. `SIGNED_URL_TTL_SECONDS`, `RETENTION_DAYS`, `FFPROBE_TIMEOUT_MS`, `GUEST_SESSION_MAX_AGE_SECONDS`) keep the export if the constant is a documented owner-locked value — unexporting pure noise is not worth churn. Use judgment; list every decision in the report.
+### 2. Motion violations (§4: transitions animate transform + opacity ONLY)
+Audit findings — fix each, preserving the visual intent (same feel, compliant properties):
+- `Capture.tsx:200` `transition-[box-shadow,opacity]` on the 9:16 stage — remove box-shadow from the transition (keep opacity; if shadow change is desired make it instant).
+- `Capture.tsx:151,235,258` bare `transition` (all properties) on buttons with `active:scale-*`/`hover:bg-*` — narrow to `transition-transform` (or `transition-[transform,opacity]`).
+- Voice/Capture/PreSession: find remaining transitions/animations that animate bg/border/shadow/height and convert to transform/opacity or make the non-compliant property change instant. NOTE: `animate-pulse` on Voice recording affordances (mic halo, status dot, equalizer) and on loading skeletons is RATIFIED (§2 amendment, §4) — do not remove those.
+- Respect existing `prefers-reduced-motion` handling; do not weaken it.
+
+### 3. Color literals bypass tokens
+- `Capture.tsx:261` shutter core gradient `from-amber-600 via-accent to-yellow-200` — rebuild using token-derived colors (`--accent` and existing token alpha variants; the shutter is a gold primary, amber is NOT allowed on primaries per §2 amendment). Keep the gold gradient look.
+- `components/admin/admin-dashboard.tsx:673,685,708` destructive buttons: `border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:border-red-500/40` → `--error` token equivalents (`border-error/30 bg-error/10 text-error hover:bg-error/20 hover:border-error/40`).
+
+### 4. Voice success color
+- `components/guest/screens/VoiceRecordingScreen.tsx` success/confirmed state uses gold — per §2 `--success` (green) is the confirmed-persistence semantic. Change the success state color to `--success`; gold stays on primary actions only. (Amber recording-state styling stays.)
+
+### 5. Guest heading mobile
+- Guest screen heading rendered `text-2xl` on mobile where canon (§3) requires 3xl (2rem) for guest screen headings — locate in PreSession/Voice/PhotoReview and set `text-3xl` at mobile (verify against §5 per-screen specs).
+
+### 6. EN aria-labels in admin-access
+- `components/admin/admin-access.tsx:62` `aria-label="QR code for event access"` and `:93` `aria-label="Printable QR code for event access"` → Bahasa Indonesia (canon §5.7 supersedes the old EN aria-label convention). Suggested: "Kode QR akses acara" / "Kode QR cetak akses acara".
+- MUST sync e2e specs that select these attributes: `e2e/qr-qa.spec.ts:26,69,85` and `e2e/print-qa.spec.ts:46,47` — update the selector strings to the new labels. No other e2e changes.
+
+## Lane fix-1 — @fixer: signOut 500 branch test
+- `app/api/admin/auth/sign-out/route.ts` checks `signOut()` result → 500 INTERNAL_ERROR + `logApiError("admin_sign_out_failed")` on failure. This branch has NO test.
+- Add a focused co-located test (match existing sign-out route test conventions — see existing `*.test.ts` beside the route) covering the failure branch: mocked supabase `signOut` rejecting/returning error → expect 500 + INTERNAL_ERROR envelope. Also assert success + unauthenticated paths still pass if not already covered.
+- Do not touch any file outside `app/api/admin/auth/sign-out/`.
+
+## Lane fix-2 — @fixer (AFTER design-1 terminal): capture error feedback
+- `components/guest-event-entry.tsx:268-284` `handleCapture`: `catch { return; }` + `if (!blob) return;` swallow capture failures — user gets no feedback (shutter flashes, no photo appears).
+- Fix: on failure (throw OR null blob), surface a transient error in the Capture screen — e.g. state passed down / callback result, rendered as a `role="alert"` quiet bordered block matching §5.3 banner anatomy ("Gagal jepret foto, coba lagi." — keep register santai). Auto-dismiss after a few seconds or on next successful capture.
+- `hooks/use-camera.ts` `capture()` currently returns null on internal catch — you may keep that contract and treat null as failure at the call site; no signature change required.
+- CRITICAL: design-1 just edited `components/guest/screens/Capture.tsx` — preserve its exact styling/structure; add only the minimal error display consistent with the existing banner pattern in that file.

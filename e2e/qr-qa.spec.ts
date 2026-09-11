@@ -23,7 +23,7 @@ test("QR renders, encodes exact public URL, copy/print intact (desktop)", async 
   await expect(page.getByRole("heading", { name: "Bagikan akses acara." })).toBeVisible();
 
   // SVG rendered with correct accessibility.
-  const svg = page.locator('svg[aria-label="QR code for event access"]');
+  const svg = page.locator('svg[aria-label="Kode QR akses acara"]');
   await expect(svg).toBeVisible();
   await expect(svg).toHaveAttribute("role", "img");
 
@@ -66,7 +66,7 @@ test("QR not distorted at mobile width 375px (responsive)", async ({ page }) => 
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto(`/admin/events/${EVENT_ID}/access`, { waitUntil: "networkidle" });
 
-  const svg = page.locator('svg[aria-label="QR code for event access"]');
+  const svg = page.locator('svg[aria-label="Kode QR akses acara"]');
   await expect(svg).toBeVisible();
 
   const box = await svg.boundingBox();
@@ -82,7 +82,7 @@ test("QR not distorted at tablet width 768px (responsive)", async ({ page }) => 
   await page.setViewportSize({ width: 768, height: 1024 });
   await page.goto(`/admin/events/${EVENT_ID}/access`, { waitUntil: "networkidle" });
 
-  const svg = page.locator('svg[aria-label="QR code for event access"]');
+  const svg = page.locator('svg[aria-label="Kode QR akses acara"]');
   await expect(svg).toBeVisible();
 
   const box = await svg.boundingBox();

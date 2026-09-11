@@ -177,56 +177,33 @@ Never trust frontend limits, localStorage, client MIME/duration, public storage 
 
 ## 12. Current repository state
 
-**Implementation: complete** (Guest API, Admin API, Guest UI, Admin UI). All UI copy is Bahasa Indonesia (`app/layout.tsx` `lang="id"`); server/API error messages stay English (API contract domain).
+**Implementation: complete** (Guest API, Admin API, Guest UI, Admin UI). All UI copy is Bahasa Indonesia (`app/layout.tsx` `lang="id"`); server/API error messages stay English (API contract domain). No known code-vs-docs divergence — all past divergences were ratified into `docs/DESIGN.md`, which is the sole UI/flow reference (docs/UX_FLOW.md deleted by owner decision 2026-09-09).
 
 **Architecture notes for agents:**
 
 - Guest flow: sequential full-screen states in `components/guest-event-entry.tsx` (PRE_SESSION → FRAME_SELECT → CAPTURE → PHOTO_REVIEW → VOICE → DONE), screens in `components/guest/screens/`.
-- **Guest UI redesign (2026-09-09, uncommitted, owner-approved to keep):** new copy register, Review→Camera back navigation, client-side <5s voice submit block (server validation unchanged), changed capture auto-advance semantics, 1920×1080 ideal camera constraints, haptics, amber/pulse voice design. E2e selectors follow the implementation. Ratified into DESIGN.md 2026-09-09 (see below).
-- Submission seam (ADR-012): `lib/guest-submission-auth.ts` + `lib/guest-submission-pipeline.ts` + per-kind payload adapters; routes are config-only.
-- Frame selection/compositing is client-side UX only (`lib/frames.ts`); frame registry carries 4 frames (none, wedding-crimson, flower, new, clean); frame-asset failure falls back unframed and clears `selectedFrame`.
+- Submission seam (ADR-012): `lib/guest-submission-auth.ts` + `lib/guest-submission-pipeline.ts` + per-kind payload adapters (factory: `lib/multipart-payload.ts`); routes are config-only.
+- Shared server helpers: `lib/admin-auth.ts` (`requireAdmin`/`requireOwnedEvent` — all admin routes), `lib/storage-adapter.ts`, `lib/submission-compensation.ts`, `lib/events-url.ts`, `lib/format.ts`.
+- Frame selection/compositing is client-side UX only (`lib/frames.ts`); frame registry carries 4 templates + none; frame-asset failure falls back unframed and clears `selectedFrame`.
 - Admin surfaces: sign-in, event index, dashboard, access/QR — `components/admin/`.
 - Capture screen: 3-zone photobooth studio (docs/DESIGN.md §5.3) with container-query 9:16 viewport; review overlay uses shadcn/Radix Dialog (owns focus trap/restore).
 - Signed media URLs are fetched fresh per preview/download, never cached client-side; TTL 900s is owner-locked.
-
-**Database:** migrations `0001`–`0004`, `0007`–`0009` in repo and applied to live DB (`0005`/`0006` deleted from repo during guest-message feature removal; their remote history entries repaired to `reverted` 2026-09-11, so `supabase db push` works normally; `0009` verified applied — `guest_messages` dropped). All migrations idempotent. Live Supabase verified (schema tests + `PLAYWRIGHT_LIVE=1`).
+- Voice recording timer is wall-clock anchored (`Date.now()`), immune to background-tab `setInterval` throttle.
 
 **Known-fragile pattern:** `admin-ui.tsx` gates the ACTIVE_EVENT_EXISTS recovery link off `error.toLowerCase().includes("udah ada")` — re-check on any copy change.
 
-**SSOT divergence: RESOLVED 2026-09-09.** All implementation-vs-docs divergences were ratified into DESIGN.md (copy register §5.2–§5.6, Review→Camera back-nav §5.4, auto-advance semantics §5.3, camera constraints §5.3, haptics §4, amber/pulse voice styling via the §2 Amber semantic amendment, client-side <5s voice submit block §5.5, frame registry §5.2 = 4 templates + none). docs/UX_FLOW.md deleted by owner decision — DESIGN.md is the sole UI/flow reference (compact flow state list at §5 head). DESIGN.md also distilled for brevity (207 lines). No known code-vs-docs divergence remains.
+**Database:** migrations `0001`–`0004`, `0007`–`0010` in repo and applied to live DB (`0005`/`0006` remote history `reverted`; `0009` dropped `guest_messages`; `0010` pins service-role DELETE grants). All migrations idempotent. `supabase db push` works normally.
 
-**Outstanding — pre-event audit 2026-09-11 (3-lane explorer/librarian/qa + orchestrator verification against live DB):**
+**Production:** https://ressonance-one.vercel.app — production `DATABASE_URL` uses `sslmode=no-verify` (pg 8.x maps `require` to `verify-full` and rejects Supavisor's certificate chain; documented in `.env.example`). Local dev (5432, no sslmode) unaffected.
 
-**BLOCKERS (fix sebelum event 12 Sep 2026):**
-- B1: Voice upload deadlock saat network failure — `components/guest-event-entry.tsx:568` `request.onerror` early-returns on `status === 0` without setting error state; UI stuck in "submitting" permanently. Fix: hapus early-return, set `review-error`.
-- B2: 429 retry otomatis tanpa batas — `components/guest-event-entry.tsx:373-378` retries on `Retry-After` indefinitely (`i--; continue`); UI locked lama + synchronized retry storm. Fix: cap retry 3× → error status + retry manual.
+**Outstanding (deferred):**
+- `FrameSelection.tsx:218` transition includes non-compliant properties (border-color/box-shadow/background-color vs DESIGN.md §4 transform+opacity only) — flagged 2026-09-12, outside that batch's scope.
+- E2E not re-run after the 2026-09-12 polish batch (2 aria-label selectors changed in qr-qa/print-qa specs, synced in-repo) — run `npm run e2e` before next deploy.
 
-**OWNER DECISIONS NEEDED:**
-- D1: Serialisasi upload per-event — event-row `FOR UPDATE` lock dipegang selama Storage upload (`lib/photo-tx-repo.ts:59` + `lib/submit-photo.ts:132`, idem voice). Opsi (a) refactor upload-before-tx, atau (b) accept-and-monitor (Vercel logs). Concurrency tests 4/4 pass; bukan confirmed breaker pada wedding scale.
-- D2: Migration 0010 — pin `GRANT DELETE ON events, guest_sessions TO service_role` (live privileges saat ini `true` via platform default; 0007 philosophy = pin semua yang dipakai). Additive, zero-risk, direkomendasikan.
-- D3: Doc reconciliation batch — PRD +FR delete event; db_scheme hapus stale notes ("0009 pending live apply", "no delete FR in MVP"); API_CONTRACT §8.8 migration set `0001–0008` → `0001–0009`; ARCHIVED-deletable clarification di §5.12.
-- D4: FrameSelection default — `components/guest/screens/FrameSelection.tsx` default pilihan = frame pertama, bukan `none`; verifikasi intentional vs drift dari DESIGN.md §5.2 (`none` default).
+**Last validated (2026-09-12, polish batch):** typecheck PASS; vitest 49 files / 381 passed / 4 skipped / 0 failed; lint baseline only (1 pre-existing `any` in `e2e/print-qa.spec.ts` + warnings). Earlier (2026-09-11, commit `3ab9d7f`): e2e 37 passed / 1 skipped (owner-run against production).
 
-**DEFERRED (post-event):**
-- UI/UX polish: guest "Lanjut" CTA 44px vs kanon 48px; admin filter 40px < 44px; motion violations (animasi bg/border/shadow/height di Voice/Capture/PreSession); color literals bypass tokens (Capture `amber-600`/`yellow-200`, admin `red-*` vs `--error`); voice success gold vs `--success`; heading mobile 2xl vs 3xl; EN aria-labels di admin-access.
-- Admin: debounced search tanpa abort controller (stale response race); close-dialog error tersembunyi (`DialogClose` wrap); `revokeObjectURL()` terlalu cepat setelah `click()`.
-- Backend minor: `signOut()` result tidak dicek; `pool.connect()` di luar try (skip logging); voice 30s timer rentan `setInterval` throttle; capture errors ditelan.
-- Refactor: photo/voice payload adapter duplikat (byte-identical); storage adapter duplikat; `tryDelete`/`compensate` duplikat; admin auth boilerplate ×10 → `requireAdmin()`; `publicUrl()`/`rateLimitKey()`/format-helper duplikat.
-- Dead code: `lib/supabase/client.ts` orphan; `component-catalog.html` stale; export-only-for-test symbols (~10).
-- API-level sign-in rate limiting — owner decision 2026-09-11: not implemented; acceptable for MVP.
+**Polish batch (2026-09-12):** touch targets (guest primary 48px, admin filter 44px), motion narrowed to transform/opacity (§4), color literals → tokens (shutter gold-foil pair `--accent-foil-*`, admin `--error`), voice success → `--success`, guest headings 3xl flat, admin-access aria-labels Bahasa Indonesia (e2e selectors synced), signOut 500-branch test, capture failure feedback (transient `role="alert"` banner).
 
-**Go/No-Go audit: GO conditional** — setelah B1+B2 diterapkan dan D1 diputuskan. Jalur persistence benar secara otorisasi, limit, dan kompensasi.
-
-**Production:** https://ressonance-one.vercel.app
-
-**Live DB:** migrations `0001`–`0004`, `0007`–`0009` applied (0005/0006 remote history `reverted`; `guest_messages` dropped, verified). Service-role DELETE privileges on all 4 tables verified `true` 2026-09-11.
-
-**Incident (2026-09-11, resolved):** POST `/api/events/{id}/session` 500 in production — pg 8.x maps `sslmode=require` to `verify-full`, rejecting Supavisor's certificate chain. Fix: production `DATABASE_URL` changed to `sslmode=no-verify` (Vercel env, redeployed, verified 201). `.env.example` documents this; local dev (5432, no sslmode) unaffected.
-
-**Last validated (2026-09-11):** typecheck PASS; vitest 49 files / 379 passed / 4 skipped / 0 failed (post hard-delete, commit `106bf89`); full e2e suite re-run against production 38 tests PASS. Lint baseline: 1 pre-existing `any` error in `e2e/print-qa.spec.ts` + pre-existing warnings. Pre-event audit completed 2026-09-11: 0 KRITIS, 2 blockers (B1/B2), 4 owner decisions (D1-D4).
-
-**Owner decisions (2026-08-15):** Supabase managed backups only; structured logs + Vercel logs only (no Sentry/OTel); no guest-facing retention messaging; APAC Supabase region ratified; signed URL TTL 900s; ARCHIVED post-MVP.
-
-**Owner decision (2026-08-29):** Done-screen loading `role="status"` dropped — screen-reader users out of scope for that decorative screen.
+**Standing owner decisions:** (2026-08-15) Supabase managed backups only; structured logs + Vercel logs only (no Sentry/OTel); no guest-facing retention messaging; APAC Supabase region; signed URL TTL 900s; ARCHIVED post-MVP. (2026-08-29) Done-screen loading `role="status"` dropped — screen-reader users out of scope for that decorative screen. (2026-09-11) upload serialization per-event accept-and-monitor via Vercel logs; API-level sign-in rate limiting not implemented — acceptable for single-admin MVP.
 
 Detailed per-task history lives in `git log`, not this file.

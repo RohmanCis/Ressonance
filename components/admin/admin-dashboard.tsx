@@ -670,7 +670,7 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
                                 type="button"
                                 disabled={closing}
                                 onClick={() => void close()}
-                                className={`min-h-12 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-400 transition duration-fast hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-45 ${focusRing}`}
+                                className={`min-h-12 rounded-lg border border-error/30 bg-error/10 px-4 py-2 text-sm font-semibold text-error transition duration-fast hover:bg-error/20 disabled:cursor-not-allowed disabled:opacity-45 ${focusRing}`}
                               >
                                 Ya, tutup sekarang
                               </button>
@@ -682,7 +682,7 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
                           <DialogTrigger asChild>
                             <button
                               type="button"
-                              className={`min-h-11 w-full rounded-lg border border-red-500/20 bg-transparent px-4 text-xs font-medium text-red-400/70 transition duration-fast hover:border-red-500/40 hover:text-red-400 md:w-auto ${focusRing}`}
+                              className={`min-h-11 w-full rounded-lg border border-error/20 bg-transparent px-4 text-xs font-medium text-error/70 transition duration-fast hover:border-error/40 hover:text-error md:w-auto ${focusRing}`}
                             >
                               Hapus Event
                             </button>
@@ -705,7 +705,7 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
                                 type="button"
                                 disabled={deleting}
                                 onClick={() => void deleteEvent()}
-                                className={`min-h-12 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-400 transition duration-fast hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-45 ${focusRing}`}
+                                className={`min-h-12 rounded-lg border border-error/30 bg-error/10 px-4 py-2 text-sm font-semibold text-error transition duration-fast hover:bg-error/20 disabled:cursor-not-allowed disabled:opacity-45 ${focusRing}`}
                               >
                                 {deleting ? "Menghapus…" : "Ya, hapus selamanya"}
                               </button>
@@ -781,7 +781,7 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
                             type="button"
                             aria-pressed={selected}
                             onClick={() => setMediaFilter(segment.value)}
-                            className={`min-h-10 rounded-md text-xs font-bold transition duration-fast ${selected ? "bg-bg-elevated text-text-primary" : "text-text-muted hover:text-text-primary"} ${focusRing}`}
+                            className={`min-h-11 rounded-md text-xs font-bold transition duration-fast ${selected ? "bg-bg-elevated text-text-primary" : "text-text-muted hover:text-text-primary"} ${focusRing}`}
                           >
                             {segment.label}
                           </button>

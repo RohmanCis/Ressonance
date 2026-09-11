@@ -110,7 +110,7 @@ export function VoiceRecordingScreen({
         <h1
           ref={headingRef}
           tabIndex={-1}
-          className="font-display text-2xl sm:text-3xl font-medium tracking-tight text-text-primary outline-none"
+          className="font-display text-3xl font-medium tracking-tight text-text-primary outline-none"
         >
           Tinggalkan Pesan Suara
         </h1>
@@ -133,9 +133,9 @@ export function VoiceRecordingScreen({
         {limit ? (
           <div
             role="alert"
-            className="w-full rounded-2xl border border-accent/30 bg-bg-surface/85 p-5 text-center shadow-xl backdrop-blur-xl"
+            className="w-full rounded-2xl border border-success/30 bg-bg-surface/85 p-5 text-center shadow-xl backdrop-blur-xl"
           >
-            <CheckCircle2 className="h-10 w-10 text-accent mx-auto mb-2 opacity-90" />
+            <CheckCircle2 className="h-10 w-10 text-success mx-auto mb-2 opacity-90" />
             <h2 className="font-display text-base font-semibold text-text-primary">
               Pesan Suara Tersimpan
             </h2>
@@ -212,7 +212,7 @@ export function VoiceRecordingScreen({
                 type="button"
                 onClick={handleMicToggle}
                 aria-label={recording ? "Hentikan rekaman" : "Mulai rekam pesan suara"}
-                className={`relative z-10 flex h-20 w-20 items-center justify-center rounded-full transition-[transform,background-color,border-color,box-shadow] duration-base active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent ${
+                className={`relative z-10 flex h-20 w-20 items-center justify-center rounded-full transition-transform duration-base active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent ${
                   recording
                     ? "bg-bg-surface border-2 border-accent text-accent shadow-[0_0_30px_color-mix(in_srgb,var(--accent)_30%,transparent)] scale-105"
                     : "bg-accent text-on-accent shadow-[0_0_30px_color-mix(in_srgb,var(--accent)_45%,transparent)] hover:brightness-105"
@@ -248,7 +248,7 @@ export function VoiceRecordingScreen({
                 {[35, 70, 100, 55, 85, 45, 90, 60, 40].map((height, i) => (
                   <span
                     key={i}
-                    className={`w-1 rounded-full transition-[height,background-color] duration-300 ${
+                    className={`w-1 rounded-full ${
                       recording
                         ? "bg-accent animate-pulse"
                         : "bg-border/60 h-1.5"
@@ -329,7 +329,7 @@ export function VoiceRecordingScreen({
               type="button"
               onClick={onSubmit}
               disabled={submitting || closed || !isDurationValid || voiceState === "success"}
-              className="gold-foil-btn flex h-12 w-full items-center justify-center rounded-xl text-sm font-semibold shadow-lg transition duration-fast hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+              className="gold-foil-btn flex h-12 w-full items-center justify-center rounded-xl text-sm font-semibold shadow-lg transition-transform duration-fast active:scale-[0.98] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {submitting ? (
                 <div className="flex items-center gap-2">
@@ -346,7 +346,7 @@ export function VoiceRecordingScreen({
               type="button"
               onClick={onReset}
               disabled={submitting}
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-bg-surface/80 text-xs font-semibold text-text-secondary transition hover:text-text-primary hover:bg-bg-surface active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-40"
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-bg-surface/80 text-xs font-semibold text-text-secondary transition-transform active:scale-[0.98] hover:text-text-primary hover:bg-bg-surface focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-40"
             >
               <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
               <span>Rekam Ulang</span>
@@ -359,7 +359,7 @@ export function VoiceRecordingScreen({
           <button
             type="button"
             onClick={onSkip}
-            className="flex min-h-11 w-full items-center justify-center text-center text-xs font-medium text-text-muted underline underline-offset-4 hover:text-text-primary transition-colors focus-visible:outline-2 focus-visible:outline-accent"
+            className="flex min-h-11 w-full items-center justify-center text-center text-xs font-medium text-text-muted underline underline-offset-4 hover:text-text-primary focus-visible:outline-2 focus-visible:outline-accent"
           >
             Lewati — Selesai & Kirim Foto Saja
           </button>

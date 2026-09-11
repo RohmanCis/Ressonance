@@ -11,6 +11,7 @@ import { NextRequest } from "next/server";
 
 let getUserResult: { ok: true } | { ok: false } | undefined;
 let signOutCalls = 0;
+let signOutError: { message: string } | null = null;
 
 vi.mock("@/lib/supabase/server", () => {
   const fakeAuth = {
@@ -22,7 +23,7 @@ vi.mock("@/lib/supabase/server", () => {
     },
     signOut: async () => {
       signOutCalls += 1;
-      return { error: null };
+      return { error: signOutError };
     },
   };
   return { createClient: async () => ({ auth: fakeAuth }) };
@@ -38,6 +39,7 @@ beforeEach(() => {
   vi.stubEnv("NODE_ENV", "development");
   getUserResult = undefined;
   signOutCalls = 0;
+  signOutError = null;
 });
 
 describe("POST /api/admin/auth/sign-out", () => {
@@ -47,6 +49,18 @@ describe("POST /api/admin/auth/sign-out", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toEqual({ signed_out: true });
+    expect(signOutCalls).toBe(1);
+  });
+
+  it("returns 500 INTERNAL_ERROR when signOut returns an error", async () => {
+    getUserResult = { ok: true };
+    signOutError = { message: "sign-out failed" };
+    const res = await POST(makeRequest());
+    expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body).toEqual({
+      error: { code: "INTERNAL_ERROR", message: "Internal server error." },
+    });
     expect(signOutCalls).toBe(1);
   });
 

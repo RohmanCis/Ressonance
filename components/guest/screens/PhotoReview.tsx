@@ -59,7 +59,7 @@ export function PhotoReview({
             type="button"
             onClick={onBack}
             disabled={syncing}
-            className="flex min-h-11 items-center gap-1.5 rounded-full bg-bg-surface/70 px-3.5 text-xs font-medium text-text-secondary backdrop-blur-md border border-border/60 transition active:scale-95 hover:text-text-primary focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-40"
+            className="flex min-h-11 items-center gap-1.5 rounded-full bg-bg-surface/70 px-3.5 text-xs font-medium text-text-secondary backdrop-blur-md border border-border/60 transition-transform active:scale-95 hover:text-text-primary focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-40"
             aria-label="Kembali ke kamera"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
@@ -85,7 +85,7 @@ export function PhotoReview({
         <h1
           ref={headingRef}
           tabIndex={-1}
-          className="font-display text-2xl sm:text-3xl font-medium tracking-tight text-text-primary outline-none"
+          className="font-display text-3xl font-medium tracking-tight text-text-primary outline-none"
         >
           Foto Pilihanmu{" "}
           <span className="font-mono text-xl text-accent tabular-nums">
@@ -194,7 +194,7 @@ export function PhotoReview({
                   type="button"
                   onClick={onBack}
                   aria-label="Ambil foto tambahan"
-                  className="group flex aspect-[9/16] w-full flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-accent/40 bg-accent/5 transition-[border-color,background-color,transform] duration-fast hover:border-accent hover:bg-accent/10 active:scale-95 focus-visible:outline-2 focus-visible:outline-accent"
+                  className="group flex aspect-[9/16] w-full flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-accent/40 bg-accent/5 transition-transform duration-fast hover:border-accent hover:bg-accent/10 active:scale-95 focus-visible:outline-2 focus-visible:outline-accent"
                 >
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/20 text-accent group-hover:scale-110 transition-transform">
                     <Plus className="h-4 w-4 stroke-[2.5]" />
@@ -239,7 +239,7 @@ export function PhotoReview({
           type="button"
           onClick={onNext}
           disabled={ctaDisabled}
-          className="gold-foil-btn flex h-12 w-full items-center justify-center rounded-xl text-sm font-semibold shadow-lg transition duration-fast hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45"
+          className="gold-foil-btn flex h-12 w-full items-center justify-center rounded-xl text-sm font-semibold shadow-lg transition-transform duration-fast active:scale-[0.98] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-45"
         >
           {syncing ? "Mengirim foto…" : "Simpan & Lanjut ke Pesan Suara →"}
         </button>
@@ -249,7 +249,7 @@ export function PhotoReview({
           type="button"
           onClick={onBack}
           disabled={syncing}
-          className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-bg-surface/50 text-xs font-semibold text-text-secondary transition hover:text-text-primary hover:bg-bg-surface active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-40"
+          className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-bg-surface/50 text-xs font-semibold text-text-secondary transition-transform active:scale-[0.98] hover:text-text-primary hover:bg-bg-surface focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-40"
         >
           <Camera className="h-4 w-4" aria-hidden="true" />
           <span>{canAddMore ? "Ambil Foto Tambahan" : "Foto Ulang / Ganti Foto"}</span>

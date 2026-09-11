@@ -37,6 +37,7 @@ export function Capture({
   reviewIndex,
   camera,
   selectedFrame,
+  captureError,
   onShutter,
   onFileSelect,
   onAdvance,
@@ -53,6 +54,7 @@ export function Capture({
   reviewIndex: number | null;
   camera: ReturnType<typeof useCamera>;
   selectedFrame: { src?: string } | null;
+  captureError: boolean;
   onShutter: () => void;
   onFileSelect: (e: ChangeEvent<HTMLInputElement>) => void;
   onAdvance: () => void;
@@ -148,7 +150,7 @@ export function Capture({
             <button
               type="button"
               onClick={camera.switchCamera}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-bg-surface/70 backdrop-blur-md border border-border/80 text-text-primary shadow-md transition active:scale-95 focus-visible:outline-2 focus-visible:outline-accent"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-bg-surface/70 backdrop-blur-md border border-border/80 text-text-primary shadow-md transition-transform active:scale-95 focus-visible:outline-2 focus-visible:outline-accent"
               aria-label="Ganti kamera"
             >
               <RotateCcw className="h-4 w-4" aria-hidden="true" />
@@ -167,7 +169,7 @@ export function Capture({
           </p>
         </div>
 
-        {(closed || showPreExpiryWarning) && (
+        {(closed || showPreExpiryWarning || captureError) && (
           <div className="space-y-1">
             {closed && (
               <div
@@ -190,6 +192,16 @@ export function Capture({
                 </p>
               </div>
             )}
+            {captureError && (
+              <div
+                role="alert"
+                className="rounded-lg border border-error/30 bg-bg-elevated/95 p-2 text-center shadow-lg"
+              >
+                <p className="text-xs font-semibold text-error">
+                  Gagal jepret foto, coba lagi.
+                </p>
+              </div>
+            )}
           </div>
         )}
       </header>
@@ -197,7 +209,7 @@ export function Capture({
       {/* 2. ZONA 2: FRAME STAGE SEAMLESS (Ganti bagian kontainer kartu ini) */}
       <section className="relative z-10 flex min-h-0 flex-1 items-center justify-center overflow-hidden px-2 py-1 [container-type:size]">
         {/* Box 9:16 yang pas di kedua sumbu: min(content width, content height × 9/16) */}
-        <div className="relative aspect-[9/16] w-[min(100cqw,calc(100cqh*9/16))] overflow-hidden rounded-[24px] ring-1 ring-white/10 ring-inset shadow-[0_20px_50px_-10px_rgba(0,0,0,0.9),0_0_40px_-15px_rgba(212,175,55,0.15)] transition-[box-shadow,opacity] duration-base">
+        <div className="relative aspect-[9/16] w-[min(100cqw,calc(100cqh*9/16))] overflow-hidden rounded-[24px] ring-1 ring-white/10 ring-inset shadow-[0_20px_50px_-10px_rgba(0,0,0,0.9),0_0_40px_-15px_rgba(212,175,55,0.15)] transition-opacity duration-base">
           <CameraViewfinder
             camera={camera}
             frameOverlaySrc={selectedFrame?.src}
@@ -232,7 +244,7 @@ export function Capture({
           <div className="flex-1 flex justify-start">
             <label
               aria-label="Pilih foto"
-              className="flex h-11 w-11 items-center justify-center rounded-xl bg-bg-surface/80 backdrop-blur-md border border-border text-text-secondary transition active:scale-95 cursor-pointer hover:text-text-primary shadow-lg focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent"
+              className="flex h-11 w-11 items-center justify-center rounded-xl bg-bg-surface/80 backdrop-blur-md border border-border text-text-secondary transition-transform active:scale-95 cursor-pointer hover:text-text-primary shadow-lg focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent"
             >
               <span className="sr-only">Pilih foto</span>
               <ImagePlus className="h-5 w-5" aria-hidden="true" />
@@ -255,10 +267,10 @@ export function Capture({
               type="button"
               onClick={handleShutter}
               disabled={shutterDisabled}
-              className="relative flex h-[72px] w-[72px] items-center justify-center rounded-full bg-bg-surface/80 p-1 ring-2 ring-accent/30 shadow-[0_0_30px_color-mix(in_srgb,var(--accent)_35%,transparent)] transition duration-fast active:scale-90 focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-40"
+              className="relative flex h-[72px] w-[72px] items-center justify-center rounded-full bg-bg-surface/80 p-1 ring-2 ring-accent/30 shadow-[0_0_30px_color-mix(in_srgb,var(--accent)_35%,transparent)] transition-transform duration-fast active:scale-90 focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-40"
               aria-label="Jepret foto"
             >
-              <div className="h-full w-full rounded-full border border-black/30 bg-gradient-to-tr from-amber-600 via-accent to-yellow-200 shadow-inner" />
+              <div className="h-full w-full rounded-full border border-black/30 bg-gradient-to-tr from-[var(--accent-foil-dark)] via-accent to-[var(--accent-foil-light)] shadow-inner" />
             </button>
           </div>
 
@@ -269,12 +281,12 @@ export function Capture({
                 type="button"
                 onClick={onAdvance}
                 disabled={closed}
-                className="flex h-11 items-center justify-center rounded-xl bg-accent px-4 text-xs font-bold text-on-accent shadow-lg transition duration-fast hover:brightness-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-45"
+                className="flex h-12 items-center justify-center rounded-xl bg-accent px-4 text-xs font-bold text-on-accent shadow-lg transition-transform duration-fast active:scale-95 hover:brightness-105 focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-45"
               >
                 Lanjut →
               </button>
             ) : (
-              <div className="h-11 w-11" />
+              <div className="h-12 w-11" />
             )}
           </div>
         </div>
@@ -483,7 +495,7 @@ function ReviewOverlay({
             autoFocus
             onClick={onClose}
             aria-label="Kembali"
-            className="flex-1 h-11 rounded-xl border border-border bg-bg-surface/80 text-xs font-semibold text-text-primary transition active:scale-95 hover:bg-bg-elevated focus-visible:outline-2 focus-visible:outline-accent"
+            className="flex-1 h-11 rounded-xl border border-border bg-bg-surface/80 text-xs font-semibold text-text-primary transition-transform active:scale-95 hover:bg-bg-elevated focus-visible:outline-2 focus-visible:outline-accent"
           >
             Kembali
           </button>
@@ -492,7 +504,7 @@ function ReviewOverlay({
               type="button"
               onClick={onRetake}
               aria-label="Ulangi"
-              className="flex-1 h-11 rounded-xl border border-border bg-bg-surface/80 text-xs font-semibold text-text-primary transition active:scale-95 hover:bg-bg-elevated focus-visible:outline-2 focus-visible:outline-accent"
+              className="flex-1 h-11 rounded-xl border border-border bg-bg-surface/80 text-xs font-semibold text-text-primary transition-transform active:scale-95 hover:bg-bg-elevated focus-visible:outline-2 focus-visible:outline-accent"
             >
               Ulangi
             </button>
@@ -502,7 +514,7 @@ function ReviewOverlay({
               type="button"
               onClick={onDelete}
               aria-label="Hapus"
-              className="flex-1 h-11 rounded-xl border border-error/30 bg-error/10 text-xs font-semibold text-error transition active:scale-95 hover:bg-error/20 focus-visible:outline-2 focus-visible:outline-accent"
+              className="flex-1 h-11 rounded-xl border border-error/30 bg-error/10 text-xs font-semibold text-error transition-transform active:scale-95 hover:bg-error/20 focus-visible:outline-2 focus-visible:outline-accent"
             >
               Hapus
             </button>

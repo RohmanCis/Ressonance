@@ -1,41 +1,34 @@
-# Result: Post-event cleanup batch — Admin fixes, backend minor, refactors, dead code
+# Result: UI/UX polish batch — 6 polish points + 2 minor
 
 ## Status
-ALL DONE (4 lanes: A/B/C/D). Validation green. Net −250+ lines.
+ALL DONE (3 lanes: design-1, fix-1, fix-2). Validation green.
 
-## Lane A — Admin UI (fix-2)
-- `components/admin/admin-dashboard.tsx`: debounced search now uses per-load AbortController (stale-response race fixed); close-event dialog renders its own `closeError` inside DialogContent + closes programmatically only on success (no more DialogClose-swallowed failure); `revokeObjectURL` deferred 1000ms after `click()`.
-- NEW `lib/format.ts` (`pad2`, `formatTime`, `formatDuration`, `formatTimer`) — dedup of format helpers in `admin-dashboard.tsx`, `admin-event-index.tsx`, `audio-player.tsx`, `VoiceRecordingScreen.tsx`. Output byte-identical per call site.
+## Lane design-1 — @designer: 6 polish points
+Files: `Capture.tsx`, `VoiceRecordingScreen.tsx`, `PreSession.tsx`, `PhotoReview.tsx`, `admin-access.tsx`, `admin-dashboard.tsx`, `e2e/qr-qa.spec.ts`, `e2e/print-qa.spec.ts`.
+1. Touch targets: Capture "Lanjut →" `h-11`→`h-12` (48px, spacer height matched); admin filter segments `min-h-10`→`min-h-11` (44px).
+2. Motion (§4 transform+opacity only): bare/`transition-[…]` on interactive elements narrowed to `transition-transform`/`transition-opacity` (Capture 151/200/235/258/272/486/495/505, Voice 215/332/349, PhotoReview 62/197/242/252, PreSession 203/275); equalizer bar height/bg transitions + form-field `transition-colors` + skip-link `transition-colors` removed (instant); ratified `animate-pulse` (recording/skeletons) kept; `prefers-reduced-motion` untouched.
+3. Color literals: Capture shutter gradient → `--accent-foil-dark`/`--accent-foil-light` (canonical gold-foil pair, §2); admin destructive buttons `red-*` → `--error` tokens (3 sites).
+4. Voice success: confirmed-state block `border-accent/30`→`border-success/30`, icon `text-accent`→`text-success`; amber recording styling untouched.
+5. Headings: Voice + PhotoReview `text-2xl sm:text-3xl` → `text-3xl` flat (§3/§5); PreSession event-title 4xl/5xl untouched (per §5.1).
+6. aria-labels: admin-access "Kode QR akses acara" / "Kode QR cetak akses acara"; e2e selectors synced (`qr-qa.spec.ts:26,69,85`, `print-qa.spec.ts:46,47`) — no other e2e changes.
 
-## Lane B — Backend/guest minor (fix-1)
-- `lib/guest-submission-pipeline.ts`: `pool.connect()` moved inside try (connect failures now logged + 500 envelope; single fix point for photo+voice); canonical exported `rateLimitKey`.
-- `app/api/events/[public_id]/session/route.ts`: local `rateLimitKey` duplicate deleted.
-- `components/guest-event-entry.tsx`: voice timer anchored to `Date.now()` (wall-clock, stops at real 30s even in throttled background tabs; ticking + `<5s` message semantics preserved).
+## Lane fix-1 — @fixer: signOut 500 branch test
+- `app/api/admin/auth/sign-out/route.test.ts`: +1 test — `signOut` error → 500 + INTERNAL_ERROR envelope + call-count assert. Success/401 already covered. Mock extended with settable `signOutError`. No route bug found.
 
-## Lane C — Refactors (fix-3)
-- NEW `lib/multipart-payload.ts` — #7 parameterized payload factory; `photo-payload.ts`/`voice-note-payload.ts` now thin wrappers (public API stable).
-- NEW `lib/storage-adapter.ts` — #8 generic storage adapter; `photo-storage.ts`/`voice-note-storage.ts` delegate.
-- NEW `lib/submission-compensation.ts` — #9 shared `tryDeleteObject`/`compensateObject` (event-name param).
-- NEW `lib/admin-auth.ts` — #10 `requireAdmin` (401) + `requireOwnedEvent` (404/403); replaced boilerplate in all 10 admin routes. Envelopes/status byte-identical.
-- #4 `sign-out/route.ts`: `signOut()` result checked — failure → 500 INTERNAL_ERROR + `logApiError("admin_sign_out_failed")`.
-- NEW `lib/events-url.ts` — #11 `eventPublicUrl`; `publicUrl` dup deleted from events + access routes.
-
-## Lane D — Dead code (fix-4)
-- DELETED `lib/supabase/client.ts` (orphan), `component-catalog.html` (unreferenced).
-- Unexported 6 internal-only symbols (`generatePhotoStorageKey`, `generateVoiceNoteStorageKey`, `MULTIPART_OVERHEAD_ALLOWANCE`, `detectImageMime`, `findEventOwnerById`, `getSessionEventId`, `createSignedMediaUrl`).
-- Kept: test-asserted symbols + documented owner-locked constants (`SIGNED_URL_TTL_SECONDS`, `RETENTION_DAYS`, `MAX_EVENTS_PER_RUN`, `FFPROBE_TIMEOUT_MS`, `GUEST_SESSION_MAX_AGE_SECONDS`, `PHOTO_MIME_TYPES`, `FRAME_ASPECT_RATIO`) + production-consumed (`computeCoverCrop`, `drawFrameOverlay` in hooks/use-camera.ts).
+## Lane fix-2 — @fixer: capture error feedback
+- `components/guest-event-entry.tsx`: `handleCapture` no longer swallows failures — throw/null-blob → `captureError` state, 3s auto-dismiss, cleared on next success; timer cleaned up on unmount.
+- `components/guest/screens/Capture.tsx`: `captureError` prop → `role="alert"` banner in header zone (matches closed/pre-expiry anatomy, `--error` tokens): "Gagal jepret foto, coba lagi." Design-1 styling untouched.
 
 ## Validation
 - `npm run typecheck` — PASS.
-- `npx vitest run` — 49 files / 380 passed / 4 skipped / 0 failed (no regression; route tests confirm envelopes preserved through requireAdmin refactor).
 - `npm run lint` — baseline only: 1 pre-existing `any` (`e2e/print-qa.spec.ts:33`) + 15 warnings. No new findings.
-- `git diff --check` — clean.
+- `npx vitest run` — 49 files / 381 passed (+1 signOut test) / 4 skipped / 0 failed.
+- Not run: e2e (aria-label selectors changed in 2 specs — recommend `npm run e2e` before deploy).
 
 ## Risks / notes
-- `signOut()` 500 branch has no dedicated unit test (success/401 covered). Low risk; add if desired.
-- Session route now imports `rateLimitKey` from the pipeline (server-only, nodejs runtime, lazy pool — no connect at import). Safe.
-- Voice timer: fully-throttled tab can still overshoot by ≤1 throttled tick before the wall-clock check fires; exact-stop would need setTimeout (also throttled). Accepted.
-- Not run: e2e suite (recommend before deploy since admin dashboard + guest entry changed).
+- `FrameSelection.tsx:218` still has a non-compliant transition (`transform,opacity,border-color,box-shadow,background-color`) — was outside this batch's write scope; flagged by designer. Candidate for a follow-up 1-line fix.
+- Voice equalizer bar height changes now instant (was transitioned) — visual feel slightly snappier; compliant with §4.
+- `hover:brightness-105` (filter) on gold CTAs kept — repo-wide incl. ratified redesigns.
 
 ## Next step
-Owner: review diff, commit, deploy.
+Owner: review diff, commit, run e2e before deploy.

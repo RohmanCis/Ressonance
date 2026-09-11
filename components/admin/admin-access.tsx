@@ -59,7 +59,7 @@ export function AdminAccess({ publicId }: { publicId: string }) {
               <div className="mt-8 rounded-2xl border border-border bg-bg-surface/85 p-5 backdrop-blur-xl">
                 {/* Row 1: QR centered, max 160px */}
                 <div className="mx-auto w-40">
-                  <QRCodeSVG value={url} bgColor="#FFFFFF" fgColor="#000000" includeMargin aria-label="QR code for event access" className="h-full w-full" />
+                  <QRCodeSVG value={url} bgColor="#FFFFFF" fgColor="#000000" includeMargin aria-label="Kode QR akses acara" className="h-full w-full" />
                 </div>
                 <p className="mt-4 text-center text-xs text-text-muted">Scan pakai kamera HP buat buka halaman tamu, atau bagikan link publiknya.</p>
                 {/* Row 2: URL underline display */}
@@ -90,7 +90,7 @@ export function AdminAccess({ publicId }: { publicId: string }) {
         </div>
         {/* Print-only: bare QR, one A4 page, no title/URL/chrome */}
         <div aria-hidden="true" className="hidden print:flex print:min-h-screen print:w-full print:items-center print:justify-center print:overflow-hidden">
-          {url && <QRCodeSVG value={url} bgColor="#FFFFFF" fgColor="#000000" aria-label="Printable QR code for event access" className="h-[80mm] w-[80mm]" />}
+          {url && <QRCodeSVG value={url} bgColor="#FFFFFF" fgColor="#000000" aria-label="Kode QR cetak akses acara" className="h-[80mm] w-[80mm]" />}
         </div>
       </Shell>
     </AuthGate>

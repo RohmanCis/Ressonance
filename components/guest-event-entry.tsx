@@ -63,6 +63,8 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
   pendingPhotosRef.current = pendingPhotos;
   const prevPhotosCountRef = useRef(0);
   const [syncing, setSyncing] = useState(false);
+  const [captureError, setCaptureError] = useState(false);
+  const captureErrorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [reviewIndex, setReviewIndex] = useState<number | null>(null);
   const reviewReturnFocusRef = useRef<HTMLElement | null>(null);
   const syncAbortedRef = useRef(false);
@@ -265,15 +267,28 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
     );
   }
 
+  function showCaptureError() {
+    setCaptureError(true);
+    if (captureErrorTimer.current) clearTimeout(captureErrorTimer.current);
+    captureErrorTimer.current = setTimeout(() => {
+      captureErrorTimer.current = null;
+      setCaptureError(false);
+    }, 3000);
+  }
+
   async function handleCapture() {
     if (!session || event?.status === "CLOSED" || !event) return;
     let blob: Blob | null = null;
     try {
       blob = await camera.capture({ frameImg: frameImgRef.current });
     } catch {
+      blob = null;
+    }
+    if (!blob) {
+      showCaptureError();
       return;
     }
-    if (!blob) return;
+    setCaptureError(false);
     const photo: PendingPhoto = {
       id: nextPendingId(),
       blob,
@@ -625,6 +640,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
       pendingPhotosRef.current.forEach((p) => { if (p.previewUrl) URL.revokeObjectURL(p.previewUrl); });
       expiredPendingRef.current.forEach((p) => { if (p.previewUrl) URL.revokeObjectURL(p.previewUrl); });
       if (voiceUrlRef.current) URL.revokeObjectURL(voiceUrlRef.current);
+      if (captureErrorTimer.current) clearTimeout(captureErrorTimer.current);
       voiceXhrRef.current?.abort();
       voiceXhrRef.current = null;
       finishRecording();
@@ -702,6 +718,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
         reviewIndex={reviewIndex}
         camera={camera}
         selectedFrame={selectedFrame}
+        captureError={captureError}
         onShutter={handleCapture}
         onFileSelect={handleFileSelect}
         onAdvance={() => setState("photo-review")}

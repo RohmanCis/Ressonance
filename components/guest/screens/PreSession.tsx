@@ -151,7 +151,7 @@ export function PreSession({
             <button
               type="button"
               onClick={onDeclineCarryOver}
-              className="mt-3 inline-flex min-h-12 items-center text-xs text-text-muted underline underline-offset-4 hover:text-text-primary transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              className="mt-3 inline-flex min-h-12 items-center text-xs text-text-muted underline underline-offset-4 hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
               Hapus foto sebelumnya
             </button>
@@ -188,7 +188,7 @@ export function PreSession({
               value={name}
               onChange={(e) => onNameChange(e.target.value)}
               disabled={blocked || state === "starting"}
-              className="h-12 w-full rounded-none border-0 border-b border-border bg-transparent px-0 pb-2 text-base text-text-primary placeholder:text-sm placeholder:text-text-muted transition-colors duration-fast focus:border-accent focus:outline-none"
+              className="h-12 w-full rounded-none border-0 border-b border-border bg-transparent px-0 pb-2 text-base text-text-primary placeholder:text-sm placeholder:text-text-muted focus:border-accent focus:outline-none"
               aria-describedby="name-help"
             />
             <p id="name-help" className="text-xs text-text-secondary leading-relaxed pt-1">
@@ -200,7 +200,7 @@ export function PreSession({
             <button
               type="submit"
               disabled={blocked || state === "starting"}
-              className="gold-foil-btn h-12 w-full rounded-xl text-sm font-semibold transition duration-fast hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+              className="gold-foil-btn h-12 w-full rounded-xl text-sm font-semibold transition-transform duration-fast active:scale-[0.98] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {state === "starting"
                 ? "Sebentar ya…"
@@ -272,7 +272,7 @@ function Status({
         <button
           type="button"
           onClick={retry}
-          className="mt-4 h-12 rounded-lg bg-accent px-5 text-xs font-semibold text-on-accent transition duration-fast hover:brightness-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className="mt-4 h-12 rounded-lg bg-accent px-5 text-xs font-semibold text-on-accent transition-transform duration-fast hover:brightness-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
           Coba Lagi
         </button>
