@@ -195,17 +195,35 @@ Never trust frontend limits, localStorage, client MIME/duration, public storage 
 
 **SSOT divergence: RESOLVED 2026-09-09.** All implementation-vs-docs divergences were ratified into DESIGN.md (copy register §5.2–§5.6, Review→Camera back-nav §5.4, auto-advance semantics §5.3, camera constraints §5.3, haptics §4, amber/pulse voice styling via the §2 Amber semantic amendment, client-side <5s voice submit block §5.5, frame registry §5.2 = 4 templates + none). docs/UX_FLOW.md deleted by owner decision — DESIGN.md is the sole UI/flow reference (compact flow state list at §5 head). DESIGN.md also distilled for brevity (207 lines). No known code-vs-docs divergence remains.
 
-**Deferred LOW (owner decision pending):** API-level sign-in rate limiting.
+**Outstanding — pre-event audit 2026-09-11 (3-lane explorer/librarian/qa + orchestrator verification against live DB):**
 
-**Outstanding:** none blocking. Pre-deploy blockers ALL CLOSED (2026-09-11): `TRUSTED_PROXY=1` ✅ verified; `CRON_SECRET` ✅ verified (401 without bearer, 200 with); live-DB re-verification ✅ (schema 10/10, concurrency 4/4 in isolated `guestbook_test`; use `TEST_DATABASE_URL` pointing there — destructive suites DROP/re-apply schema); deployed live at `https://ressonance-one.vercel.app` (note: `ressonance.vercel.app` is taken by another party — do not use). `NEXT_PUBLIC_APP_URL` set accordingly. Full e2e suite ✅ re-run 2026-09-11 against production (38 tests; QA auth-cookie domain fix in `admin-index.spec.ts`).
+**BLOCKERS (fix sebelum event 12 Sep 2026):**
+- B1: Voice upload deadlock saat network failure — `components/guest-event-entry.tsx:568` `request.onerror` early-returns on `status === 0` without setting error state; UI stuck in "submitting" permanently. Fix: hapus early-return, set `review-error`.
+- B2: 429 retry otomatis tanpa batas — `components/guest-event-entry.tsx:373-378` retries on `Retry-After` indefinitely (`i--; continue`); UI locked lama + synchronized retry storm. Fix: cap retry 3× → error status + retry manual.
 
-**Remaining (non-blocking):** C5 ffprobe runtime proof — CLOSED 2026-09-11 (manual production voice upload succeeded; voice_notes row verified with duration 9s, so ffprobe ran in the Vercel runtime). Sign-in rate limiting — owner decision 2026-09-11: not implemented; single-admin endpoint, acceptable brute-force risk for MVP. Migration `0009` applied to live DB and verified (`guest_messages` dropped; remote history repaired 2026-09-11). Full e2e suite — DONE 2026-09-11 (see Last validated). Cosmetic debt C11–C14 RESOLVED 2026-09-09 (Capture counter aria-label synced to visual; DM Mono verified already token-backed, no-op; unused spin-tape/wave-pulse keyframes removed; equalizer `transition-all` → explicit property list).
+**OWNER DECISIONS NEEDED:**
+- D1: Serialisasi upload per-event — event-row `FOR UPDATE` lock dipegang selama Storage upload (`lib/photo-tx-repo.ts:59` + `lib/submit-photo.ts:132`, idem voice). Opsi (a) refactor upload-before-tx, atau (b) accept-and-monitor (Vercel logs). Concurrency tests 4/4 pass; bukan confirmed breaker pada wedding scale.
+- D2: Migration 0010 — pin `GRANT DELETE ON events, guest_sessions TO service_role` (live privileges saat ini `true` via platform default; 0007 philosophy = pin semua yang dipakai). Additive, zero-risk, direkomendasikan.
+- D3: Doc reconciliation batch — PRD +FR delete event; db_scheme hapus stale notes ("0009 pending live apply", "no delete FR in MVP"); API_CONTRACT §8.8 migration set `0001–0008` → `0001–0009`; ARCHIVED-deletable clarification di §5.12.
+- D4: FrameSelection default — `components/guest/screens/FrameSelection.tsx` default pilihan = frame pertama, bukan `none`; verifikasi intentional vs drift dari DESIGN.md §5.2 (`none` default).
+
+**DEFERRED (post-event):**
+- UI/UX polish: guest "Lanjut" CTA 44px vs kanon 48px; admin filter 40px < 44px; motion violations (animasi bg/border/shadow/height di Voice/Capture/PreSession); color literals bypass tokens (Capture `amber-600`/`yellow-200`, admin `red-*` vs `--error`); voice success gold vs `--success`; heading mobile 2xl vs 3xl; EN aria-labels di admin-access.
+- Admin: debounced search tanpa abort controller (stale response race); close-dialog error tersembunyi (`DialogClose` wrap); `revokeObjectURL()` terlalu cepat setelah `click()`.
+- Backend minor: `signOut()` result tidak dicek; `pool.connect()` di luar try (skip logging); voice 30s timer rentan `setInterval` throttle; capture errors ditelan.
+- Refactor: photo/voice payload adapter duplikat (byte-identical); storage adapter duplikat; `tryDelete`/`compensate` duplikat; admin auth boilerplate ×10 → `requireAdmin()`; `publicUrl()`/`rateLimitKey()`/format-helper duplikat.
+- Dead code: `lib/supabase/client.ts` orphan; `component-catalog.html` stale; export-only-for-test symbols (~10).
+- API-level sign-in rate limiting — owner decision 2026-09-11: not implemented; acceptable for MVP.
+
+**Go/No-Go audit: GO conditional** — setelah B1+B2 diterapkan dan D1 diputuskan. Jalur persistence benar secara otorisasi, limit, dan kompensasi.
 
 **Production:** https://ressonance-one.vercel.app
 
-**Incident (2026-09-11, resolved):** POST `/api/events/{id}/session` 500 in production — pg 8.x maps `sslmode=require` to `verify-full`, rejecting Supavisor's certificate chain; every pg-pool request (session rate limit, photo/voice pipeline) failed fail-closed. Fix: production `DATABASE_URL` changed to `sslmode=no-verify` (Vercel env, redeployed, verified 201). `.env.example` documents this; local dev (5432, no sslmode) unaffected.
+**Live DB:** migrations `0001`–`0004`, `0007`–`0009` applied (0005/0006 remote history `reverted`; `guest_messages` dropped, verified). Service-role DELETE privileges on all 4 tables verified `true` 2026-09-11.
 
-**Last validated (2026-09-09):** typecheck PASS; vitest 375/375 (48 files); e2e `mobile-media-qa.spec.ts` 19 passed / 0 failed. Full e2e suite not re-run after the guest UI redesign. Lint baseline: 1 pre-existing `any` error in `e2e/print-qa.spec.ts` + pre-existing warnings.
+**Incident (2026-09-11, resolved):** POST `/api/events/{id}/session` 500 in production — pg 8.x maps `sslmode=require` to `verify-full`, rejecting Supavisor's certificate chain. Fix: production `DATABASE_URL` changed to `sslmode=no-verify` (Vercel env, redeployed, verified 201). `.env.example` documents this; local dev (5432, no sslmode) unaffected.
+
+**Last validated (2026-09-11):** typecheck PASS; vitest 49 files / 379 passed / 4 skipped / 0 failed (post hard-delete, commit `106bf89`); full e2e suite re-run against production 38 tests PASS. Lint baseline: 1 pre-existing `any` error in `e2e/print-qa.spec.ts` + pre-existing warnings. Pre-event audit completed 2026-09-11: 0 KRITIS, 2 blockers (B1/B2), 4 owner decisions (D1-D4).
 
 **Owner decisions (2026-08-15):** Supabase managed backups only; structured logs + Vercel logs only (no Sentry/OTel); no guest-facing retention messaging; APAC Supabase region ratified; signed URL TTL 900s; ARCHIVED post-MVP.
 
