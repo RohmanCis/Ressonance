@@ -1,10 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
+import { requireAdmin } from "@/lib/admin-auth";
 import { resolveAuthorizedMedia } from "@/lib/admin-media-repo";
 import { logApiError } from "@/lib/api-log";
 import { getServerConfig } from "@/lib/config";
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 export const runtime = "nodejs";
@@ -21,14 +21,8 @@ export async function GET(
 ) {
   const { media_id } = await context.params;
 
-  const supabase = await createClient();
-  const { data: auth, error } = await supabase.auth.getUser();
-  if (error || !auth.user) {
-    return NextResponse.json(
-      { error: { code: "AUTHENTICATION_REQUIRED", message: "A valid admin session is required." } },
-      { status: 401 },
-    );
-  }
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.response;
 
   const db = createServiceRoleClient() as unknown as SupabaseClient;
   try {

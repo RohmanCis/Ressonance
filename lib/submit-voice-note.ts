@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
 
-import { logApiError } from "@/lib/api-log";
 import type { AudioInspector } from "@/lib/audio-inspector";
 import {
   ffprobeFormatToMime,
@@ -12,6 +11,7 @@ import {
   voiceNoteExtension,
 } from "@/lib/audio-file";
 import type { GuestSession } from "@/lib/guest-session";
+import { compensateObject, tryDeleteObject } from "@/lib/submission-compensation";
 import { PHOTO_LIMIT } from "@/lib/submit-photo";
 import type { VoiceNoteStorage } from "@/lib/voice-note-storage";
 import {
@@ -74,7 +74,7 @@ export interface SubmitVoiceNoteInput {
 }
 
 /** Opaque storage key; never a user filename or DB PK (TECHNICAL_DESIGN §6). */
-export function generateVoiceNoteStorageKey(
+function generateVoiceNoteStorageKey(
   eventId: string,
   sessionId: string,
   mime: VoiceNoteMimeType,
@@ -82,31 +82,7 @@ export function generateVoiceNoteStorageKey(
   return `events/${eventId}/sessions/${sessionId}/voice-notes/${randomUUID()}.${voiceNoteExtension(mime)}`;
 }
 
-/**
- * Best-effort object deletion. Never rethrows into a success path; a cleanup
- * failure is logged as a structured entry for operational reconciliation (TD §6).
- */
-async function tryDelete(storage: VoiceNoteStorage, key: string): Promise<void> {
-  try {
-    await storage.delete(key);
-  } catch (err) {
-    logApiError({
-      event: "voice_note_cleanup_failed",
-      error: err,
-      context: { storageKey: key },
-    });
-  }
-}
-
-/** Roll back the transaction and compensate the just-written object. */
-async function compensate(
-  tx: { rollback(): Promise<void> },
-  storage: VoiceNoteStorage,
-  key: string,
-): Promise<void> {
-  await tx.rollback();
-  await tryDelete(storage, key);
-}
+const CLEANUP_LOG_EVENT = "voice_note_cleanup_failed";
 
 export async function submitVoiceNote(
   deps: SubmitVoiceNoteDeps,
@@ -154,7 +130,7 @@ export async function submitVoiceNote(
   } catch {
     // The object may have been partially created; compensate it (QA-1 #4).
     await tx.rollback();
-    await tryDelete(deps.storage, key);
+    await tryDeleteObject(deps.storage, key, CLEANUP_LOG_EVENT);
     return { kind: "media_persistence_failed" };
   }
 
@@ -171,10 +147,10 @@ export async function submitVoiceNote(
     if (err instanceof VoiceNoteUniqueViolationError) {
       // The losing concurrent request: delete the object written for it and
       // map the raw SQL error to the business rule (TD §9).
-      await compensate(tx, deps.storage, key);
+      await compensateObject(tx, deps.storage, key, CLEANUP_LOG_EVENT);
       return { kind: "voice_note_limit_reached" };
     }
-    await compensate(tx, deps.storage, key);
+    await compensateObject(tx, deps.storage, key, CLEANUP_LOG_EVENT);
     return { kind: "media_persistence_failed" };
   }
 
@@ -183,14 +159,14 @@ export async function submitVoiceNote(
   try {
     photoCount = await tx.countPhotos(input.session.id);
   } catch {
-    await compensate(tx, deps.storage, key);
+    await compensateObject(tx, deps.storage, key, CLEANUP_LOG_EVENT);
     return { kind: "media_persistence_failed" };
   }
 
   try {
     await tx.commit();
   } catch {
-    await compensate(tx, deps.storage, key);
+    await compensateObject(tx, deps.storage, key, CLEANUP_LOG_EVENT);
     return { kind: "media_persistence_failed" };
   }
 

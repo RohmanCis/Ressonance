@@ -438,7 +438,7 @@ DELETE /api/admin/events/{public_id}/delete
 }
 ```
 
-**Authorization:** The authenticated admin must own the event. Only a `CLOSED` event can be deleted; an `ACTIVE` event returns `403 FORBIDDEN` (close it first).
+**Authorization:** The authenticated admin must own the event. Only a non-`ACTIVE` event can be deleted — `CLOSED` or `ARCHIVED`; an `ACTIVE` event returns `403 FORBIDDEN` (close it first). Clarified 2026-09-11 to match the implementation, which gates on status ≠ ACTIVE.
 
 **Side effects:** Deletes the event's private Storage objects, then its `photos`, `voice_notes`, and `guest_sessions` metadata, then the event record. After deletion the QR/public link for the deleted `public_id` returns `404 NOT_FOUND` (§6.1).
 
@@ -674,7 +674,7 @@ Internal operational endpoint, not a guest/admin product feature. Invoked daily 
 5. ~~Signed URL TTL.~~ Resolved 2026-08-15: 900 seconds (15 minutes), as implemented.
 6. ~~Hosting-specific same-origin base URL and local development proxy details.~~ Resolved 2026-08-15: Vercel same-origin deployment; base URL via `NEXT_PUBLIC_APP_URL`.
 7. Monitoring, backups, and media-retention policy. Retention resolved 2026-08-15 (owner): retain media 7 days after event CLOSED, private during retention, automatic cleanup after. Mechanism: internal cron endpoint §7.1 (owner-approved, implemented). Monitoring and backups resolved 2026-08-15 (owner): structured API logs + Vercel logs, no Sentry/OTel/custom alerting; Supabase managed backups, no custom backup/restore system for MVP.
-8. ~~Schema constraint/index naming cleanup before migrations.~~ Resolved 2026-08: migrations 0001–0008 applied live; no duplicate names.
+8. ~~Schema constraint/index naming cleanup before migrations.~~ Resolved 2026-08: migrations applied live (`0001`–`0004`, `0007`–`0010`; `0005`/`0006` reverted); no duplicate names.
 
 ## 9. Next step
 

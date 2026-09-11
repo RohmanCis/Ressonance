@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { requireAdmin } from "@/lib/admin-auth";
 import { logApiError } from "@/lib/api-log";
-import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
@@ -12,21 +12,19 @@ export const runtime = "nodejs";
  * surgery, no `__Host-admin_session` (it does not exist). Missing, expired,
  * or invalid sessions return 401. Success returns `{ signed_out: true }`.
  */
-
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const auth = await requireAdmin();
+    if (!auth.ok) return auth.response;
 
-    const { data, error } = await supabase.auth.getUser();
-
-    if (error || !data.user) {
+    const { error } = await auth.supabase.auth.signOut();
+    if (error) {
+      logApiError({ event: "admin_sign_out_failed", request, code: "INTERNAL_ERROR", error });
       return NextResponse.json(
-        { error: { code: "AUTHENTICATION_REQUIRED", message: "A valid admin session is required." } },
-        { status: 401 },
+        { error: { code: "INTERNAL_ERROR", message: "Internal server error." } },
+        { status: 500 },
       );
     }
-
-    await supabase.auth.signOut();
 
     return NextResponse.json({ signed_out: true }, { status: 200 });
   } catch (err) {

@@ -74,6 +74,18 @@ export function canDeletePhoto(status: PendingStatus): boolean {
   return status === "pending" || status === "error";
 }
 
+/** Max automatic retries for a single photo after 429 before surfacing an error. */
+export const MAX_RATE_LIMIT_RETRIES = 3;
+
+/**
+ * Whether a photo should auto-retry after another 429, given how many
+ * rate-limit responses it has already received. Caps the sync loop so a
+ * persistent 429 cannot hold the upload lock indefinitely.
+ */
+export function shouldRetryRateLimit(attempts: number): boolean {
+  return attempts < MAX_RATE_LIMIT_RETRIES;
+}
+
 /**
  * Parse an HTTP `Retry-After` header value (seconds). A finite positive number
  * is used as-is; missing/invalid/NaN/negative/zero/garbage falls back to 5.

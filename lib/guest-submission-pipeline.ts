@@ -93,8 +93,12 @@ function repoFromClient(client: PoolClient): GuestSubmissionRepo {
   };
 }
 
-/** Client identity for rate limiting; forwarded headers only trusted behind a proxy. */
-function rateLimitKey(request: NextRequest): string {
+/**
+ * Client identity for rate limiting. Canonical location (shared with the
+ * session route); forwarded headers only trusted behind an explicitly
+ * configured proxy (`TRUSTED_PROXY=1`).
+ */
+export function rateLimitKey(request: NextRequest): string {
   return rateLimitIdentity(
     (name) => request.headers.get(name),
     process.env.TRUSTED_PROXY === "1",
@@ -123,8 +127,11 @@ export function createGuestSubmissionHandler<T>(
     }
 
     const pool = getPgPool();
-    const client = await pool.connect();
+    let client: PoolClient | undefined;
     try {
+      // Connect inside the try so a pool/connect failure is logged and mapped
+      // to the same 500 envelope as any other internal error (photo+voice).
+      client = await pool.connect();
       // Authorize before touching the body (QA-2): unknown event, CLOSED
       // status, and missing/invalid/wrong-event/expired cookies are rejected
       // without parsing.
@@ -205,7 +212,7 @@ export function createGuestSubmissionHandler<T>(
         { status: 500 },
       );
     } finally {
-      client.release();
+      client?.release();
     }
   };
 }

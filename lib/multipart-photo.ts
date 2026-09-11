@@ -15,7 +15,7 @@
  */
 
 /** Bytes permitted beyond the photo file size for headers/boundary/other fields. */
-export const MULTIPART_OVERHEAD_ALLOWANCE = 64 * 1024;
+const MULTIPART_OVERHEAD_ALLOWANCE = 64 * 1024;
 
 /** Hard cap on the buffered multipart body for a given file-size limit. */
 export function multipartBodyCap(maxSizeBytes: number): number {

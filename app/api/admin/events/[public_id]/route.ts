@@ -1,9 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
-import { findAdminEvent } from "@/lib/admin-event-repo";
+import { requireAdmin, requireOwnedEvent } from "@/lib/admin-auth";
 import { logApiError } from "@/lib/api-log";
-import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 export const runtime = "nodejs";
@@ -19,24 +18,14 @@ export async function GET(
 ) {
   const { public_id } = await context.params;
 
-  const supabase = await createClient();
-  const { data: auth, error } = await supabase.auth.getUser();
-  if (error || !auth.user) {
-    return NextResponse.json(
-      { error: { code: "AUTHENTICATION_REQUIRED", message: "A valid admin session is required." } },
-      { status: 401 },
-    );
-  }
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.response;
 
   const db = createServiceRoleClient() as unknown as SupabaseClient;
   try {
-    const event = await findAdminEvent(db, public_id);
-    if (!event) {
-      return NextResponse.json({ error: { code: "NOT_FOUND", message: "Event not found." } }, { status: 404 });
-    }
-    if (event.admin_id !== auth.user.id) {
-      return NextResponse.json({ error: { code: "FORBIDDEN", message: "Not authorized to access this event." } }, { status: 403 });
-    }
+    const owned = await requireOwnedEvent(db, public_id, auth.user.id);
+    if (!owned.ok) return owned.response;
+    const event = owned.event;
 
     return NextResponse.json(
       {

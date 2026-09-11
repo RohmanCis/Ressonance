@@ -22,7 +22,7 @@ export type PhotoFileValidation =
   | { status: "unsupported" };
 
 /** Detect an approved image format from its leading bytes (magic bytes). */
-export function detectImageMime(data: Uint8Array): PhotoMimeType | null {
+function detectImageMime(data: Uint8Array): PhotoMimeType | null {
   if (data.length < 12) return null;
   // JPEG: FF D8 FF
   if (data[0] === 0xff && data[1] === 0xd8 && data[2] === 0xff) return "image/jpeg";

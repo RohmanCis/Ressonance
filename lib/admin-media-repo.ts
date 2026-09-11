@@ -62,7 +62,7 @@ export async function findEventByPublicId(
 }
 
 /** Resolve an event's owning admin by its DB id. */
-export async function findEventOwnerById(
+async function findEventOwnerById(
   db: Db,
   eventId: string,
 ): Promise<string | null> {
@@ -124,7 +124,7 @@ export async function findMedia(db: Db, mediaId: string): Promise<MediaRecord | 
 }
 
 /** Resolve the Event a GuestSession belongs to. */
-export async function getSessionEventId(
+async function getSessionEventId(
   db: Db,
   sessionId: string,
 ): Promise<string | null> {
@@ -249,7 +249,7 @@ export async function resolveAuthorizedMedia(
 }
 
 /** Create a short-lived signed URL for a private object. Null on failure. */
-export async function createSignedMediaUrl(
+async function createSignedMediaUrl(
   db: Db,
   bucket: string,
   storageKey: string,

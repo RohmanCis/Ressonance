@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { api, Busy, Button, Event, Shell, Status } from "./admin-ui";
 import { AdminPageShell } from "./admin-page-shell";
+import { pad2 } from "@/lib/format";
 
 const ID_MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-const pad2 = (n: number) => String(n).padStart(2, "0");
 const fmtFull = (iso: string) => {
   const d = new Date(iso);
   return `${d.getDate()} ${ID_MONTHS[d.getMonth()]} ${d.getFullYear()} · ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;

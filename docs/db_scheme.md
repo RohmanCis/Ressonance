@@ -2,7 +2,7 @@
 
 Version: 1.2
 Status: Approved schema design  
-Reconciled 2026-08-15 — closes open technical decisions; schema applied via migrations 0001–0008; 0009 (repo-only, pending live apply) drops the removed guest_messages table.
+Reconciled 2026-08-15 — closes open technical decisions; schema applied via migrations 0001–0010 (0005/0006 reverted remotely; 0009 drops the removed guest_messages table; 0010 pins service_role DELETE grants for the event hard-delete endpoint).
 Source of Truth: PRD v1.3 + Domain Model + ERD (all locked)
 
 ---
@@ -278,7 +278,7 @@ ARCHIVE→ status = 'ARCHIVED', closed_at = (tetap timestamp dari CLOSE)
 | `original_filename` | Tidak ada business value untuk media dari kamera browser |
 | `archived_at` | `ARCHIVED` belum punya behavior aktif di MVP |
 | Media retention / media `expires_at` | Policy resolved 2026-08-15 (owner): retain media 7 days after event CLOSED, then automatic cleanup (cron endpoint, API Contract §7.1). No new column required — cleanup derives eligibility from `events.closed_at` + `events.status`; deletes `photos`/`voice_notes` rows only |
-| Soft delete (`deleted_at`) | Tidak ada FR delete di MVP |
+| Soft delete (`deleted_at`) | Tidak dipakai — event deletion adalah hard delete child-first (FR-012, API Contract §5.12; owner decision 2026-09-11) |
 
 ---
 
@@ -291,4 +291,4 @@ ARCHIVE→ status = 'ARCHIVED', closed_at = (tetap timestamp dari CLOSE)
 
 ## Next Step
 
-Schema applied to live Supabase via migrations 0001–0008 (verified: migration history records `0001`–`0008`); 0009 (repo-only, pending live apply) drops the removed guest_messages table. Migration 0002 sets `search_path = public, extensions` so the pgcrypto `gen_random_bytes` backfill resolves on Supabase, where pgcrypto installs in the `extensions` schema. Migrations 0007–0008 (2026-08-17) change privileges/policies only, not schema shape: 0007 pins explicit `service_role` table grants (photos/voice_notes SELECT+DELETE, events SELECT+INSERT+UPDATE, guest_sessions SELECT+INSERT); 0008 asserts `storage.objects` RLS policies scoped to the private `guest-media` bucket for `service_role` (SELECT/INSERT/DELETE; applied via Supabase dashboard, repo file is documentation-only). All migrations are idempotent and safe to re-run. Further schema changes require an approved change to this document plus a new migration.
+Schema applied to live Supabase via migrations 0001–0010 (verified: migration history records `0001`–`0004`, `0007`–`0010`; `0005`/`0006` reverted). Migration 0002 sets `search_path = public, extensions` so the pgcrypto `gen_random_bytes` backfill resolves on Supabase, where pgcrypto installs in the `extensions` schema. Migration 0009 drops the removed `guest_messages` table. Migrations 0007–0010 change privileges/policies only, not schema shape: 0007 pins explicit `service_role` table grants (photos/voice_notes SELECT+DELETE, events SELECT+INSERT+UPDATE, guest_sessions SELECT+INSERT); 0008 asserts `storage.objects` RLS policies scoped to the private `guest-media` bucket for `service_role` (SELECT/INSERT/DELETE; applied via Supabase dashboard, repo file is documentation-only); 0010 adds the service_role DELETE grants on `events` and `guest_sessions` required by the event hard-delete endpoint (API Contract §5.12). All migrations are idempotent and safe to re-run. Further schema changes require an approved change to this document plus a new migration.

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 
@@ -11,16 +11,8 @@ export const runtime = "nodejs";
  */
 
 export async function GET() {
-  const supabase = await createClient();
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.response;
 
-  const { data, error } = await supabase.auth.getUser();
-
-  if (error || !data.user) {
-    return NextResponse.json(
-      { error: { code: "AUTHENTICATION_REQUIRED", message: "A valid admin session is required." } },
-      { status: 401 },
-    );
-  }
-
-  return NextResponse.json({ admin: { email: data.user.email } }, { status: 200 });
+  return NextResponse.json({ admin: { email: auth.user.email } }, { status: 200 });
 }

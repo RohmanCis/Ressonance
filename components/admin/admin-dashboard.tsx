@@ -9,6 +9,7 @@ import { api, Button, Event, Shell, Status, Submission } from "./admin-ui";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { describeDownloadResponse, downloadErrorCodeFromResponse, downloadErrorMessage } from "@/lib/admin-download";
+import { formatDuration as fmtDuration, pad2 } from "@/lib/format";
 
 const PreviewDialog = dynamic(() => import("./admin-preview-dialog").then((m) => m.PreviewDialog));
 
@@ -23,7 +24,6 @@ export function errorText(code: string) {
 
 const nameOf = (item: Submission) => item.guest_name?.trim() || "Tamu anonim";
 const ID_MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-const pad2 = (n: number) => String(n).padStart(2, "0");
 const fmtDate = (d: Date) => `${d.getDate()} ${ID_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 const fmtTime = (d: Date) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 export const fmtFull = (iso: string) => {
@@ -35,7 +35,6 @@ const fmtRange = (oldestIso: string, newestIso: string) => {
   const newest = new Date(newestIso);
   return `${fmtDate(newest)} · ${fmtTime(oldest)}–${fmtTime(newest)}`;
 };
-const fmtDuration = (s?: number | null) => (s == null ? "" : `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`);
 export const typeLabel = (item: Submission) => (item.type === "PHOTO" ? "Foto" : "Pesan suara");
 
 type Group = { ref: string; name: string; session: number | null; items: Submission[] };
@@ -130,7 +129,8 @@ export function useDownload(item: Submission) {
       document.body.appendChild(a);
       a.click();
       a.remove();
-      URL.revokeObjectURL(objectUrl);
+      // Defer revoke so the browser can start the download before the blob URL dies.
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
     } catch {
       setError(downloadErrorMessage());
     } finally {
@@ -490,6 +490,8 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
   const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(true);
   const [closing, setClosing] = useState(false);
+  const [closeOpen, setCloseOpen] = useState(false);
+  const [closeError, setCloseError] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [error, setError] = useState("");
@@ -498,21 +500,27 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
   // Last search actually sent to the API — drives the polite result announcement.
   const [appliedQuery, setAppliedQuery] = useState("");
   const lastSearchRef = useRef("");
+  // Tracks the in-flight load so a newer query (or unmount) aborts the stale one.
+  const loadAbortRef = useRef<AbortController | null>(null);
 
   async function load(search = query) {
+    loadAbortRef.current?.abort();
+    const controller = new AbortController();
+    loadAbortRef.current = controller;
     setBusy(true);
     setError("");
     try {
       const suffix = search ? `?guest_name=${encodeURIComponent(search)}` : "";
       const [eventRes, subsRes] = await Promise.all([
-        api<{ event: Event }>(`/api/admin/events/${publicId}`),
-        api<{ submissions: Submission[] }>(`/api/admin/events/${publicId}/submissions${suffix}`),
+        api<{ event: Event }>(`/api/admin/events/${publicId}`, { signal: controller.signal }),
+        api<{ submissions: Submission[] }>(`/api/admin/events/${publicId}/submissions${suffix}`, { signal: controller.signal }),
       ]);
       setEvent(eventRes.event);
       setItems(subsRes.submissions);
       setAppliedQuery(search);
       lastSearchRef.current = search;
     } catch (e) {
+      if (controller.signal.aborted) return; // superseded by a newer load
       const code = (e as Error).message;
       // UI_UX §5.5: unauthenticated access redirects to sign-in.
       if (code === "AUTHENTICATION_REQUIRED") {
@@ -521,11 +529,12 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
       }
       setError(code);
     } finally {
-      setBusy(false);
+      if (!controller.signal.aborted && loadAbortRef.current === controller) setBusy(false);
     }
   }
   useEffect(() => {
-    load("");
+    void load("");
+    return () => loadAbortRef.current?.abort();
   }, [publicId]);
   // DESIGN.md §6: inline debounced search — no submit button; Enter loads
   // immediately (pending timer no-ops on the same query), Escape clears.
@@ -538,11 +547,12 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
 
   async function close() {
     setClosing(true);
-    setError("");
+    setCloseError("");
     try {
       setEvent((await api<{ event: Event }>(`/api/admin/events/${publicId}/close`, { method: "POST" })).event);
+      setCloseOpen(false);
     } catch (e) {
-      setError((e as Error).message);
+      setCloseError((e as Error).message);
     } finally {
       setClosing(false);
     }
@@ -636,7 +646,7 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
                     </div>
                     <div className="mt-5 md:mt-0 md:flex md:justify-end">
                       {event.status === "ACTIVE" ? (
-                        <Dialog>
+                        <Dialog open={closeOpen} onOpenChange={(open) => { setCloseOpen(open); if (!open) setCloseError(""); }}>
                           <DialogTrigger asChild>
                             <Button disabled={closing} className="w-full md:w-auto">
                               {closing ? "Menutup…" : "Tutup acara"}
@@ -649,20 +659,21 @@ export function AdminDashboard({ publicId }: { publicId: string }) {
                                 Setelah ditutup, tamu tidak bisa lagi mengirim foto atau pesan suara. Tindakan ini tidak bisa dibatalkan.
                               </DialogDescription>
                             </DialogHeader>
+                            {closeError && (
+                              <p role="alert" className="text-xs text-error">{errorText(closeError)}</p>
+                            )}
                             <DialogFooter>
                               <DialogClose asChild>
                                 <Button secondary>Batal</Button>
                               </DialogClose>
-                              <DialogClose asChild>
-                                <button
-                                  type="button"
-                                  disabled={closing}
-                                  onClick={() => void close()}
-                                  className={`min-h-12 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-400 transition duration-fast hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-45 ${focusRing}`}
-                                >
-                                  Ya, tutup sekarang
-                                </button>
-                              </DialogClose>
+                              <button
+                                type="button"
+                                disabled={closing}
+                                onClick={() => void close()}
+                                className={`min-h-12 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-400 transition duration-fast hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-45 ${focusRing}`}
+                              >
+                                Ya, tutup sekarang
+                              </button>
                             </DialogFooter>
                           </DialogContent>
                         </Dialog>

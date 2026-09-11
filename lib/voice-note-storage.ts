@@ -3,6 +3,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { VoiceNoteMimeType } from "@/lib/audio-file";
+import { createStorageAdapter, type StorageAdapter } from "@/lib/storage-adapter";
 
 /**
  * Private Supabase Storage adapter for voice-note objects (T007).
@@ -11,25 +12,11 @@ import type { VoiceNoteMimeType } from "@/lib/audio-file";
  * (API Contract §7). `delete` is used as compensation when a newly written
  * object must be removed after a metadata failure.
  */
-export interface VoiceNoteStorage {
-  upload(key: string, data: Uint8Array, mime: VoiceNoteMimeType): Promise<void>;
-  delete(key: string): Promise<void>;
-}
+export type VoiceNoteStorage = StorageAdapter<VoiceNoteMimeType>;
 
 export function createVoiceNoteStorage(
   client: SupabaseClient,
   bucket: string,
 ): VoiceNoteStorage {
-  return {
-    async upload(key, data, mime) {
-      const { error } = await client.storage
-        .from(bucket)
-        .upload(key, data, { contentType: mime });
-      if (error) throw error;
-    },
-    async delete(key) {
-      const { error } = await client.storage.from(bucket).remove([key]);
-      if (error) throw error;
-    },
-  };
+  return createStorageAdapter<VoiceNoteMimeType>(client, bucket);
 }

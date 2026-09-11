@@ -2,10 +2,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { randomBytes } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 
+import { requireAdmin } from "@/lib/admin-auth";
 import { createAdminEvent, listAdminEvents } from "@/lib/admin-event-repo";
 import { logApiError } from "@/lib/api-log";
-import { getServerConfig } from "@/lib/config";
-import { createClient } from "@/lib/supabase/server";
+import { eventPublicUrl } from "@/lib/events-url";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 export const runtime = "nodejs";
@@ -13,11 +13,6 @@ export const runtime = "nodejs";
 /** Opaque, non-sequential public id (API Contract §4/§5.3; base64url of 16 random bytes). */
 function generatePublicId(): string {
   return randomBytes(16).toString("base64url");
-}
-
-/** Same-origin public URL for an event (API Contract 5.3/5.6). */
-function publicUrl(publicId: string): string {
-  return `${getServerConfig().appUrl}/e/${publicId}`;
 }
 
 function readTitle(body: unknown): { ok: true; title: string } | { ok: false } {
@@ -35,14 +30,8 @@ function readTitle(body: unknown): { ok: true; title: string } | { ok: false } {
  * violation maps to 409 ACTIVE_EVENT_EXISTS.
  */
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-  const { data: auth, error } = await supabase.auth.getUser();
-  if (error || !auth.user) {
-    return NextResponse.json(
-      { error: { code: "AUTHENTICATION_REQUIRED", message: "A valid admin session is required." } },
-      { status: 401 },
-    );
-  }
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.response;
 
   const contentType = request.headers.get("content-type") ?? "";
   if (!/^application\/json\b/i.test(contentType)) {
@@ -99,7 +88,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { event: result.event, public_url: publicUrl(result.event.public_id) },
+      { event: result.event, public_url: eventPublicUrl(result.event.public_id) },
       { status: 201 },
     );
   } catch (err) {
@@ -119,14 +108,8 @@ export async function POST(request: NextRequest) {
  * primary key or admin_id is returned.
  */
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
-  const { data: auth, error } = await supabase.auth.getUser();
-  if (error || !auth.user) {
-    return NextResponse.json(
-      { error: { code: "AUTHENTICATION_REQUIRED", message: "A valid admin session is required." } },
-      { status: 401 },
-    );
-  }
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.response;
 
   const db = createServiceRoleClient() as unknown as SupabaseClient;
   try {

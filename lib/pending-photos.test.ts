@@ -10,6 +10,8 @@ import {
   isEventClosedError,
   isPhotoLimitError,
   isRateLimited,
+  shouldRetryRateLimit,
+  MAX_RATE_LIMIT_RETRIES,
   canRetakePhoto,
   canDeletePhoto,
   parseRetryAfterSeconds,
@@ -93,6 +95,16 @@ describe("pending-photos retry-after parsing", () => {
     expect(parseRetryAfterSeconds("12abc")).toBe(5);
     expect(parseRetryAfterSeconds("Infinity")).toBe(5);
     expect(parseRetryAfterSeconds("  ")).toBe(5);
+  });
+});
+
+describe("pending-photos rate-limit retry cap", () => {
+  it("allows auto-retry below the cap and stops at it", () => {
+    expect(MAX_RATE_LIMIT_RETRIES).toBe(3);
+    expect(shouldRetryRateLimit(1)).toBe(true);
+    expect(shouldRetryRateLimit(2)).toBe(true);
+    expect(shouldRetryRateLimit(3)).toBe(false);
+    expect(shouldRetryRateLimit(4)).toBe(false);
   });
 });
 

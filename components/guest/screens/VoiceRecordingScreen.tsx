@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Mic, Square, Sparkles, CheckCircle2, AlertCircle, RotateCcw } from "lucide-react";
 import { AudioPlayer } from "@/components/guest/audio-player";
+import { formatTimer } from "@/lib/format";
 import type { Usage } from "@/lib/usage";
 import { AmbientBackdrop } from "@/components/guest/ambient-backdrop";
 import { ExpiryHint } from "./expiry-hint";
@@ -19,10 +20,6 @@ type EventData = { title: string; status: "ACTIVE" | "CLOSED" };
 
 const MIN_SECONDS = 5;
 const MAX_SECONDS = 30;
-
-function formatTimer(seconds: number): string {
-  return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
-}
 
 /**
  * VOICE_NOTE — Layar perekaman suara mandiri (DESIGN.md §5.5).

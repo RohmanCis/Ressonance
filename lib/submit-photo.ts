@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
 
-import { logApiError } from "@/lib/api-log";
 import type { GuestSession } from "@/lib/guest-session";
 import {
   photoExtension,
@@ -10,6 +9,7 @@ import {
 } from "@/lib/photo-file";
 import type { PhotoStorage } from "@/lib/photo-storage";
 import type { PhotoTxRepo } from "@/lib/photo-tx-repo";
+import { compensateObject, tryDeleteObject } from "@/lib/submission-compensation";
 
 /**
  * POST /api/events/{public_id}/photos orchestration (T006).
@@ -63,7 +63,7 @@ export interface SubmitPhotoInput {
 }
 
 /** Opaque storage key; never a user filename or DB PK (TECHNICAL_DESIGN §6). */
-export function generatePhotoStorageKey(
+function generatePhotoStorageKey(
   eventId: string,
   sessionId: string,
   mime: PhotoMimeType,
@@ -71,31 +71,7 @@ export function generatePhotoStorageKey(
   return `events/${eventId}/sessions/${sessionId}/photos/${randomUUID()}.${photoExtension(mime)}`;
 }
 
-/**
- * Best-effort object deletion. Never rethrows into a success path; a cleanup
- * failure is logged as a structured entry for operational reconciliation (TD §6).
- */
-async function tryDelete(storage: PhotoStorage, key: string): Promise<void> {
-  try {
-    await storage.delete(key);
-  } catch (err) {
-    logApiError({
-      event: "photo_cleanup_failed",
-      error: err,
-      context: { storageKey: key },
-    });
-  }
-}
-
-/** Roll back the transaction and compensate the just-written object. */
-async function compensate(
-  tx: { rollback(): Promise<void> },
-  storage: PhotoStorage,
-  key: string,
-): Promise<void> {
-  await tx.rollback();
-  await tryDelete(storage, key);
-}
+const CLEANUP_LOG_EVENT = "photo_cleanup_failed";
 
 export async function submitPhoto(
   deps: SubmitPhotoDeps,
@@ -133,7 +109,7 @@ export async function submitPhoto(
   } catch {
     // The object may have been partially created; compensate it (QA-1 #4).
     await tx.rollback();
-    await tryDelete(deps.storage, key);
+    await tryDeleteObject(deps.storage, key, CLEANUP_LOG_EVENT);
     return { kind: "media_persistence_failed" };
   }
 
@@ -146,7 +122,7 @@ export async function submitPhoto(
       mimeType: validation.mime,
     });
   } catch {
-    await compensate(tx, deps.storage, key);
+    await compensateObject(tx, deps.storage, key, CLEANUP_LOG_EVENT);
     return { kind: "media_persistence_failed" };
   }
 
@@ -155,14 +131,14 @@ export async function submitPhoto(
   try {
     voiceCount = await tx.countVoiceNotes(input.session.id);
   } catch {
-    await compensate(tx, deps.storage, key);
+    await compensateObject(tx, deps.storage, key, CLEANUP_LOG_EVENT);
     return { kind: "media_persistence_failed" };
   }
 
   try {
     await tx.commit();
   } catch {
-    await compensate(tx, deps.storage, key);
+    await compensateObject(tx, deps.storage, key, CLEANUP_LOG_EVENT);
     return { kind: "media_persistence_failed" };
   }
 

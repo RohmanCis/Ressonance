@@ -7,7 +7,8 @@ import {
   GUEST_SESSION_COOKIE,
 } from "@/lib/guest-session";
 import { getSessionUsage, type UsageRepo } from "@/lib/get-session-usage";
-import { loadRateLimitConfig, rateLimitIdentity } from "@/lib/rate-limit";
+import { loadRateLimitConfig } from "@/lib/rate-limit";
+import { rateLimitKey } from "@/lib/guest-submission-pipeline";
 import { logApiError } from "@/lib/api-log";
 import { checkSessionCreateRateLimit } from "@/lib/session-create-rate-limit";
 import { startGuestSession, type SessionRepo } from "@/lib/start-guest-session";
@@ -27,16 +28,6 @@ function readGuestName(body: unknown): { ok: false } | { ok: true; value: unknow
     return { ok: false };
   }
   return { ok: true, value: (body as Record<string, unknown>).guest_name };
-}
-
-/** Client identity for rate limiting. Trusts forwarded headers ONLY behind an
- * explicitly configured trusted reverse proxy; otherwise all requests share one
- * coarse bucket so a spoofed header can never bypass the limit. */
-function rateLimitKey(request: NextRequest): string {
-  return rateLimitIdentity(
-    (name) => request.headers.get(name),
-    process.env.TRUSTED_PROXY === "1",
-  );
 }
 
 export async function POST(

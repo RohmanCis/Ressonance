@@ -14,6 +14,7 @@ import {
   nextPendingId,
   parseRetryAfterSeconds,
   photoErrorMessage,
+  shouldRetryRateLimit,
   type PendingPhoto,
 } from "@/lib/pending-photos";
 import dynamic from "next/dynamic";
@@ -321,6 +322,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
     const ids = pendingPhotosRef.current
       .filter((p) => p.status === "pending")
       .map((p) => p.id);
+    const rateLimitAttempts = new Map<string, number>();
 
     for (let i = 0; i < ids.length; i++) {
       if (syncAbortedRef.current) break;
@@ -371,6 +373,14 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
             break;
           }
           if (isRateLimited(response.status, code)) {
+            const attempts = (rateLimitAttempts.get(itemId) ?? 0) + 1;
+            rateLimitAttempts.set(itemId, attempts);
+            if (!shouldRetryRateLimit(attempts)) {
+              setPendingPhotos((prev) =>
+                applySyncResult(prev, itemId, { status: "error", errorCode: "RATE_LIMITED", errorMessage: photoErrorMessage("RATE_LIMITED") }),
+              );
+              continue;
+            }
             const retryAfter = parseRetryAfterSeconds(response.headers.get("Retry-After"));
             setPendingPhotos((prev) => applySyncResult(prev, itemId, { status: "pending" }));
             await new Promise((r) => setTimeout(r, retryAfter * 1000));
@@ -472,17 +482,21 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
       voiceSecondsRef.current = 0;
       setVoiceState("recording");
       setVoiceMessage("Merekam");
+      const startedAt = Date.now();
       recorder.start();
       voiceTimer.current = setInterval(
         () =>
-          setVoiceSeconds((seconds) => {
-            if (seconds >= 29) {
+          setVoiceSeconds(() => {
+            // Anchor to wall-clock elapsed, not tick count: throttled background
+            // tabs fire late but still stop at the real 30s mark.
+            const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+            if (elapsed >= 30) {
               finishRecording();
+              voiceSecondsRef.current = 30;
               return 30;
             }
-            const next = seconds + 1;
-            voiceSecondsRef.current = next;
-            return next;
+            voiceSecondsRef.current = elapsed;
+            return elapsed;
           }),
         1000,
       );
@@ -533,7 +547,6 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
     };
     request.onload = async () => {
       voiceXhrRef.current = null;
-      if (request.status === 0) return;
       try {
         if (request.status === 201) {
           setVoiceState("success");
@@ -565,7 +578,6 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
     };
     request.onerror = () => {
       voiceXhrRef.current = null;
-      if (request.status === 0) return;
       setVoiceState("review-error");
       setVoiceMessage("Pesan suara gagal dikirim. Cek koneksimu, lalu coba lagi.");
     };
