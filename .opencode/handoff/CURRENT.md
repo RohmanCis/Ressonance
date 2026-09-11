@@ -1,6 +1,6 @@
 # Current Task Status
 
-**Status:** IDLE — polish batch (2026-09-12) complete, validated, committed.
+**Status:** IDLE — session closed 2026-09-12. All session work committed (`75dbb9b`, local only — not pushed).
 
 ## Session summary (2026-09-12)
 - AGENTS.md §12 refreshed (stale blockers/decisions/deferred items removed).

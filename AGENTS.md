@@ -200,7 +200,7 @@ Never trust frontend limits, localStorage, client MIME/duration, public storage 
 - `FrameSelection.tsx:218` transition includes non-compliant properties (border-color/box-shadow/background-color vs DESIGN.md §4 transform+opacity only) — flagged 2026-09-12, outside that batch's scope.
 - E2E not re-run after the 2026-09-12 polish batch (2 aria-label selectors changed in qr-qa/print-qa specs, synced in-repo) — run `npm run e2e` before next deploy.
 
-**Last validated (2026-09-12, polish batch):** typecheck PASS; vitest 49 files / 381 passed / 4 skipped / 0 failed; lint baseline only (1 pre-existing `any` in `e2e/print-qa.spec.ts` + warnings). Earlier (2026-09-11, commit `3ab9d7f`): e2e 37 passed / 1 skipped (owner-run against production).
+**Last validated (2026-09-12, polish batch, commit `75dbb9b`):** typecheck PASS; vitest 49 files / 381 passed / 4 skipped / 0 failed; lint baseline only (1 pre-existing `any` in `e2e/print-qa.spec.ts` + warnings). Earlier (2026-09-11, commit `3ab9d7f`): e2e 37 passed / 1 skipped (owner-run against production).
 
 **Polish batch (2026-09-12):** touch targets (guest primary 48px, admin filter 44px), motion narrowed to transform/opacity (§4), color literals → tokens (shutter gold-foil pair `--accent-foil-*`, admin `--error`), voice success → `--success`, guest headings 3xl flat, admin-access aria-labels Bahasa Indonesia (e2e selectors synced), signOut 500-branch test, capture failure feedback (transient `role="alert"` banner).
 
