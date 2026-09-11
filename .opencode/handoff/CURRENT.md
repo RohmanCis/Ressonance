@@ -1,6 +1,24 @@
 # Current Task Status
 
-**Status:** IDLE — session closed 2026-09-12. All session work committed (`75dbb9b`, local only — not pushed).
+**Status:** IDLE — copy warmth pass (items 1–10) SELESAI 2026-09-12. Lanes fix-1 + lib-1 terekonsiliasi; 4 string fixer disesuaikan orchestrator ke owner-exact wording.
+
+## Session (2026-09-12, lanjutan)
+- des-1 audit copy guest flow → owner approve item 1–10.
+- fix-1: copy item 1–10 + test + e2e selector sync (mobile-media-qa.spec.ts).
+- lib-1: DESIGN.md §5.4/§5.5/§5.6 sync + amendment marker.
+- E2E flake print-qa/qr-qa mobile: dev-server `clientReferenceManifest` bug, rerun 6/6 PASS, no code change.
+
+## Validation
+- typecheck PASS; vitest 49 files / 381 passed / 4 skipped / 0 failed; lint touched-files 0 error (1 pre-existing warning).
+
+## Outstanding
+- `FrameSelection.tsx:218` transition non-compliant (§4) — 1-line fix.
+- `npm run e2e` sebelum deploy (3 selector mobile-media-qa berubah).
+- Commit `75dbb9b` + copy-pass commit belum push.
+
+## Context this session
+- E2E failure batch (print-qa/qr-qa mobile 375px) diagnosed: Next.js dev-server flake (`clientReferenceManifest` invariant), bukan bug produk. Rerun 2 spec → 6/6 PASS. No code change.
+- Outstanding lama: `FrameSelection.tsx:218` transition non-compliant; commit `75dbb9b` belum push.
 
 ## Session summary (2026-09-12)
 - AGENTS.md §12 refreshed (stale blockers/decisions/deferred items removed).

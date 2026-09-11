@@ -347,7 +347,7 @@ test.describe("Mobile-media QA", () => {
     await page.getByRole("button", { name: "Simpan & Lanjut ke Pesan Suara →" }).click();
 
     // Error alert with retry-or-delete guidance.
-    await expect(page.getByText("1 foto belum tersimpan. Ketuk ikon putar atau hapus sebelum lanjut.")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("1 foto belum tersimpan. Ketuk ↻ buat kirim ulang, atau hapus fotonya sebelum lanjut.")).toBeVisible({ timeout: 5000 });
 
     // CTA blocked while unresolved errors remain (nothing left to send).
     await expect(page.getByRole("button", { name: "Simpan & Lanjut ke Pesan Suara →" })).toBeDisabled();
@@ -523,7 +523,7 @@ test.describe("Mobile-media QA", () => {
     await page.getByRole("button", { name: "Kirim Pesan Suara →" }).click();
 
     // Error message shown.
-    await expect(page.getByText("Pesan suara harus 5–30 detik. Rekam ulang di rentang itu.")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("Pesan suara harus 5–30 detik. Rekam ulang ya.")).toBeVisible({ timeout: 5000 });
 
     // Audio playback retained.
     await expect(page.getByRole("button", { name: "Putar pesan suara" })).toBeVisible();
@@ -619,7 +619,7 @@ test.describe("Mobile-media QA", () => {
     await expect(page.getByText("Durasi terlalu singkat")).toHaveCount(0);
 
     // "Minimum 5 detik" guidance should NOT show.
-    await expect(page.getByText("Pesan suara minimal 5 detik agar dapat disimpan. Silakan rekam ulang.")).toHaveCount(0);
+    await expect(page.getByText("Pesan suara minimal 5 detik. Rekam ulang ya.")).toHaveCount(0);
   });
 
   // 11. PHOTO: multiple captures before sync (batch via photo-review)

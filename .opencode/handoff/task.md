@@ -1,45 +1,54 @@
-﻿# Task: UI/UX polish batch — 6 polish points + 2 minor
+﻿# Task: Guest copy warmth pass (items 1–10) + DESIGN.md spec sync
 
-Two parallel lanes (design-1 @designer, fix-1 @fixer) + one queued lane (fix-2 @fixer, AFTER design-1 completes). Fixers/designer report in their final message; orchestrator writes result.md.
+Two parallel lanes. No file overlap. Owner-approved copy rewrites (designer audit des-1 ratified by owner). Bahasa Indonesia, santai register. NO logic/behavior changes — strings only.
 
-Global constraints: TypeScript strict, no `any`, no new deps, no canonical-doc changes, Bahasa Indonesia copy register (santai/ramah guest, kasual-profesional admin), no API contract changes. Do NOT run vitest (serialized/destructive — orchestrator runs it once at the end). Per-lane validation: `npm run typecheck` ONLY. Keep e2e selectors stable EXCEPT the two aria-labels explicitly listed below (spec updates are in scope).
+Global constraints: TypeScript strict, no `any`, no new deps. Orchestrator runs `npx vitest run` ONCE after both lanes terminal (serialized destructive suites). Per-lane validation: `npx tsc --noEmit` (fixer lane). Do not touch files outside your lane scope. Bahasa Indonesia copy register santai.
 
-Governing doc: `docs/DESIGN.md` (CANONICAL). Key sections: §2 tokens (+ Amber amendment), §3 type scale (3xl guest headings), §4 motion (transform+opacity only, reduced-motion), §5.3 Capture, §5.5 Voice, §5.1 PreSession, §5.7 admin.
+## Lane copy-1 — @fixer: code copy updates (items 1–10)
 
-## Lane design-1 — @designer: 6 polish points
+Read first: AGENTS.md, docs/DESIGN.md §5.4–§5.6 (for context; spec updated in parallel by librarian lane — do not edit docs/), lib/pending-photos.ts, lib/pending-photos.test.ts, components/guest/screens/PhotoReview.tsx, components/guest/screens/VoiceRecordingScreen.tsx, components/guest/screens/Done.tsx, components/guest-event-entry.tsx.
 
-### 1. Touch targets
-- `components/guest/screens/Capture.tsx:272` "Lanjut →" CTA: `h-11` (44px) → 48px (`h-12`) — guest primary canon (§5.1/§5.3, 48px guest primaries). Adjust the placeholder spacer (`h-11 w-11` at line 277) to match new height so layout doesn't jump.
-- `components/admin/admin-dashboard.tsx` media filter segmented control (around line 775, `role="group" aria-label="Saring jenis media"`): buttons/segments currently < 44px — raise to min-h-11 (44px).
+Exact final strings (use verbatim):
 
-### 2. Motion violations (§4: transitions animate transform + opacity ONLY)
-Audit findings — fix each, preserving the visual intent (same feel, compliant properties):
-- `Capture.tsx:200` `transition-[box-shadow,opacity]` on the 9:16 stage — remove box-shadow from the transition (keep opacity; if shadow change is desired make it instant).
-- `Capture.tsx:151,235,258` bare `transition` (all properties) on buttons with `active:scale-*`/`hover:bg-*` — narrow to `transition-transform` (or `transition-[transform,opacity]`).
-- Voice/Capture/PreSession: find remaining transitions/animations that animate bg/border/shadow/height and convert to transform/opacity or make the non-compliant property change instant. NOTE: `animate-pulse` on Voice recording affordances (mic halo, status dot, equalizer) and on loading skeletons is RATIFIED (§2 amendment, §4) — do not remove those.
-- Respect existing `prefers-reduced-motion` handling; do not weaken it.
+**Item 1 — lib/pending-photos.ts:148-169 `photoErrorMessage()`** — translate all English strings:
+- UNSUPPORTED_FORMAT → `Format fotonya nggak didukung. Pilih foto lain.`
+- FILE_TOO_LARGE → `Fotonya kegedeen. Pilih yang lebih kecil.`
 
-### 3. Color literals bypass tokens
-- `Capture.tsx:261` shutter core gradient `from-amber-600 via-accent to-yellow-200` — rebuild using token-derived colors (`--accent` and existing token alpha variants; the shutter is a gold primary, amber is NOT allowed on primaries per §2 amendment). Keep the gold gradient look.
-- `components/admin/admin-dashboard.tsx:673,685,708` destructive buttons: `border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:border-red-500/40` → `--error` token equivalents (`border-error/30 bg-error/10 text-error hover:bg-error/20 hover:border-error/40`).
+Update `lib/pending-photos.test.ts` expected strings to match (around lines 200-211). Also grep repo (`e2e/`, `components/`) for any other assertion/usage of the old English strings and sync if found.
 
-### 4. Voice success color
-- `components/guest/screens/VoiceRecordingScreen.tsx` success/confirmed state uses gold — per §2 `--success` (green) is the confirmed-persistence semantic. Change the success state color to `--success`; gold stays on primary actions only. (Amber recording-state styling stays.)
+**Item 2 — components/guest-event-entry.tsx:~491** (voice too-short error): final `Terlalu singkat. Minimal 5 detik ya.` (delete "— hasil akhirnya tetap server yang menentukan.")
 
-### 5. Guest heading mobile
-- Guest screen heading rendered `text-2xl` on mobile where canon (§3) requires 3xl (2rem) for guest screen headings — locate in PreSession/Voice/PhotoReview and set `text-3xl` at mobile (verify against §5 per-screen specs).
+**Item 3 — components/guest/screens/PhotoReview.tsx:~233**: `Sedang menyelaraskan foto dengan server…` → `Lagi ngirim foto…`
 
-### 6. EN aria-labels in admin-access
-- `components/admin/admin-access.tsx:62` `aria-label="QR code for event access"` and `:93` `aria-label="Printable QR code for event access"` → Bahasa Indonesia (canon §5.7 supersedes the old EN aria-label convention). Suggested: "Kode QR akses acara" / "Kode QR cetak akses acara".
-- MUST sync e2e specs that select these attributes: `e2e/qr-qa.spec.ts:26,69,85` and `e2e/print-qa.spec.ts:46,47` — update the selector strings to the new labels. No other e2e changes.
+**Item 4 — PhotoReview.tsx:~217**: `Ketuk ikon putar atau hapus sebelum lanjut.` → `Ketuk ↻ buat kirim ulang, atau hapus fotonya sebelum lanjut.`
 
-## Lane fix-1 — @fixer: signOut 500 branch test
-- `app/api/admin/auth/sign-out/route.ts` checks `signOut()` result → 500 INTERNAL_ERROR + `logApiError("admin_sign_out_failed")` on failure. This branch has NO test.
-- Add a focused co-located test (match existing sign-out route test conventions — see existing `*.test.ts` beside the route) covering the failure branch: mocked supabase `signOut` rejecting/returning error → expect 500 + INTERNAL_ERROR envelope. Also assert success + unauthenticated paths still pass if not already covered.
-- Do not touch any file outside `app/api/admin/auth/sign-out/`.
+**Item 5 — components/guest/screens/VoiceRecordingScreen.tsx:~195**: `Dengarkan rekamanmu sebelum disimpan. Kamu bisa mengulang jika ingin mengubah isi ucapan.` → `Dengerin dulu rekamannya. Mau diubah? Rekam ulang aja.`
 
-## Lane fix-2 — @fixer (AFTER design-1 terminal): capture error feedback
-- `components/guest-event-entry.tsx:268-284` `handleCapture`: `catch { return; }` + `if (!blob) return;` swallow capture failures — user gets no feedback (shutter flashes, no photo appears).
-- Fix: on failure (throw OR null blob), surface a transient error in the Capture screen — e.g. state passed down / callback result, rendered as a `role="alert"` quiet bordered block matching §5.3 banner anatomy ("Gagal jepret foto, coba lagi." — keep register santai). Auto-dismiss after a few seconds or on next successful capture.
-- `hooks/use-camera.ts` `capture()` currently returns null on internal catch — you may keep that contract and treat null as failure at the call site; no signature change required.
-- CRITICAL: design-1 just edited `components/guest/screens/Capture.tsx` — preserve its exact styling/structure; add only the minimal error display consistent with the existing banner pattern in that file.
+**Item 6 — VoiceRecordingScreen.tsx:~157**: `Momen acara telah berakhir. Kiriman pesan baru tidak diterima lagi.` → `Acaranya sudah selesai, jadi pesan baru nggak bisa dikirim lagi.`
+
+**Item 7 — components/guest-event-entry.tsx:~539**: `Rekam ulang di rentang itu.` → `Rekam ulang ya.` (keep the 5–30s sentence before it intact)
+
+**Item 8 — components/guest/screens/Done.tsx:~188**: `Host akan melihatnya setelah acara.` → `Yang punya acara akan lihat setelah acara selesai.`
+
+**Item 9 — VoiceRecordingScreen.tsx**:
+- :~118 helper: delete `secara personal` (keep rest of sentence: `Ungkapkan doa & ucapan hangat untuk kedua mempelai.`)
+- :~190 min-duration warning: `Pesan suara minimal 5 detik agar dapat disimpan. Silakan rekam ulang.` → `Pesan suara minimal 5 detik. Rekam ulang ya.`
+- :~290 status line: `Tahan berbicara…` → `Lanjut ngomong…` (keep `(Ns lagi)` suffix)
+
+**Item 10 — PhotoReview.tsx:~96**: `Kamu bisa memotret ulang, menghapus, atau lanjut simpan.` → `Mau jepret ulang, hapus, atau lanjut? Bisa semua.`
+
+After edits: run `npx tsc --noEmit` (must pass). Also grep `e2e/` for any of the OLD strings above — if a spec asserts one, update the spec selector and note it in your report. Do NOT run vitest. No e2e run. Report files changed + tsc result in final message; do not write result.md (orchestrator writes it).
+
+## Lane doc-1 — @librarian: DESIGN.md spec sync (items 8–10 copy)
+
+Edit docs/DESIGN.md ONLY (no other files). Update the spec copy to match the new strings above:
+
+- §5.4 Photo Review (line ~151): helper copy `Kamu bisa memotret ulang, menghapus, atau lanjut simpan.` → `Mau jepret ulang, hapus, atau lanjut? Bisa semua.`
+- §5.5 Voice Note (line ~156): helper `Unggapkan doa & ucapan hangat untuk kedua mempelai secara personal.` → drop `secara personal` → `Ungkapkan doa & ucapan hangat untuk kedua mempelai.`
+- §5.5 (line ~157): `Tahan berbicara… (Ns lagi)` → `Lanjut ngomong… (Ns lagi)`
+- §5.5 (line ~159): `Pesan suara minimal 5 detik agar dapat disimpan. Silakan rekam ulang.` → `Pesan suara minimal 5 detik. Rekam ulang ya.`
+- §5.6 Done (line ~171): `Host akan melihatnya setelah acara.` → `Yang punya acara akan lihat setelah acara selesai.`
+
+For each changed line, append marker: `(Amended 2026-09-12: copy warmth pass — align tone, remove English/formal words)` — place at end of the affected sentence/clause or as trailing note on the bullet, whichever reads cleanest. Preserve all other spec content exactly.
+
+Report exact lines changed + before/after in final message. Do not write result.md.

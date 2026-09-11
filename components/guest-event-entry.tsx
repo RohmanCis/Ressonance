@@ -488,7 +488,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
         setVoiceState("review");
         setVoiceMessage(
           voiceSecondsRef.current < 5
-            ? "Terlalu singkat. Minimal 5 detik ya — hasil akhirnya tetap server yang menentukan."
+            ? "Terlalu singkat. Minimal 5 detik ya."
             : "Dengarkan dulu rekamanmu sebelum dikirim.",
         );
       };
@@ -536,7 +536,7 @@ export function GuestEventEntry({ publicId }: { publicId: string }) {
     const messages: Record<string, string> = {
       UNSUPPORTED_MEDIA: "Format audionya nggak didukung. Rekam ulang di browser yang didukung.",
       FILE_TOO_LARGE: "Rekamannya kegedean. Rekam yang lebih singkat.",
-      AUDIO_DURATION_INVALID: "Pesan suara harus 5–30 detik. Rekam ulang di rentang itu.",
+      AUDIO_DURATION_INVALID: "Pesan suara harus 5–30 detik. Rekam ulang ya.",
       AUDIO_UNINSPECTABLE: "Rekamannya nggak bisa diverifikasi. Rekam ulang ya.",
       VOICE_NOTE_LIMIT_REACHED: "Batas pesan suara untuk sesi ini sudah terpakai.",
       EVENT_CLOSED: "Acara ini sudah selesai. Kiriman baru nggak diterima lagi.",

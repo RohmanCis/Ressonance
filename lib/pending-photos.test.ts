@@ -197,17 +197,17 @@ describe("pending-photos error classification", () => {
 
 describe("pending-photos error messages", () => {
   it("maps known error codes to user-facing messages", () => {
-    expect(photoErrorMessage("UNSUPPORTED_MEDIA")).toContain("not supported");
-    expect(photoErrorMessage("FILE_TOO_LARGE")).toContain("too large");
-    expect(photoErrorMessage("PHOTO_LIMIT_REACHED")).toContain("limit reached");
-    expect(photoErrorMessage("EVENT_CLOSED")).toContain("closed");
-    expect(photoErrorMessage("RATE_LIMITED")).toContain("Too many requests");
-    expect(photoErrorMessage("MEDIA_PERSISTENCE_FAILED")).toContain("not confirmed as saved");
-    expect(photoErrorMessage("SESSION_EXPIRED")).toContain("no longer valid");
+    expect(photoErrorMessage("UNSUPPORTED_MEDIA")).toContain("nggak didukung");
+    expect(photoErrorMessage("FILE_TOO_LARGE")).toContain("kegedeen");
+    expect(photoErrorMessage("PHOTO_LIMIT_REACHED")).toContain("Batas foto sesi ini sudah terpakai");
+    expect(photoErrorMessage("EVENT_CLOSED")).toContain("Acara ini sudah selesai");
+    expect(photoErrorMessage("RATE_LIMITED")).toContain("Terlalu banyak permintaan");
+    expect(photoErrorMessage("MEDIA_PERSISTENCE_FAILED")).toContain("belum terkonfirmasi tersimpan");
+    expect(photoErrorMessage("SESSION_EXPIRED")).toContain("Sesi kamu sudah nggak berlaku");
   });
 
   it("returns generic message for unknown codes", () => {
-    expect(photoErrorMessage("UNKNOWN_CODE")).toContain("could not be uploaded");
-    expect(photoErrorMessage(undefined)).toContain("could not be uploaded");
+    expect(photoErrorMessage("UNKNOWN_CODE")).toContain("Foto gagal dikirim");
+    expect(photoErrorMessage(undefined)).toContain("Foto gagal dikirim");
   });
 });

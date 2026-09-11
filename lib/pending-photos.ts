@@ -148,23 +148,23 @@ export function isRateLimited(status: number, code?: string): boolean {
 export function photoErrorMessage(code?: string): string {
   switch (code) {
     case "UNSUPPORTED_MEDIA":
-      return "This image format is not supported. Choose another photo.";
+      return "Format fotonya nggak didukung. Pilih foto lain.";
     case "FILE_TOO_LARGE":
-      return "This photo is too large. Choose a smaller file.";
+      return "Fotonya kegedeen. Pilih yang lebih kecil.";
     case "PHOTO_LIMIT_REACHED":
-      return "Photo limit reached for this guest session.";
+      return "Batas foto sesi ini sudah terpakai.";
     case "EVENT_CLOSED":
-      return "This event is closed. New submissions are not accepted.";
+      return "Acara ini sudah selesai. Kiriman baru nggak diterima lagi.";
     case "RATE_LIMITED":
-      return "Too many requests. Wait, then try again deliberately.";
+      return "Terlalu banyak permintaan. Tunggu sebentar, lalu coba lagi.";
     case "MEDIA_PERSISTENCE_FAILED":
-      return "The photo was not confirmed as saved. Try again.";
+      return "Fotonya belum terkonfirmasi tersimpan. Coba lagi.";
     case "SESSION_EXPIRED":
     case "SESSION_INVALID":
     case "SESSION_REQUIRED":
-      return "Your session is no longer valid.";
+      return "Sesi kamu sudah nggak berlaku.";
     default:
-      return "The photo could not be uploaded. Check your connection, then try again.";
+      return "Foto gagal dikirim. Cek koneksimu, lalu coba lagi.";
   }
 }
 

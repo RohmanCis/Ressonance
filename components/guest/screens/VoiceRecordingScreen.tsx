@@ -115,7 +115,7 @@ export function VoiceRecordingScreen({
           Tinggalkan Pesan Suara
         </h1>
         <p className="mt-1 text-xs text-text-secondary leading-relaxed max-w-xs mx-auto">
-          Ungkapkan doa & ucapan hangat untuk kedua mempelai secara personal.
+          Ungkapkan doa & ucapan hangat untuk kedua mempelai.
         </p>
 
         {/* Expiry Hint Alert */}
@@ -154,7 +154,7 @@ export function VoiceRecordingScreen({
               Acara Sudah Selesai
             </h2>
             <p className="mt-1 text-xs text-text-secondary leading-relaxed max-w-xs mx-auto">
-              Momen acara telah berakhir. Kiriman pesan baru tidak diterima lagi.
+              Acaranya sudah selesai, jadi pesan baru nggak bisa dikirim lagi.
             </p>
           </div>
         ) : voiceState === "unsupported" ? (
@@ -187,12 +187,12 @@ export function VoiceRecordingScreen({
                   Durasi terlalu singkat ({voiceSeconds} detik)
                 </p>
                 <p className="mt-0.5 text-[10px] text-text-muted leading-relaxed">
-                  Pesan suara minimal 5 detik agar dapat disimpan. Silakan rekam ulang.
+                  Pesan suara minimal 5 detik. Rekam ulang ya.
                 </p>
               </div>
             ) : (
               <p className="text-center text-xs text-text-secondary leading-relaxed">
-                Dengarkan rekamanmu sebelum disimpan. Kamu bisa mengulang jika ingin mengubah isi ucapan.
+                Dengerin dulu rekamannya. Mau diubah? Rekam ulang aja.
               </p>
             )}
           </div>
@@ -287,7 +287,7 @@ export function VoiceRecordingScreen({
                   <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
                   <span>
                     {voiceSeconds < MIN_SECONDS
-                      ? `Tahan berbicara… (${MIN_SECONDS - voiceSeconds}s lagi)`
+                      ? `Lanjut ngomong… (${MIN_SECONDS - voiceSeconds}s lagi)`
                       : "Sedang merekam… ketuk kotak jika selesai"}
                   </span>
                 </div>

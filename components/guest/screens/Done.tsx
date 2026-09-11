@@ -185,7 +185,7 @@ export function Done({
             Terima kasih — foto dan pesan suara kamu sudah kami terima.
           </p>
           <p className="mt-1 max-w-sm text-sm text-text-muted">
-            Host akan melihatnya setelah acara.
+            Yang punya acara akan lihat setelah acara selesai.
           </p>
         </div>
       )}

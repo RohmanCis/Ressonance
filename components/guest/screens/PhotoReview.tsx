@@ -93,7 +93,7 @@ export function PhotoReview({
           </span>
         </h1>
         <p className="mt-1 text-xs text-text-secondary leading-relaxed max-w-xs mx-auto">
-          Kamu bisa memotret ulang, menghapus, atau lanjut simpan.
+          Mau jepret ulang, hapus, atau lanjut? Bisa semua.
         </p>
 
         {/* Expiry Hint */}
@@ -214,7 +214,7 @@ export function PhotoReview({
 
         {hasErrors && (
           <p role="alert" className="mt-2 text-center text-xs text-error font-medium">
-            {errorCount} foto belum tersimpan. Ketuk ikon putar atau hapus sebelum lanjut.
+            {errorCount} foto belum tersimpan. Ketuk ↻ buat kirim ulang, atau hapus fotonya sebelum lanjut.
           </p>
         )}
 
@@ -230,7 +230,7 @@ export function PhotoReview({
         {syncing && (
           <div className="flex items-center justify-center gap-2 text-xs text-accent">
             <Sparkles className="h-3.5 w-3.5 animate-spin" />
-            <span>Sedang menyelaraskan foto dengan server…</span>
+            <span>Lagi ngirim foto…</span>
           </div>
         )}
 
