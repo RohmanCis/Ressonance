@@ -10,11 +10,11 @@
 
 ## Validation
 - typecheck PASS; vitest 49 files / 381 passed / 4 skipped / 0 failed; lint touched-files 0 error (1 pre-existing warning).
+- E2E full suite (2026-09-12, post copy-pass): 37 passed / 1 skipped (live-backend) / 0 failed. Pre-check spec clean; 1 mid-run failure (qr-qa tablet 768px) terkonfirmasi FLAKE dev-server (stuck "Mengecek akses", race compile-on-demand) — rerun spec 4/4 PASS + full suite rerun all-green. Bukan bug kode.
 
 ## Outstanding
 - `FrameSelection.tsx:218` transition non-compliant (§4) — 1-line fix.
-- `npm run e2e` sebelum deploy (3 selector mobile-media-qa berubah).
-- Commit `75dbb9b` + copy-pass commit belum push.
+- Recurring dev-server e2e flake (clientReferenceManifest / Mengecek akses) — kalau berulang, pertimbangkan e2e vs production build.
 
 ## Context this session
 - E2E failure batch (print-qa/qr-qa mobile 375px) diagnosed: Next.js dev-server flake (`clientReferenceManifest` invariant), bukan bug produk. Rerun 2 spec → 6/6 PASS. No code change.
