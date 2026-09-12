@@ -215,7 +215,7 @@ export function FrameSelection({
                 className="group relative flex h-full shrink-0 snap-center flex-col items-center justify-center outline-none"
               >
                 <div
-                  className={`relative aspect-[9/16] h-[calc(100%-1.75rem)] max-h-[46dvh] overflow-hidden rounded-2xl border-2 bg-bg-surface/90 p-1.5 transition-[transform,opacity,border-color,box-shadow,background-color] duration-fast group-focus-visible:ring-2 group-focus-visible:ring-accent ${
+                  className={`relative aspect-[9/16] h-[calc(100%-1.75rem)] max-h-[46dvh] overflow-hidden rounded-2xl border-2 bg-bg-surface/90 p-1.5 transition-[transform,opacity] duration-fast group-focus-visible:ring-2 group-focus-visible:ring-accent ${
                     isSelected
                       ? "z-10 scale-105 border-accent bg-accent/10 shadow-[0_0_30px_color-mix(in_srgb,var(--accent)_30%,transparent)] ring-1 ring-accent"
                       : "border-border/70 opacity-80 scale-90 hover:opacity-100"
