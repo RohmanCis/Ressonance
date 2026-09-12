@@ -1,28 +1,23 @@
-# Result: Guest copy warmth pass (items 1–10) + DESIGN.md spec sync
+# Result: Session close 2026-09-12
 
 ## Status
-ALL DONE. Validation green.
+CLOSED. All work committed and pushed.
 
-## Changes
-- `lib/pending-photos.ts` — `photoErrorMessage()` fully localized to Bahasa Indonesia (8 branches). Orchestrator adjusted 4 fixer strings to owner-exact wording: PHOTO_LIMIT_REACHED "Batas foto sesi ini sudah terpakai.", EVENT_CLOSED "Acara ini sudah selesai. Kiriman baru nggak diterima lagi.", SESSION_* "Sesi kamu sudah nggak berlaku.", default "Foto gagal dikirim. Cek koneksimu, lalu coba lagi."
-- `lib/pending-photos.test.ts` — expected strings synced to final wording.
-- `components/guest/screens/PhotoReview.tsx` — items 3, 4, 10 (helper, retry guidance, busy line).
-- `components/guest/screens/VoiceRecordingScreen.tsx` — items 5, 6, 9 (helper, closed-event, min-duration warning, review helper, status line).
-- `components/guest/screens/Done.tsx` — item 8 ("Yang punya acara akan lihat setelah acara selesai.").
-- `components/guest-event-entry.tsx` — items 2, 7 (drop server meta-commentary, "Rekam ulang ya.").
-- `e2e/mobile-media-qa.spec.ts` — 3 stale selectors synced (fix-1).
-- `docs/DESIGN.md` — §5.4/§5.5/§5.6 copy updated to match items 8–10, amendment marker `(Amended 2026-09-12: copy warmth pass — align tone, remove English/formal words)` on 5 lines (lib-1).
+## Session commits
+- `75dbb9b` polish: canonical UI fixes, signOut 500 test, capture error feedback
+- `17c030d` docs: close session (midday sync)
+- `d41208d` fix(copy): Indonesian warmth pass — items 1–10 + DESIGN.md §5.4–§5.6 sync
+- `b40b783` docs: e2e full suite green record
+- `ade6e42` fix(motion): FrameSelection transition §4 compliance
+- (this commit) docs: session close — handoff + AGENTS.md §12 sync
 
 ## Validation
-- `npx tsc --noEmit` — PASS.
-- `npx vitest run` — 49 files / 381 passed / 4 skipped / 0 failed.
-- ESLint on all touched files — 1 pre-existing warning (no-img-element), 0 errors.
-- Not run: e2e (3 selectors changed in mobile-media-qa.spec.ts — run `npm run e2e` before deploy).
+- typecheck PASS; vitest 381 passed / 4 skipped / 0 failed; lint baseline only.
+- E2E full suite 37 passed / 1 skipped / 0 failed (post copy-pass).
+- Dev-server flake (clientReferenceManifest) diagnosed non-code; mitigated by fresh `.next` + dev server restart.
 
-## Notes / risks
-- Server-side API error messages stay English (API contract domain) — intentional, untouched.
-- Key `UNSUPPORTED_MEDIA` (not UNSUPPORTED_FORMAT) — kept, message localized.
-- SSOT: docs/DESIGN.md and code now aligned for items 8–10.
+## Blockers / SSOT conflicts
+None. Code and DESIGN.md aligned (copy items 8–10 ratified via amendment markers).
 
 ## Next step
-Owner: review, commit, run e2e before deploy.
+Idle. No open code tasks.

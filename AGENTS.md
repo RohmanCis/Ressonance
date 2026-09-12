@@ -197,12 +197,13 @@ Never trust frontend limits, localStorage, client MIME/duration, public storage 
 **Production:** https://ressonance-one.vercel.app — production `DATABASE_URL` uses `sslmode=no-verify` (pg 8.x maps `require` to `verify-full` and rejects Supavisor's certificate chain; documented in `.env.example`). Local dev (5432, no sslmode) unaffected.
 
 **Outstanding (deferred):**
-- `FrameSelection.tsx:218` transition includes non-compliant properties (border-color/box-shadow/background-color vs DESIGN.md §4 transform+opacity only) — flagged 2026-09-12, outside that batch's scope.
-- E2E not re-run after the 2026-09-12 polish batch (2 aria-label selectors changed in qr-qa/print-qa specs, synced in-repo) — run `npm run e2e` before next deploy.
+- Watch item: intermittent dev-server e2e flake (Next.js `clientReferenceManifest` invariant / stuck "Mengecek akses"; 2 occurrences 2026-09-12) — not a code bug; reruns green. Mitigate with fresh `.next` + dev-server restart; if it recurs, run e2e against a production build.
 
-**Last validated (2026-09-12, polish batch, commit `75dbb9b`):** typecheck PASS; vitest 49 files / 381 passed / 4 skipped / 0 failed; lint baseline only (1 pre-existing `any` in `e2e/print-qa.spec.ts` + warnings). Earlier (2026-09-11, commit `3ab9d7f`): e2e 37 passed / 1 skipped (owner-run against production).
+**Last validated (2026-09-12, commit `d41208d`):** typecheck PASS; vitest 49 files / 381 passed / 4 skipped / 0 failed; lint baseline only (1 pre-existing `any` in `e2e/print-qa.spec.ts` + warnings); e2e full suite 37 passed / 1 skipped (live-backend) / 0 failed. Final commit of the day `ade6e42` (1-line class change, tsc PASS) landed after the e2e run.
 
-**Polish batch (2026-09-12):** touch targets (guest primary 48px, admin filter 44px), motion narrowed to transform/opacity (§4), color literals → tokens (shutter gold-foil pair `--accent-foil-*`, admin `--error`), voice success → `--success`, guest headings 3xl flat, admin-access aria-labels Bahasa Indonesia (e2e selectors synced), signOut 500-branch test, capture failure feedback (transient `role="alert"` banner).
+**Polish batch (2026-09-12):** touch targets (guest primary 48px, admin filter 44px), motion narrowed to transform/opacity (§4; FrameSelection tile transition fixed in `ade6e42`), color literals → tokens (shutter gold-foil pair `--accent-foil-*`, admin `--error`), voice success → `--success`, guest headings 3xl flat, admin-access aria-labels Bahasa Indonesia (e2e selectors synced), signOut 500-branch test, capture failure feedback (transient `role="alert"` banner).
+
+**Copy warmth pass (2026-09-12, commit `d41208d`):** all guest-facing copy Bahasa Indonesia incl. `photoErrorMessage()` (was full-English, test synced); formal/English words removed (e.g. "Host", "secara personal", "Silakan"); docs/DESIGN.md §5.4–§5.6 spec copy aligned via amendment markers (owner-approved items 8–10). `e2e/mobile-media-qa.spec.ts` selectors synced.
 
 **Standing owner decisions:** (2026-08-15) Supabase managed backups only; structured logs + Vercel logs only (no Sentry/OTel); no guest-facing retention messaging; APAC Supabase region; signed URL TTL 900s; ARCHIVED post-MVP. (2026-08-29) Done-screen loading `role="status"` dropped — screen-reader users out of scope for that decorative screen. (2026-09-11) upload serialization per-event accept-and-monitor via Vercel logs; API-level sign-in rate limiting not implemented — acceptable for single-admin MVP.
 
